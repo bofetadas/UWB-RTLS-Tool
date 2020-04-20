@@ -7,8 +7,9 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import bachelor.test.locationapp.R
+import bachelor.test.locationapp.presenter.LocationData
 import bachelor.test.locationapp.presenter.PresenterImpl
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.view.*
 
 class ViewImpl : AppCompatActivity(), MainScreenContract.View {
 
@@ -16,19 +17,61 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.view)
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), 1)
         presenter = PresenterImpl(applicationContext, this)
-        presenter.start()
 
         setOnClickListeners()
     }
 
+    override fun onStart() {
+        super.onStart()
+        presenter.start()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        presenter.stop()
+        enableConnectButton(true)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        presenter.stop()
+        enableConnectButton(true)
+    }
+
     override fun showPosition(locationData: LocationData) {
-        x_position.text     =   "X: " + locationData.xPos
-        y_position.text     =   "Y: " + locationData.yPos
-        z_position.text     =   "Z: " + locationData.zPos
-        quality_factor.text =   "Quality Factor: " + locationData.qualityFactor
+        this.runOnUiThread {
+            x_position.text = "X: " + locationData.xPos + " m"
+            y_position.text = "Y: " + locationData.yPos + " m"
+            z_position.text = "Z: " + locationData.zPos + " m"
+            quality_factor.text = "Quality Factor: " + locationData.qualityFactor
+        }
+    }
+
+    override fun enableConnectButton(enabled: Boolean) {
+        this.runOnUiThread {
+            if (enabled) {
+                connect_button.visibility = View.VISIBLE
+                start_button.visibility = View.GONE
+                stop_button.visibility = View.GONE
+            } else {
+                connect_button.visibility = View.GONE
+            }
+        }
+    }
+
+    override fun swapStartButton(start: Boolean) {
+        this.runOnUiThread {
+            if (start) {
+                stop_button.visibility = View.GONE
+                start_button.visibility = View.VISIBLE
+            } else {
+                start_button.visibility = View.GONE
+                stop_button.visibility = View.VISIBLE
+            }
+        }
     }
 
     override fun showMessage(message: String?) {
@@ -37,24 +80,15 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View {
         }
     }
 
-    override fun swapButton() {
-        if (start_button.visibility == View.VISIBLE)
-        {
-            start_button.visibility = View.GONE
-            stop_button.visibility = View.VISIBLE
-        }
-        else
-        {
-            stop_button.visibility = View.GONE
-            start_button.visibility = View.VISIBLE
-        }
-    }
-
     override fun setPresenter(presenter: MainScreenContract.Presenter) {
         this.presenter = presenter
     }
 
     private fun setOnClickListeners() {
+        connect_button.setOnClickListener {
+            presenter.onConnectClicked()
+        }
+
         start_button.setOnClickListener {
             presenter.onStartClicked()
         }

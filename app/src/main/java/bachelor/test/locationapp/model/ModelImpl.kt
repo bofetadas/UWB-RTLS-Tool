@@ -1,19 +1,60 @@
 package bachelor.test.locationapp.model
 
 import android.content.Context
+import bachelor.test.locationapp.presenter.Observer
+import java.util.*
 
-class ModelImpl(private val context: Context): Model {
+class ModelImpl(val context: Context): Model {
 
-    private lateinit var bluetoothService : BluetoothService
-    override fun initializeBluetooth() {
-        bluetoothService = BluetoothService(context)
-        bluetoothService.initializeBluetooth()
+    private val observerList = ArrayList<Observer>()
+    private var bluetoothService : BluetoothService? = null
 
+    override fun initializeBluetoothConnection() {
+        bluetoothService = BluetoothService(this)
+        bluetoothService?.initialize()
     }
 
-    override fun getLocation(): ByteArray {
-        return bluetoothService.getLocationCharacteristic()
+    override fun terminateBluetoothConnection(): Boolean? {
+        return bluetoothService?.terminate()
     }
 
+    override fun startDataTransfer() {
+        bluetoothService?.enableNotifications()
+    }
 
+    override fun stopDataTransfer() {
+        bluetoothService?.disableNotifications()
+    }
+
+    override fun onConnectionSuccess(success: Boolean) {
+        observerList.forEach { observer ->
+            observer.onBluetoothConnectionSuccess(this, success)
+        }
+    }
+
+    override fun onDisconnectionSuccess(success: Boolean) {
+        observerList.forEach { observer ->
+            observer.onBluetoothDisconnectionSuccess(this, success)
+        }
+    }
+
+    override fun onCharacteristicChange(args: Any) {
+        observerList.forEach {observer ->
+            observer.onBluetoothCharacteristicChange(this, args)
+        }
+    }
+
+    override fun addObserver(observer: Observer) {
+        observerList.add(observer)
+    }
+
+    override fun deleteObserver(observer: Observer) {
+        observerList.remove(observer)
+    }
+
+    override fun onBluetoothNotEnabled() {
+        observerList.forEach { observer ->
+            observer.onBluetoothNotEnabled(this)
+        }
+    }
 }

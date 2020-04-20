@@ -1,6 +1,8 @@
 package bachelor.test.locationapp.model
 
-interface Model {
-    fun initializeBluetooth()
-    fun getLocation(): ByteArray
+interface Model: Observable, BluetoothCallbacks {
+    fun initializeBluetoothConnection()
+    fun terminateBluetoothConnection(): Boolean?
+    fun startDataTransfer()
+    fun stopDataTransfer()
 }

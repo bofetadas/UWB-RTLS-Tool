@@ -1,60 +1,114 @@
 package bachelor.test.locationapp.presenter
 
+import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.IntentFilter
 import bachelor.test.locationapp.model.Model
 import bachelor.test.locationapp.model.ModelImpl
-import bachelor.test.locationapp.view.LocationData
+import bachelor.test.locationapp.model.Observable
 import bachelor.test.locationapp.view.MainScreenContract
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 private const val POSITION_LOCATION_BYTE_ARRAY_SIZE = 14
-private const val FPS60 = 17L
-private const val FPS30 = 34L
-private const val FPS2 = 500L
-class PresenterImpl(private val context: Context, private val view: MainScreenContract.View): MainScreenContract.Presenter {
 
-    private lateinit var model: Model
-    private lateinit var job: Job
+class PresenterImpl(private val context: Context, private val view: MainScreenContract.View):
+    MainScreenContract.Presenter,
+    Observer
+{
+    private var model: Model? = null
+    private var broadcastReceiver: BroadcastReceiver = BluetoothBroadcastReceiver(this)
 
     override fun start() {
         model = ModelImpl(context)
-        model.initializeBluetooth()
+        model?.addObserver(this)
+        context.registerReceiver(broadcastReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+    }
+
+    override fun stop() {
+        if (model?.terminateBluetoothConnection() != null){
+            if (model?.terminateBluetoothConnection()!!) {
+                model?.deleteObserver(this)
+            }
+        }
+    }
+
+    override fun onConnectClicked() {
+        model?.initializeBluetoothConnection()
     }
 
     override fun onStartClicked() {
-        job = CoroutineScope(IO).launch { getLocation() }
-        view.swapButton()
+        model?.startDataTransfer()
+        view.swapStartButton(false)
     }
 
     override fun onStopClicked() {
-        job.cancel()
-        view.swapButton()
+        model?.stopDataTransfer()
+        view.swapStartButton(true)
     }
 
-    private suspend fun getLocation(){
-        try {
-            val locationByteArray = model.getLocation()
-            if (locationByteArray.size == POSITION_LOCATION_BYTE_ARRAY_SIZE){
-                val location = getLocationFromByteArray(locationByteArray)
+    override fun onBluetoothEnabled() {
+        view.showMessage("Bluetooth successfully turned on")
+        model?.initializeBluetoothConnection()
+    }
+
+    override fun onBluetoothNotEnabled(observable: Observable) {
+        view.showMessage("Bluetooth not enabled. Enabling now")
+    }
+
+
+    override fun onBluetoothConnectionSuccess(observable: Observable, success: Boolean) {
+        if (success) {
+            view.enableConnectButton(false)
+            view.swapStartButton(true)
+            view.showMessage("Tag connected")
+        }
+        else {
+            view.enableConnectButton(true)
+            view.showMessage("Connection to tag failed")
+        }
+    }
+
+    override fun onBluetoothDisconnectionSuccess(observable: Observable, success: Boolean) {
+        view.enableConnectButton(true)
+        view.showMessage("Tag disconnected")
+    }
+
+    @ExperimentalUnsignedTypes
+    override fun onBluetoothCharacteristicChange(observable: Observable, args: Any) {
+        try{
+            args as ByteArray
+            // Because we set the location mode to 0 in Bluetooth Service, here we can expect an array of 14 Bytes
+            // The official decawave doc says that only 13 Bytes should be returned
+            // I don't know where that extra first Byte is coming from though.
+            if (args.size == POSITION_LOCATION_BYTE_ARRAY_SIZE) {
+                val location = getLocationFromByteArray(args)
                 view.showPosition(location)
             }
-        } catch (e: Exception){
-            view.showMessage(e.message)
+        } catch (e: TypeCastException){
+            println(e)
         }
-        delay(FPS2)
-        getLocation()
     }
 
-    private fun getLocationFromByteArray(locationByteArray: ByteArray): LocationData{
+    @ExperimentalUnsignedTypes
+    private fun getLocationFromByteArray(locationByteArray: ByteArray): LocationData {
+        // Since received byte arrays are encoded in little endian, reverse the order for each position
+        val xByteArray = byteArrayOf(locationByteArray[4], locationByteArray[3], locationByteArray[2], locationByteArray[1])
+        val xPosition = xByteArray.getUIntAt(0).toDouble() / 1000
 
-        val xByte = ("${locationByteArray[4]} ${locationByteArray[3]} ${locationByteArray[2]} ${locationByteArray[1]}")
-        val yByte = ("${locationByteArray[8]} ${locationByteArray[7]} ${locationByteArray[6]} ${locationByteArray[5]}")
-        val zByte = ("${locationByteArray[12]} ${locationByteArray[11]} ${locationByteArray[10]} ${locationByteArray[9]}")
-        val qualityFactor = ("${locationByteArray[13]}")
-        return LocationData(xByte, yByte, zByte, qualityFactor)
+        val yByteArray = byteArrayOf(locationByteArray[8], locationByteArray[7], locationByteArray[6], locationByteArray[5])
+        val yPosition = yByteArray.getUIntAt(0).toDouble() / 1000
+
+        val zByteArray = byteArrayOf(locationByteArray[12], locationByteArray[11], locationByteArray[10], locationByteArray[9])
+        val zPosition = zByteArray.getUIntAt(0).toDouble() / 1000
+
+        val qualityFactor = locationByteArray[13].toUByte().toInt()
+        return LocationData(xPosition, yPosition, zPosition, qualityFactor)
     }
+
+    @ExperimentalUnsignedTypes
+    private fun ByteArray.getUIntAt(idx: Int) =
+        ((this[idx].toUInt() and 0xFFu) shl 24) or
+                ((this[idx + 1].toUInt() and 0xFFu) shl 16) or
+                ((this[idx + 2].toUInt() and 0xFFu) shl 8) or
+                (this[idx + 3].toUInt() and 0xFFu)
 }

@@ -4,69 +4,64 @@ import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
-import android.os.Handler
 import java.util.*
 
 private const val TAG_MAC = "F0:74:2F:98:DE:90"
-private const val LOCATION_CHARACTERISTIC = "003BBDF2-C634-4B3D-AB56-7EC889B89A37"
+private const val GET_LOCATION_CHARACTERISTIC = "003BBDF2-C634-4B3D-AB56-7EC889B89A37"
+private const val SET_LOCATION_MODE_CHARACTERISTIC = "A02B947E-DF97-4516-996A-1882521E0EAD"
 private const val DESCRIPTOR = "00002902-0000-1000-8000-00805f9b34fb"
+private val POSITION_MODE = byteArrayOf(0x00)
 
-private const val SCAN_PERIOD = 10000L
+class BluetoothService(private val model: ModelImpl) {
 
-private const val BLUETOOTH_NOT_ENABLED = "Bluetooth not enabled. Please enable Bluetooth and restart the app."
-
-class BluetoothService(private val context: Context) {
-
-    private lateinit var location: ByteArray
-    private val handler = Handler()
+    private var tagConnection: BluetoothGatt? = null
+    private var tagIsConnected = true
 
     private val bluetoothAdapter: BluetoothAdapter? by lazy(LazyThreadSafetyMode.NONE) {
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val bluetoothManager = model.context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothManager.adapter
     }
 
     private val BluetoothAdapter.isDisabled: Boolean
         get() = !isEnabled
 
-    fun getLocationCharacteristic(): ByteArray{
-        return location
+    fun initialize(){
+        // Ensures Bluetooth is available on the device and it is enabled.
+        bluetoothAdapter?.takeIf { it.isDisabled }?.apply {
+            model.onBluetoothNotEnabled()
+            bluetoothAdapter?.enable()
+            return
+        }
+        scanLeDevice()
     }
 
-    fun initializeBluetooth(){
-        // Ensures Bluetooth is available on the device and it is enabled. If not,
-        // displays a dialog requesting user permission to enable Bluetooth.
-        bluetoothAdapter?.takeIf { it.isDisabled }?.apply {
-            println(BLUETOOTH_NOT_ENABLED)
+    fun terminate(): Boolean{
+        if (tagIsConnected){
+            tagConnection?.disconnect()
+            tagConnection?.close()
+            tagConnection = null
+            return true
         }
-        println("SCANNING FOR BLUETOOTH DEVICES")
-        scanLeDevice()
+        return false
     }
 
     private fun scanLeDevice() {
         val scanner = bluetoothAdapter?.bluetoothLeScanner
 
-        handler.postDelayed({
-            scanner?.stopScan(object: ScanCallback(){
-                override fun onScanResult(callbackType: Int, result: ScanResult?) {
-                    println("SCAN STOPPED")
-                }
-            })
-        }, SCAN_PERIOD)
-
-        println("STARTING SCAN")
+        println("Scan started")
         scanner?.startScan(object: ScanCallback(){
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
                 super.onScanResult(callbackType, result)
                 val device = result?.device
                 if (device?.address == TAG_MAC){
-                    println("FOUND TAG")
-                    println("CONNECTING TO TAG...")
-                    device.connectGatt(context, false, gattCallback)
+                    println("Found tag")
+                    scanner.stopScan(this)
+                    device.connectGatt(model.context, false, gattCallback)
                 }
             }
 
             override fun onScanFailed(errorCode: Int) {
-                println("SCAN FAILED")
+                println("Scan failed")
                 println(errorCode.toString())
             }
         })
@@ -77,9 +72,15 @@ class BluetoothService(private val context: Context) {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    println("CONNECTED TO TAG")
-                    println("DISCOVERING SERVICES...")
-                    gatt.discoverServices()
+                    println("Connected to tag")
+                    tagConnection = gatt
+                    tagIsConnected = true
+                    tagConnection!!.discoverServices()
+                }
+                BluetoothProfile.STATE_DISCONNECTED -> {
+                    tagIsConnected = false
+                    tagConnection = null
+                    model.onDisconnectionSuccess(true)
                 }
             }
         }
@@ -88,24 +89,59 @@ class BluetoothService(private val context: Context) {
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
-                    println("SERVICES DISCOVERED")
-                    println("ENABLING NOTIFICATIONS...")
-                    val characteristic = gatt.services[2].getCharacteristic(UUID.fromString(LOCATION_CHARACTERISTIC))
-                    gatt.setCharacteristicNotification(characteristic, true)
-                    val descriptor = characteristic.getDescriptor(UUID.fromString(DESCRIPTOR))
-                    descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                    gatt.writeDescriptor(descriptor)
-                    println("NOTIFICATIONS ENABLED")
+                    println("Services discovered")
+                    // Set location mode to 0 (Position only mode)
+                    val setLocationModeCharacteristic = gatt.services[2].getCharacteristic(UUID.fromString(SET_LOCATION_MODE_CHARACTERISTIC))
+                    setLocationModeCharacteristic.value = POSITION_MODE
+                    val success = gatt.writeCharacteristic(setLocationModeCharacteristic)
+                    if (!success){
+                        model.onConnectionSuccess(false)
+                    }
                 }
-                else -> println("NO SERVICES DISCOVERED")
+                else -> {
+                    // Unsuccessful service discovery
+                    model.onConnectionSuccess(false)
+                    println("No services discovered")
+                }
             }
         }
 
-        override fun onCharacteristicChanged(
-            gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?
-        ) {
-            location = characteristic!!.value
+        // Check if the position mode set in 'onServicesDiscovered' was successful
+        override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int){
+            if (characteristic?.uuid == UUID.fromString(SET_LOCATION_MODE_CHARACTERISTIC) && status == BluetoothGatt.GATT_SUCCESS){
+                if (characteristic?.value!!.contentEquals(POSITION_MODE)) {
+                    model.onConnectionSuccess(true)
+                }
+            }
+        }
+
+        // Remote characteristic changes handling
+        override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
+            model.onCharacteristicChange(characteristic!!.value)
+        }
+    }
+
+    fun enableNotifications(){
+        if (tagIsConnected){
+            val characteristic = tagConnection!!.services[2].getCharacteristic(UUID.fromString(GET_LOCATION_CHARACTERISTIC))
+            tagConnection?.setCharacteristicNotification(characteristic, true)
+            val descriptor = characteristic.getDescriptor(UUID.fromString(DESCRIPTOR))
+            descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            tagConnection?.writeDescriptor(descriptor)
+        }
+        else{
+            initialize()
+            enableNotifications()
+        }
+    }
+
+    fun disableNotifications(){
+        if (tagIsConnected){
+            val characteristic = tagConnection!!.services[2].getCharacteristic(UUID.fromString(GET_LOCATION_CHARACTERISTIC))
+            tagConnection?.setCharacteristicNotification(characteristic, false)
+            val descriptor = characteristic.getDescriptor(UUID.fromString(DESCRIPTOR))
+            descriptor.value = BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+            tagConnection?.writeDescriptor(descriptor)
         }
     }
 }
