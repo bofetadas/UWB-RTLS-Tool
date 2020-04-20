@@ -10,3 +10,6 @@ For configuration, use decawaves RTLS Manager for example or connect your dev ki
 Clone this repository into Android Studio and look into app/src/main/java/bachelor/test/locationapp/model/BluetoothService.kt.
 
 Change TAG_MAC to the mac address of your tag and install the app on your Android device.
+
+Note: You must have at least 3 Anchors running in order to enable the tag to calculate its position within the network.
+If still no position is shown, check the positions of your anchors. They must match their position set in their configuration quite exactly. Then, move your tag inside your environment. Location data should now come in.
