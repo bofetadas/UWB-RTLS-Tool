@@ -73,7 +73,6 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         view.showMessage("Tag disconnected")
     }
 
-    @ExperimentalUnsignedTypes
     override fun onBluetoothCharacteristicChange(observable: Observable, args: Any) {
         try{
             args as ByteArray
@@ -89,26 +88,24 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         }
     }
 
-    @ExperimentalUnsignedTypes
     private fun getLocationFromByteArray(locationByteArray: ByteArray): LocationData {
         // Since received byte arrays are encoded in little endian, reverse the order for each position
         val xByteArray = byteArrayOf(locationByteArray[4], locationByteArray[3], locationByteArray[2], locationByteArray[1])
-        val xPosition = xByteArray.getUIntAt(0).toDouble() / 1000
+        val xPosition = xByteArray.transformIntoSignedInteger().toDouble() / 1000
 
         val yByteArray = byteArrayOf(locationByteArray[8], locationByteArray[7], locationByteArray[6], locationByteArray[5])
-        val yPosition = yByteArray.getUIntAt(0).toDouble() / 1000
+        val yPosition = yByteArray.transformIntoSignedInteger().toDouble() / 1000
 
         val zByteArray = byteArrayOf(locationByteArray[12], locationByteArray[11], locationByteArray[10], locationByteArray[9])
-        val zPosition = zByteArray.getUIntAt(0).toDouble() / 1000
+        val zPosition = zByteArray.transformIntoSignedInteger().toDouble() / 1000
 
-        val qualityFactor = locationByteArray[13].toUByte().toInt()
+        val qualityFactor = locationByteArray[13].toInt()
         return LocationData(xPosition, yPosition, zPosition, qualityFactor)
     }
 
-    @ExperimentalUnsignedTypes
-    private fun ByteArray.getUIntAt(idx: Int) =
-        ((this[idx].toInt() and 0xFF) shl 24) or
-                ((this[idx + 1].toInt() and 0xFF) shl 16) or
-                ((this[idx + 2].toInt() and 0xFF) shl 8) or
-                (this[idx + 3].toInt() and 0xFF)
+    private fun ByteArray.transformIntoSignedInteger() =
+        ((this[0].toInt() and 0xFF) shl 24) or
+                ((this[1].toInt() and 0xFF) shl 16) or
+                ((this[2].toInt() and 0xFF) shl 8) or
+                (this[3].toInt() and 0xFF)
 }
