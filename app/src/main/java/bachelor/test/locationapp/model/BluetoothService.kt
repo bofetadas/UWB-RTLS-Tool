@@ -9,13 +9,17 @@ import java.util.*
 private const val TAG_MAC = "F0:74:2F:98:DE:90"
 private const val GET_LOCATION_CHARACTERISTIC = "003BBDF2-C634-4B3D-AB56-7EC889B89A37"
 private const val SET_LOCATION_MODE_CHARACTERISTIC = "A02B947E-DF97-4516-996A-1882521E0EAD"
-private const val DESCRIPTOR = "00002902-0000-1000-8000-00805f9b34fb"
+private const val DESCRIPTOR = "00002902-0000-1000-8000-00805F9B34FB"
+private const val MTU_SIZE = 32
 private val POSITION_MODE = byteArrayOf(0x00)
+private val DISTANCE_MODE = byteArrayOf(0x01)
+private val POSITION_DISTANCE_MODE = byteArrayOf(0x02)
 
 class BluetoothService(private val model: ModelImpl) {
 
     private var tagConnection: BluetoothGatt? = null
     private var tagIsConnected = true
+    private var locationMode = DISTANCE_MODE
 
     private val bluetoothAdapter: BluetoothAdapter? by lazy(LazyThreadSafetyMode.NONE) {
         val bluetoothManager = model.context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -90,13 +94,8 @@ class BluetoothService(private val model: ModelImpl) {
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
                     println("Services discovered")
-                    // Set location mode to 0 (Position only mode)
-                    val setLocationModeCharacteristic = gatt.services[2].getCharacteristic(UUID.fromString(SET_LOCATION_MODE_CHARACTERISTIC))
-                    setLocationModeCharacteristic.value = POSITION_MODE
-                    val success = gatt.writeCharacteristic(setLocationModeCharacteristic)
-                    if (!success){
-                        model.onConnectionSuccess(false)
-                    }
+                    // Set connection MTU to 30 bytes (default is 20 only)
+                    gatt.requestMtu(MTU_SIZE)
                 }
                 else -> {
                     // Unsuccessful service discovery
@@ -109,7 +108,7 @@ class BluetoothService(private val model: ModelImpl) {
         // Check if the position mode set in 'onServicesDiscovered' was successful
         override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int){
             if (characteristic?.uuid == UUID.fromString(SET_LOCATION_MODE_CHARACTERISTIC) && status == BluetoothGatt.GATT_SUCCESS){
-                if (characteristic?.value!!.contentEquals(POSITION_MODE)) {
+                if (characteristic?.value!!.contentEquals(locationMode)) {
                     model.onConnectionSuccess(true)
                 }
             }
@@ -118,6 +117,25 @@ class BluetoothService(private val model: ModelImpl) {
         // Remote characteristic changes handling
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
             model.onCharacteristicChange(characteristic!!.value)
+        }
+
+        override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
+            if(mtu == MTU_SIZE && status == BluetoothGatt.GATT_SUCCESS){
+                println("Success")
+                val setLocationModeCharacteristic = gatt!!.services[2].getCharacteristic(UUID.fromString(SET_LOCATION_MODE_CHARACTERISTIC))
+                // Set Position Mode to retrieve 14 byte array of position data
+                //setLocationModeCharacteristic.value = POSITION_MODE
+                // Set Distance Mode to retrieve 29 byte array of distance data (when 4 anchors available)
+                setLocationModeCharacteristic.value = DISTANCE_MODE
+                // Set Position and Distance Mode to retrieve big byte array of data
+                //setLocationModeCharacteristic.value = POSITION_DISTANCE_MODE
+
+                locationMode = setLocationModeCharacteristic.value
+                val success = gatt.writeCharacteristic(setLocationModeCharacteristic)
+                if (!success){
+                    model.onConnectionSuccess(false)
+                }
+            }
         }
     }
 

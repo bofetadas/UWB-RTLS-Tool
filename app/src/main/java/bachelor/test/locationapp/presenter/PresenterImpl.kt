@@ -9,7 +9,8 @@ import bachelor.test.locationapp.model.ModelImpl
 import bachelor.test.locationapp.model.Observable
 import bachelor.test.locationapp.view.MainScreenContract
 
-private const val POSITION_LOCATION_BYTE_ARRAY_SIZE = 14
+private const val POSITIONS_ARRAY_SIZE = 14
+private const val DISTANCES_ARRAY_SIZE = 29
 
 class PresenterImpl(private val context: Context, private val view: MainScreenContract.View):
     MainScreenContract.Presenter,
@@ -79,28 +80,56 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
             // Because we set the location mode to 0 in Bluetooth Service, here we can expect an array of 14 Bytes
             // The official decawave doc says that only 13 Bytes should be returned
             // I don't know where that extra first Byte is coming from though.
-            if (args.size == POSITION_LOCATION_BYTE_ARRAY_SIZE) {
+            if (args.size == POSITIONS_ARRAY_SIZE) {
                 val location = getLocationFromByteArray(args)
                 view.showPosition(location)
+            }
+            // Assuming we receive distance data from 4 anchors. When only 3 anchors are available, the code will fail to execute and nothing will be computed.
+            else if(args.size == DISTANCES_ARRAY_SIZE){
+                val distances = getDistancesFromByteArray(args)
+                view.showDistances(distances)
             }
         } catch (e: TypeCastException){
             println(e)
         }
     }
 
-    private fun getLocationFromByteArray(locationByteArray: ByteArray): LocationData {
+    private fun getLocationFromByteArray(args: ByteArray): LocationData {
         // Since received byte arrays are encoded in little endian, reverse the order for each position
-        val xByteArray = byteArrayOf(locationByteArray[4], locationByteArray[3], locationByteArray[2], locationByteArray[1])
+        val xByteArray = byteArrayOf(args[4], args[3], args[2], args[1])
         val xPosition = xByteArray.transformIntoSignedInteger().toDouble() / 1000
 
-        val yByteArray = byteArrayOf(locationByteArray[8], locationByteArray[7], locationByteArray[6], locationByteArray[5])
+        val yByteArray = byteArrayOf(args[8], args[7], args[6], args[5])
         val yPosition = yByteArray.transformIntoSignedInteger().toDouble() / 1000
 
-        val zByteArray = byteArrayOf(locationByteArray[12], locationByteArray[11], locationByteArray[10], locationByteArray[9])
+        val zByteArray = byteArrayOf(args[12], args[11], args[10], args[9])
         val zPosition = zByteArray.transformIntoSignedInteger().toDouble() / 1000
 
-        val qualityFactor = locationByteArray[13].toInt()
+        val qualityFactor = args[13].toInt()
         return LocationData(xPosition, yPosition, zPosition, qualityFactor)
+    }
+
+    private fun getDistancesFromByteArray(args: ByteArray): DistanceData {
+        val locationDataMode = args[0]
+        val anchorCount = args[1]
+
+        val firstID = String.format("%02X", args[3]) + String.format("%02X", args[2])
+        val firstDistance = byteArrayOf(args[7], args[6], args[5], args[4]).transformIntoSignedInteger().toFloat() / 1000
+        val firstDistanceObject = DistanceObject(firstID, firstDistance)
+
+        val secondID = String.format("%02X", args[10]) + String.format("%02X", args[9])
+        val secondDistance = byteArrayOf(args[14], args[13], args[12], args[11]).transformIntoSignedInteger().toFloat() / 1000
+        val secondDistanceObject = DistanceObject(secondID, secondDistance)
+
+        val thirdID = String.format("%02X", args[17]) + String.format("%02X", args[16])
+        val thirdDistance = byteArrayOf(args[21], args[20], args[19], args[18]).transformIntoSignedInteger().toFloat() / 1000
+        val thirdDistanceObject = DistanceObject(thirdID, thirdDistance)
+
+        val fourthID = String.format("%02X", args[24]) + String.format("%02X", args[23])
+        val fourthDistance = byteArrayOf(args[28], args[27], args[26], args[25]).transformIntoSignedInteger().toFloat() / 1000
+        val fourthDistanceObject = DistanceObject(fourthID, fourthDistance)
+
+        return DistanceData(firstDistanceObject, secondDistanceObject, thirdDistanceObject, fourthDistanceObject)
     }
 
     private fun ByteArray.transformIntoSignedInteger() =

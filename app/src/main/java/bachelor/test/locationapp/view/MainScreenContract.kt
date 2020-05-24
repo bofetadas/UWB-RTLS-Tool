@@ -1,11 +1,13 @@
 package bachelor.test.locationapp.view
 
 import bachelor.test.locationapp.presenter.BasePresenter
+import bachelor.test.locationapp.presenter.DistanceData
 import bachelor.test.locationapp.presenter.LocationData
 
 interface MainScreenContract {
     interface View : BaseView<Presenter> {
         fun showPosition(locationData: LocationData)
+        fun showDistances(distances: DistanceData)
         fun enableConnectButton(enabled: Boolean)
         fun swapStartButton(start: Boolean)
         fun showMessage(message: String?)

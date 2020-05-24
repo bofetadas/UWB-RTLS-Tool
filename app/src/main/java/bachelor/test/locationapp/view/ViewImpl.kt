@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import bachelor.test.locationapp.R
+import bachelor.test.locationapp.presenter.DistanceData
 import bachelor.test.locationapp.presenter.LocationData
 import bachelor.test.locationapp.presenter.PresenterImpl
 import kotlinx.android.synthetic.main.view.*
@@ -47,6 +48,15 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View {
             y_position.text = "Y: " + locationData.yPos + " m"
             z_position.text = "Z: " + locationData.zPos + " m"
             quality_factor.text = "Quality Factor: " + locationData.qualityFactor
+        }
+    }
+
+    override fun showDistances(distances: DistanceData) {
+        this.runOnUiThread {
+            x_position.text = "Distance to DW${distances.firstDistance.ID}: ${distances.firstDistance.distance}m"
+            y_position.text = "Distance to DW${distances.secondDistance.ID}: ${distances.secondDistance.distance}m"
+            z_position.text = "Distance to DW${distances.thirdDistance.ID}: ${distances.thirdDistance.distance}m"
+            quality_factor.text = "Distance to DW${distances.fourthDistance.ID}: ${distances.fourthDistance.distance}m"
         }
     }
 
