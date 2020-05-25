@@ -7,8 +7,8 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import bachelor.test.locationapp.R
-import bachelor.test.locationapp.presenter.DistanceData
-import bachelor.test.locationapp.presenter.LocationData
+import bachelor.test.locationapp.positioning.DistanceData
+import bachelor.test.locationapp.positioning.LocationData
 import bachelor.test.locationapp.presenter.PresenterImpl
 import kotlinx.android.synthetic.main.view.*
 
@@ -53,10 +53,10 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View {
 
     override fun showDistances(distances: DistanceData) {
         this.runOnUiThread {
-            x_position.text = "Distance to DW${distances.firstDistance.ID}: ${distances.firstDistance.distance}m"
-            y_position.text = "Distance to DW${distances.secondDistance.ID}: ${distances.secondDistance.distance}m"
-            z_position.text = "Distance to DW${distances.thirdDistance.ID}: ${distances.thirdDistance.distance}m"
-            quality_factor.text = "Distance to DW${distances.fourthDistance.ID}: ${distances.fourthDistance.distance}m"
+            x_position.text = "Distance to DW${distances.first.ID}: ${distances.first.distance}m"
+            y_position.text = "Distance to DW${distances.second.ID}: ${distances.second.distance}m"
+            z_position.text = "Distance to DW${distances.third.ID}: ${distances.third.distance}m"
+            quality_factor.text = "Distance to DW${distances.fourth.ID}: ${distances.fourth.distance}m"
         }
     }
 

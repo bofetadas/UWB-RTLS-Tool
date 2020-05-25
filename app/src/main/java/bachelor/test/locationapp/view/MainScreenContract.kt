@@ -1,8 +1,8 @@
 package bachelor.test.locationapp.view
 
 import bachelor.test.locationapp.presenter.BasePresenter
-import bachelor.test.locationapp.presenter.DistanceData
-import bachelor.test.locationapp.presenter.LocationData
+import bachelor.test.locationapp.positioning.DistanceData
+import bachelor.test.locationapp.positioning.LocationData
 
 interface MainScreenContract {
     interface View : BaseView<Presenter> {

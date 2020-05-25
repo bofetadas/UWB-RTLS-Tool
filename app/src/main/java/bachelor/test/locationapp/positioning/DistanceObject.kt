@@ -1,3 +1,3 @@
-package bachelor.test.locationapp.presenter
+package bachelor.test.locationapp.positioning
 
 data class DistanceObject(val ID: String, val distance: Float)
