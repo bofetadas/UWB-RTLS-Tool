@@ -1,17 +1,18 @@
 package bachelor.test.locationapp.view
 
 import android.Manifest
-import androidx.appcompat.app.AppCompatActivity
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import bachelor.test.locationapp.R
 import bachelor.test.locationapp.presenter.LocationData
 import bachelor.test.locationapp.presenter.PresenterImpl
 import kotlinx.android.synthetic.main.view.*
 
-class ViewImpl : AppCompatActivity(), MainScreenContract.View {
+class ViewImpl : AppCompatActivity(), MainScreenContract.View, FilenameDialogListener {
 
     private lateinit var presenter: MainScreenContract.Presenter
 
@@ -78,6 +79,22 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View {
         this.runOnUiThread {
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
+    }
+
+    override fun showRecordingDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Do you want to save the received Location Data?")
+            .setPositiveButton("YES"){_, _ ->
+                val filenameDialog = FilenameDialog()
+                filenameDialog.show(supportFragmentManager, "View")
+            }
+            .setNegativeButton("NO", null)
+            .create()
+            .show()
+    }
+
+    override fun onFilenameEntered(filename: String) {
+        presenter.onFilenameEntered(filename)
     }
 
     override fun setPresenter(presenter: MainScreenContract.Presenter) {

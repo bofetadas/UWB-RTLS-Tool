@@ -9,6 +9,7 @@ interface MainScreenContract {
         fun enableConnectButton(enabled: Boolean)
         fun swapStartButton(start: Boolean)
         fun showMessage(message: String?)
+        fun showRecordingDialog()
     }
 
     interface Presenter: BasePresenter{
@@ -17,5 +18,6 @@ interface MainScreenContract {
         fun onStartClicked()
         fun onStopClicked()
         fun onConnectClicked()
+        fun onFilenameEntered(filename: String)
     }
 }

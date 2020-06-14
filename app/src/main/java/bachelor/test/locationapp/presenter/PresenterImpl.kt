@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
+import bachelor.test.locationapp.model.FileWriter
 import bachelor.test.locationapp.model.Model
 import bachelor.test.locationapp.model.ModelImpl
 import bachelor.test.locationapp.model.Observable
@@ -17,6 +18,8 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 {
     private var model: Model? = null
     private var broadcastReceiver: BroadcastReceiver = BluetoothBroadcastReceiver(this)
+    private val fileWriter = FileWriter(context)
+    private var recording = false
 
     override fun start() {
         model = ModelImpl(context)
@@ -36,7 +39,18 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         model?.initializeBluetoothConnection()
     }
 
+    override fun onFilenameEntered(filename: String) {
+        val success = fileWriter.createFile(filename)
+        if (success) {
+            view.showMessage("Data recording successfully initialized")
+            recording = true
+        } else {
+            view.showMessage("File already exists. Please specify another filename")
+        }
+    }
+
     override fun onStartClicked() {
+        view.showRecordingDialog()
         model?.startDataTransfer()
         view.swapStartButton(false)
     }
@@ -44,6 +58,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     override fun onStopClicked() {
         model?.stopDataTransfer()
         view.swapStartButton(true)
+        recording = false
     }
 
     override fun onBluetoothEnabled() {
@@ -71,6 +86,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     override fun onBluetoothDisconnectionSuccess(observable: Observable, success: Boolean) {
         view.enableConnectButton(true)
         view.showMessage("Tag disconnected")
+        recording = false
     }
 
     override fun onBluetoothCharacteristicChange(observable: Observable, args: Any) {
@@ -82,6 +98,9 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
             if (args.size == POSITION_LOCATION_BYTE_ARRAY_SIZE) {
                 val location = getLocationFromByteArray(args)
                 view.showPosition(location)
+                if (recording) {
+                    fileWriter.writeToFile(location.toString())
+                }
             }
         } catch (e: TypeCastException){
             println(e)
