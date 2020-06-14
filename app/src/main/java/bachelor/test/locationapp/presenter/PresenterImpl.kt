@@ -11,7 +11,7 @@ import bachelor.test.locationapp.positioning.*
 import bachelor.test.locationapp.view.MainScreenContract
 
 private const val POSITIONS_ARRAY_SIZE = 14
-private const val DISTANCES_ARRAY_SIZE = 29
+private const val DISTANCES_ARRAY_SIZE = 30
 
 private const val INIT_ID = "CDA5"
 private const val AN1_ID = "5512"
@@ -25,6 +25,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     private var model: Model? = null
     private var broadcastReceiver: BroadcastReceiver = BluetoothBroadcastReceiver(this)
     private val gaussNewtonMethod = GaussNewtonMethod()
+    private val accelerometerReader = AccelerometerReader(context, this)
 
     override fun start() {
         model = ModelImpl(context)
@@ -42,6 +43,10 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 
     override fun onConnectClicked() {
         model?.initializeBluetoothConnection()
+    }
+
+    override fun onAccelerationUpdate(accData: AccelerometerData) {
+        view.showAccelerometerData(accData)
     }
 
     override fun onStartClicked() {
@@ -94,8 +99,8 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
             // Assuming we receive distance data from 4 anchors. When only 3 anchors are available, the code will fail to execute and nothing will be computed.
             else if(args.size == DISTANCES_ARRAY_SIZE){
                 val distances = getDistancesFromByteArray(args)
-                val location = gaussNewtonMethod.solve(distances)
-                view.showPosition(location)
+                //val location = gaussNewtonMethod.solve(distances)
+                view.showDistances(distances)
             }
         } catch (e: TypeCastException){
             println(e)
@@ -123,19 +128,23 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 
         val firstID = String.format("%02X", args[3]) + String.format("%02X", args[2])
         val firstDistance = byteArrayOf(args[7], args[6], args[5], args[4]).transformIntoSignedInteger().toFloat() / 1000
-        val firstDistanceObject = DistanceObject(firstID, firstDistance)
+        val firstDistanceQf = args[8].toInt()
+        val firstDistanceObject = DistanceObject(firstID, firstDistance, firstDistanceQf)
 
         val secondID = String.format("%02X", args[10]) + String.format("%02X", args[9])
         val secondDistance = byteArrayOf(args[14], args[13], args[12], args[11]).transformIntoSignedInteger().toFloat() / 1000
-        val secondDistanceObject = DistanceObject(secondID, secondDistance)
+        val secondDistanceQf = args[15].toInt()
+        val secondDistanceObject = DistanceObject(secondID, secondDistance, secondDistanceQf)
 
         val thirdID = String.format("%02X", args[17]) + String.format("%02X", args[16])
         val thirdDistance = byteArrayOf(args[21], args[20], args[19], args[18]).transformIntoSignedInteger().toFloat() / 1000
-        val thirdDistanceObject = DistanceObject(thirdID, thirdDistance)
+        val thirdDistanceQf = args[22].toInt()
+        val thirdDistanceObject = DistanceObject(thirdID, thirdDistance, thirdDistanceQf)
 
         val fourthID = String.format("%02X", args[24]) + String.format("%02X", args[23])
         val fourthDistance = byteArrayOf(args[28], args[27], args[26], args[25]).transformIntoSignedInteger().toFloat() / 1000
-        val fourthDistanceObject = DistanceObject(fourthID, fourthDistance)
+        val fourthDistanceQf = args[29].toInt()
+        val fourthDistanceObject = DistanceObject(fourthID, fourthDistance, fourthDistanceQf)
 
         return orderDistanceObjects(arrayListOf(firstDistanceObject, secondDistanceObject, thirdDistanceObject, fourthDistanceObject))
     }

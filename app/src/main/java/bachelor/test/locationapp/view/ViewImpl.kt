@@ -1,12 +1,13 @@
 package bachelor.test.locationapp.view
 
 import android.Manifest
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import bachelor.test.locationapp.R
+import bachelor.test.locationapp.positioning.AccelerometerData
 import bachelor.test.locationapp.positioning.DistanceData
 import bachelor.test.locationapp.positioning.LocationData
 import bachelor.test.locationapp.presenter.PresenterImpl
@@ -53,10 +54,20 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View {
 
     override fun showDistances(distances: DistanceData) {
         this.runOnUiThread {
-            x_position.text = "Distance to DW${distances.first.ID}: ${distances.first.distance}m"
-            y_position.text = "Distance to DW${distances.second.ID}: ${distances.second.distance}m"
-            z_position.text = "Distance to DW${distances.third.ID}: ${distances.third.distance}m"
-            quality_factor.text = "Distance to DW${distances.fourth.ID}: ${distances.fourth.distance}m"
+            x_position.text = "Distance to DW${distances.first.ID}: ${distances.first.distance}m, QF: ${distances.first.qf}"
+            y_position.text = "Distance to DW${distances.second.ID}: ${distances.second.distance}m, QF: ${distances.second.qf}"
+            z_position.text = "Distance to DW${distances.third.ID}: ${distances.third.distance}m, QF: ${distances.third.qf}"
+            // Abuse of qf text field in order to show fourth measured distance without needing a new text field
+            quality_factor.text = "Distance to DW${distances.fourth.ID}: ${distances.fourth.distance}m, QF: ${distances.fourth.qf}"
+        }
+    }
+
+    override fun showAccelerometerData(accData: AccelerometerData) {
+        this.runOnUiThread {
+            x_acc.text = "X Acceleration: ${accData.xAcceleration}"
+            y_acc.text = "Y Acceleration: ${accData.yAcceleration}"
+            z_acc.text = "Z Acceleration: ${accData.zAcceleration}"
+            linear_acc.text = "Linear Acceleration: ${accData.linearAcc}"
         }
     }
 

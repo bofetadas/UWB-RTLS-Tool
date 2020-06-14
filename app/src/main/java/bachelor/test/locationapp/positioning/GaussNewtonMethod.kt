@@ -12,32 +12,35 @@ private const val Z = 2.35f
 // Initiator aka DWCDA5
 private const val INIT_X = 0.02f
 private const val INIT_Y = 0.3f
-private const val INIT_Z = Z
+private const val INIT_Z = 2.50f
 
 // Anchor 1 aka DW5512
 private const val AN1_X = 0.02f
-private const val AN1_Y = 3.41f
-private const val AN1_Z = Z
+private const val AN1_Y = 3.39f
+private const val AN1_Z = 1.43f
 
 // Anchor 2 aka DW12A2
 private const val AN2_X = 3.75f
 private const val AN2_Y = 3.41f
-private const val AN2_Z = Z
+private const val AN2_Z = 2.55f
 
 // Anchor 3 aka DW1AA0
-private const val AN3_X = 3.75f
+private const val AN3_X = 3.73f
 private const val AN3_Y = 0.1f
-private const val AN3_Z = Z
+private const val AN3_Z = 1.45f
+
+private const val MINIMUM_GUESS_CHANGE = 0.01f
 
 class GaussNewtonMethod {
 
     private val maxIteration = 100
-    private val precision = 0.5
+    private val precision = 0.2f
     private val rows = 4
     private val cols = 3
 
     private val anchorCoordinates = Array(4){Array(3){0f}}
-    private val guess = Array(3){0f}
+    private val currentGuess = Array(3){0f}
+    private val lastGuess = Array(3){0f}
     private val lastSuccessfulGuess = Array(3){0f}
 
     private val residualsVector = Array(4){Array(1){0f}}
@@ -62,12 +65,12 @@ class GaussNewtonMethod {
         anchorCoordinates[3][2] = AN3_Z
 
         // Populate guess array with initial guess X, Y, Z (center of my room)
-        guess[0] = 1f
-        guess[1] = 1f
-        guess[2] = 1f
+        currentGuess[0] = 1f
+        currentGuess[1] = 1f
+        currentGuess[2] = 1f
     }
 
-    //@Synchronized
+    @Synchronized
     fun solve(distanceData: DistanceData): LocationData {
         val measurements = transformDistanceDataToArray(distanceData)
         val w = Array(4){0f}
@@ -80,56 +83,54 @@ class GaussNewtonMethod {
             calculateResiduals(measurements)
             val errorDistance = calculateErrorChi(w)
             if (abs(errorDistance) < precision){
-                lastSuccessfulGuess[0] = guess[0]
-                lastSuccessfulGuess[1] = guess[1]
-                lastSuccessfulGuess[2] = guess[2]
-                return LocationData(
-                    guess[0],
-                    guess[1],
-                    guess[2],
-                    maxIteration - i
-                )
+                lastSuccessfulGuess[0] = currentGuess[0]
+                lastSuccessfulGuess[1] = currentGuess[1]
+                lastSuccessfulGuess[2] = currentGuess[2]
+                resetMatrices()
+                return LocationData(lastSuccessfulGuess[0], lastSuccessfulGuess[1], lastSuccessfulGuess[2], maxIteration - i)
             }
-            jacob()
-            transpose()
+            calculateJacobi()
+            transposeJacobi()
             multiplyMatrices(jacobiMatrixTransposed, jacobiMatrix, JTWJ, w)
             multiplyMatrices(jacobiMatrixTransposed, residualsVector, JTWr, w)
             JTWJ[0][3] = JTWr[0][0]
             JTWJ[1][3] = JTWr[1][0]
             JTWJ[2][3] = JTWr[2][0]
 
-            //gauss()
+            gauss()
 
             // X Pos
-            guess[0] = guess[0] - JTWJ[0][3] / JTWJ[0][0]
-            if (guess[0].isNaN()) {
-                guess[0] = 1f
-            }
+            val newGuessX = currentGuess[0] - JTWJ[0][3] / JTWJ[0][0]
+            //if (!newGuessX.isNaN()) {
+                lastGuess[0] = currentGuess[0]
+                currentGuess[0] = newGuessX
+            //}
             // Y Pos
-            guess[1] = guess[1] - JTWJ[1][3] / JTWJ[1][1]
-            if (guess[1].isNaN()) {
-                guess[1] = 1f
-            }
+            val newGuessY = currentGuess[1] - JTWJ[1][3] / JTWJ[1][1]
+            //if (!newGuessY.isNaN()) {
+                lastGuess[1] = currentGuess[1]
+                currentGuess[1] = newGuessY
+            //}
             // Z Pos
-            guess[2] = guess[2] - JTWJ[2][3] / JTWJ[2][2]
-            if (guess[2].isNaN()) {
-                guess[2] = 1f
-            }
+            val newGuessZ = currentGuess[2] - JTWJ[2][3] / JTWJ[2][2]
+            //if (!newGuessZ.isNaN()) {
+                lastGuess[2] = currentGuess[2]
+                currentGuess[2] = newGuessZ
+            //}
+            //val isChanging = calculateMinimumGuessChange(lastGuess, currentGuess)
+            //if (!isChanging) {
+                //break
+            //}
         }
         resetMatrices()
-        return LocationData(
-            lastSuccessfulGuess[0],
-            lastSuccessfulGuess[1],
-            lastSuccessfulGuess[2],
-            -1
-        )
+        return LocationData(lastSuccessfulGuess[0], lastSuccessfulGuess[1], lastSuccessfulGuess[2], -1)
     }
 
     private fun calculateResiduals(measurements: Array<Float>){
         for (i in 0 until rows){
-            val deltaX = guess[0] - anchorCoordinates[i][0]
-            val deltaY = guess[1] - anchorCoordinates[i][1]
-            val deltaZ = guess[2] - anchorCoordinates[i][2]
+            val deltaX = currentGuess[0] - anchorCoordinates[i][0]
+            val deltaY = currentGuess[1] - anchorCoordinates[i][1]
+            val deltaZ = currentGuess[2] - anchorCoordinates[i][2]
             residualsVector[i][0] = (deltaX*deltaX)+(deltaY*deltaY)+(deltaZ*deltaZ)-(measurements[i]*measurements[i])
         }
     }
@@ -142,15 +143,15 @@ class GaussNewtonMethod {
         return sqrt(sum)
     }
 
-    private fun jacob(){
+    private fun calculateJacobi(){
         for (i in 0 until rows){
-            jacobiMatrix[i][0] = 2 * guess[0] - 2 * anchorCoordinates[i][0]
-            jacobiMatrix[i][1] = 2 * guess[1] - 2 * anchorCoordinates[i][1]
-            jacobiMatrix[i][2] = 2 * guess[2] - 2 * anchorCoordinates[i][2]
+            jacobiMatrix[i][0] = 2 * currentGuess[0] - 2 * anchorCoordinates[i][0]
+            jacobiMatrix[i][1] = 2 * currentGuess[1] - 2 * anchorCoordinates[i][1]
+            jacobiMatrix[i][2] = 2 * currentGuess[2] - 2 * anchorCoordinates[i][2]
         }
     }
 
-    private fun transpose(){
+    private fun transposeJacobi(){
         for (i in 0 until rows){
             for (j in 0 until cols){
                 jacobiMatrixTransposed[j][i] = jacobiMatrix[i][j]
@@ -211,9 +212,21 @@ class GaussNewtonMethod {
         JTWJ[1][3] = JTWJ[1][3] / y * x + JTWJ[2][3]
     }
 
+    private fun calculateMinimumGuessChange(p1: Array<Float>, p2: Array<Float>): Boolean {
+        val deltaGuessChange = sqrt(
+            (p1[0] - p2[0]).toDouble().pow(2) +
+                    (p1[1] - p2[1]).toDouble().pow(2) +
+                    (p1[2] - p2[2]).toDouble().pow(2)
+        )
+        if (deltaGuessChange > MINIMUM_GUESS_CHANGE){
+            return true
+        }
+        return false
+    }
+
     private fun resetMatrices() {
-        for (i in guess.indices){
-            guess[i] = 1f
+        for (i in currentGuess.indices){
+            currentGuess[i] = 1f
         }
         for (i in 0 until residualsVector.indices.count()){
             for (j in 0 until residualsVector[0].indices.count()){
@@ -250,9 +263,9 @@ class GaussNewtonMethod {
         measurements[3] = distanceData.fourth.distance
 
         /*measurements[0] = 2.92f
-        measurements[1] = 1.66f
+        measurements[1] = 0.66f
         measurements[2] = 3.35f
-        measurements[3] = 4.26f*/
+        measurements[3] = 3.5f*/
         return measurements
     }
 }

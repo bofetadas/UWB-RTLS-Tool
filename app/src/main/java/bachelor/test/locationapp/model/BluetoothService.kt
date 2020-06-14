@@ -10,7 +10,7 @@ private const val TAG_MAC = "F0:74:2F:98:DE:90"
 private const val GET_LOCATION_CHARACTERISTIC = "003BBDF2-C634-4B3D-AB56-7EC889B89A37"
 private const val SET_LOCATION_MODE_CHARACTERISTIC = "A02B947E-DF97-4516-996A-1882521E0EAD"
 private const val DESCRIPTOR = "00002902-0000-1000-8000-00805F9B34FB"
-private const val MTU_SIZE = 32
+private const val MTU_SIZE = 33
 private val POSITION_MODE = byteArrayOf(0x00)
 private val DISTANCE_MODE = byteArrayOf(0x01)
 private val POSITION_DISTANCE_MODE = byteArrayOf(0x02)
@@ -124,9 +124,9 @@ class BluetoothService(private val model: ModelImpl) {
                 println("Success")
                 val setLocationModeCharacteristic = gatt!!.services[2].getCharacteristic(UUID.fromString(SET_LOCATION_MODE_CHARACTERISTIC))
                 // Set Position Mode to retrieve 14 byte array of position data
-                //setLocationModeCharacteristic.value = POSITION_MODE
-                // Set Distance Mode to retrieve 29 byte array of distance data (when 4 anchors available)
-                setLocationModeCharacteristic.value = DISTANCE_MODE
+                setLocationModeCharacteristic.value = POSITION_MODE
+                // Set Distance Mode to retrieve 30 byte array of distance data (when 4 anchors available)
+                //setLocationModeCharacteristic.value = DISTANCE_MODE
                 // Set Position and Distance Mode to retrieve big byte array of data
                 //setLocationModeCharacteristic.value = POSITION_DISTANCE_MODE
 
