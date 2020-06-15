@@ -6,46 +6,75 @@
     android:layout_height="match_parent"
     tools:context=".view.ViewImpl">
 
+    <Button
+        android:id="@+id/record_start_button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/record_button_background"
+        android:text="Record"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/record_stop_button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/stop_button_background"
+        android:text="Stop"
+        android:textColor="#FFFFFF"
+        android:textColorHighlight="#FFFFFF"
+        android:textSize="30sp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
     <TextView
         android:id="@+id/x_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="173dp"
-        android:layout_marginTop="306dp"
+        android:layout_marginStart="156dp"
+        android:layout_marginTop="468dp"
+        android:text="X Position"
+        android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="X Position" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/y_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="172dp"
-        android:layout_marginTop="356dp"
+        android:layout_marginStart="156dp"
+        android:layout_marginTop="496dp"
+        android:text="Y Position"
+        android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="Y Position" />
-
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/z_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="173dp"
-        android:layout_marginTop="406dp"
+        android:layout_marginStart="156dp"
+        android:layout_marginTop="524dp"
+        android:text="Z Position"
+        android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="Z Position" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/quality_factor"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="172dp"
-        android:layout_marginTop="456dp"
+        android:layout_marginStart="156dp"
+        android:layout_marginTop="552dp"
+        android:text="Quality Factor"
+        android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="Quality Factor" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/connect_button"

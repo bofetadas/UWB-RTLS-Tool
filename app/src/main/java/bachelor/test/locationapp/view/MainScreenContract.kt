@@ -15,9 +15,12 @@ interface MainScreenContract {
     interface Presenter: BasePresenter{
         fun start()
         fun stop()
-        fun onStartClicked()
-        fun onStopClicked()
         fun onConnectClicked()
-        fun onFilenameEntered(filename: String)
+        fun onStartClicked()
+        fun onRegularDataTransferStart()
+        fun onRecordingDataTransferStart()
+        fun onRecordStartClicked(x: String, y: String, z: String, direction: String)
+        fun onStopClicked()
+        fun onRecordStopClicked()
     }
 }

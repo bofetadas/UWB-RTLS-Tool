@@ -7,14 +7,20 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import bachelor.test.locationapp.BuildConfig
 import bachelor.test.locationapp.R
 import bachelor.test.locationapp.presenter.LocationData
 import bachelor.test.locationapp.presenter.PresenterImpl
 import kotlinx.android.synthetic.main.view.*
 
-class ViewImpl : AppCompatActivity(), MainScreenContract.View, FilenameDialogListener {
+class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListener {
 
     private lateinit var presenter: MainScreenContract.Presenter
+
+    private var xInput = ""
+    private var yInput = ""
+    private var zInput = ""
+    private var directionInput = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +46,31 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FilenameDialogLis
         super.onDestroy()
         presenter.stop()
         enableConnectButton(true)
+    }
+
+    override fun showRecordingDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Do you want to save the received Location Data?")
+            .setMessage("Data will be saved to /Android/data/${BuildConfig.APPLICATION_ID}/files/Documents directory on device")
+            .setPositiveButton("YES"){_, _ ->
+                val filenameDialog = FileDialog()
+                filenameDialog.show(supportFragmentManager, "View")
+            }
+            .setNegativeButton("NO"){_, _ ->
+                presenter.onRegularDataTransferStart()
+            }
+            .create()
+            .show()
+    }
+
+    override fun onFileDataEntered(x: String, y: String, z: String, direction: String) {
+        start_button.visibility = View.GONE
+        record_start_button.visibility = View.VISIBLE
+
+        xInput = x
+        yInput = y
+        zInput = z
+        directionInput = direction
     }
 
     override fun showPosition(locationData: LocationData) {
@@ -81,22 +112,6 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FilenameDialogLis
         }
     }
 
-    override fun showRecordingDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Do you want to save the received Location Data?")
-            .setPositiveButton("YES"){_, _ ->
-                val filenameDialog = FilenameDialog()
-                filenameDialog.show(supportFragmentManager, "View")
-            }
-            .setNegativeButton("NO", null)
-            .create()
-            .show()
-    }
-
-    override fun onFilenameEntered(filename: String) {
-        presenter.onFilenameEntered(filename)
-    }
-
     override fun setPresenter(presenter: MainScreenContract.Presenter) {
         this.presenter = presenter
     }
@@ -112,6 +127,18 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FilenameDialogLis
 
         stop_button.setOnClickListener {
             presenter.onStopClicked()
+        }
+
+        record_start_button.setOnClickListener {
+            record_start_button.visibility = View.GONE
+            record_stop_button.visibility = View.VISIBLE
+            presenter.onRecordStartClicked(xInput, yInput, zInput, directionInput)
+        }
+
+        record_stop_button.setOnClickListener {
+            record_stop_button.visibility = View.GONE
+            start_button.visibility = View.VISIBLE
+            presenter.onRecordStopClicked()
         }
     }
 }

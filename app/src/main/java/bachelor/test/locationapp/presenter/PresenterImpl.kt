@@ -20,6 +20,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     private var broadcastReceiver: BroadcastReceiver = BluetoothBroadcastReceiver(this)
     private val fileWriter = FileWriter(context)
     private var recording = false
+    private var vibratorFeedback = VibratorFeedback(context)
 
     override fun start() {
         model = ModelImpl(context)
@@ -39,20 +40,35 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         model?.initializeBluetoothConnection()
     }
 
-    override fun onFilenameEntered(filename: String) {
-        val success = fileWriter.createFile(filename)
+    override fun onRecordStartClicked(x: String, y: String, z: String, direction: String) {
+        val success = fileWriter.createFile(x, y, z, direction)
         if (success) {
-            view.showMessage("Data recording successfully initialized")
             recording = true
+            model?.startDataTransfer()
+            view.showMessage("Data recording successfully initialized")
+            vibratorFeedback.vibrateOnRecordStart()
         } else {
-            view.showMessage("File already exists. Please specify another filename")
+            view.showMessage("File already exists. Please look into data directory to resolve the issue")
         }
+    }
+
+    override fun onRecordStopClicked() {
+        model?.stopDataTransfer()
+        vibratorFeedback.vibrateOnRecordStop()
+        recording = false
     }
 
     override fun onStartClicked() {
         view.showRecordingDialog()
+    }
+
+    override fun onRegularDataTransferStart() {
         model?.startDataTransfer()
         view.swapStartButton(false)
+    }
+
+    override fun onRecordingDataTransferStart() {
+        view.showRecordingDialog()
     }
 
     override fun onStopClicked() {
