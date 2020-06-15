@@ -21,6 +21,7 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
     private var yInput = ""
     private var zInput = ""
     private var directionInput = ""
+    private var timePeriodInput = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +64,17 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
             .show()
     }
 
-    override fun onFileDataEntered(x: String, y: String, z: String, direction: String) {
+    override fun showRecordStopScreen() {
+        record_start_button.visibility = View.GONE
+        record_stop_button.visibility = View.VISIBLE
+    }
+
+    override fun dismissRecordStopScreen() {
+        record_stop_button.visibility = View.GONE
+        start_button.visibility = View.VISIBLE
+    }
+
+    override fun onFileDataEntered(x: String, y: String, z: String, direction: String, timePeriod: Long) {
         start_button.visibility = View.GONE
         record_start_button.visibility = View.VISIBLE
 
@@ -71,6 +82,7 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
         yInput = y
         zInput = z
         directionInput = direction
+        timePeriodInput = timePeriod
     }
 
     override fun showPosition(locationData: LocationData) {
@@ -130,14 +142,10 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
         }
 
         record_start_button.setOnClickListener {
-            record_start_button.visibility = View.GONE
-            record_stop_button.visibility = View.VISIBLE
-            presenter.onRecordStartClicked(xInput, yInput, zInput, directionInput)
+            presenter.onRecordStartClicked(xInput, yInput, zInput, directionInput, timePeriodInput)
         }
 
         record_stop_button.setOnClickListener {
-            record_stop_button.visibility = View.GONE
-            start_button.visibility = View.VISIBLE
             presenter.onRecordStopClicked()
         }
     }

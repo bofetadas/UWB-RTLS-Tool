@@ -10,6 +10,8 @@ interface MainScreenContract {
         fun swapStartButton(start: Boolean)
         fun showMessage(message: String?)
         fun showRecordingDialog()
+        fun showRecordStopScreen()
+        fun dismissRecordStopScreen()
     }
 
     interface Presenter: BasePresenter{
@@ -17,10 +19,10 @@ interface MainScreenContract {
         fun stop()
         fun onConnectClicked()
         fun onStartClicked()
-        fun onRegularDataTransferStart()
-        fun onRecordingDataTransferStart()
-        fun onRecordStartClicked(x: String, y: String, z: String, direction: String)
         fun onStopClicked()
+        fun onRegularDataTransferStart()
+        fun onRecordStartClicked(x: String, y: String, z: String, direction: String, timePeriod: Long)
         fun onRecordStopClicked()
+        fun onTimerDone()
     }
 }
