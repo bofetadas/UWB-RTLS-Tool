@@ -1,5 +1,6 @@
 package bachelor.test.locationapp.view
 
+import bachelor.test.locationapp.presenter.AccelerometerData
 import bachelor.test.locationapp.presenter.BasePresenter
 import bachelor.test.locationapp.presenter.InputData
 import bachelor.test.locationapp.presenter.LocationData
@@ -7,6 +8,7 @@ import bachelor.test.locationapp.presenter.LocationData
 interface MainScreenContract {
     interface View : BaseView<Presenter> {
         fun showPosition(locationData: LocationData)
+        fun showAccelerometerData(accData: AccelerometerData)
         fun enableConnectButton(enabled: Boolean)
         fun swapStartButton(start: Boolean)
         fun showMessage(message: String?)
@@ -26,5 +28,6 @@ interface MainScreenContract {
         fun onRecordStartClicked(inputData: InputData)
         fun onRecordStopClicked()
         fun onTimerDone()
+        fun onAccelerometerUpdate(accData: AccelerometerData)
     }
 }

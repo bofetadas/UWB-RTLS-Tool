@@ -22,6 +22,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     private var recording = false
     private val vibratorFeedback = VibratorFeedback(context)
     private val timer = Timer(this)
+    private val accelerometerReader = AccelerometerReader(context, this)
 
     override fun start() {
         model = ModelImpl(context)
@@ -56,6 +57,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
             view.showMessage("Data recording successfully initialized")
             vibratorFeedback.vibrateOnRecordStart()
             view.showRecordStopScreen()
+            accelerometerReader.registerListener()
         } else {
             view.showMessage("File already exists. Please look into data directory to resolve the issue")
         }
@@ -69,7 +71,12 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         model?.stopDataTransfer()
         vibratorFeedback.vibrateOnRecordStop()
         view.dismissRecordStopScreen()
+        accelerometerReader.unregisterListener()
         recording = false
+    }
+
+    override fun onAccelerometerUpdate(accData: AccelerometerData) {
+        view.showAccelerometerData(accData)
     }
 
     override fun onStartClicked() {
@@ -78,11 +85,13 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 
     override fun onRegularDataTransferStart() {
         model?.startDataTransfer()
+        accelerometerReader.registerListener()
         view.swapStartButton(false)
     }
 
     override fun onStopClicked() {
         model?.stopDataTransfer()
+        accelerometerReader.unregisterListener()
         view.swapStartButton(true)
         recording = false
     }
@@ -112,6 +121,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     override fun onBluetoothDisconnectionSuccess(observable: Observable, success: Boolean) {
         view.enableConnectButton(true)
         view.showMessage("Tag disconnected")
+        accelerometerReader.unregisterListener()
         recording = false
     }
 

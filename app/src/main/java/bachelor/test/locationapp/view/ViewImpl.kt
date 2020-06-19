@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import bachelor.test.locationapp.BuildConfig
 import bachelor.test.locationapp.R
+import bachelor.test.locationapp.presenter.AccelerometerData
 import bachelor.test.locationapp.presenter.InputData
 import bachelor.test.locationapp.presenter.LocationData
 import bachelor.test.locationapp.presenter.PresenterImpl
@@ -86,6 +87,15 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
             y_position.text = "Y: ${locationData.yPos} m"
             z_position.text = "Z: ${locationData.zPos} m"
             quality_factor.text = "Quality Factor: ${locationData.qualityFactor}"
+        }
+    }
+
+    override fun showAccelerometerData(accData: AccelerometerData) {
+        this.runOnUiThread {
+            x_acc.text = "X ACC: ${accData.xAcc}"
+            y_acc.text = "Y ACC: ${accData.yAcc}"
+            z_acc.text = "Z ACC: ${accData.zAcc}"
+            linear_acc.text = "LINEAR ACC: ${accData.linearAcc}"
         }
     }
 
