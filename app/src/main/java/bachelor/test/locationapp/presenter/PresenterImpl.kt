@@ -41,12 +41,18 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         model?.initializeBluetoothConnection()
     }
 
-    override fun onRecordStartClicked(x: String, y: String, z: String, direction: String, timePeriod: Long) {
-        val success = fileWriter.createFile(x, y, z, direction)
+    override fun onDisconnectClicked() {
+        if (model?.terminateBluetoothConnection()!!){
+            view.enableConnectButton(true)
+        }
+    }
+
+    override fun onRecordStartClicked(inputData: InputData) {
+        val success = fileWriter.createFile(inputData.xInput, inputData.yInput, inputData.zInput, inputData.direction)
         if (success) {
             recording = true
             model?.startDataTransfer()
-            timer.startTimer(timePeriod)
+            timer.startTimer(inputData.timePeriod)
             view.showMessage("Data recording successfully initialized")
             vibratorFeedback.vibrateOnRecordStart()
             view.showRecordStopScreen()
@@ -62,8 +68,8 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     override fun onTimerDone() {
         model?.stopDataTransfer()
         vibratorFeedback.vibrateOnRecordStop()
-        recording = false
         view.dismissRecordStopScreen()
+        recording = false
     }
 
     override fun onStartClicked() {

@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import bachelor.test.locationapp.BuildConfig
 import bachelor.test.locationapp.R
+import bachelor.test.locationapp.presenter.InputData
 import bachelor.test.locationapp.presenter.LocationData
 import bachelor.test.locationapp.presenter.PresenterImpl
 import kotlinx.android.synthetic.main.view.*
@@ -17,11 +18,7 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
 
     private lateinit var presenter: MainScreenContract.Presenter
 
-    private var xInput = ""
-    private var yInput = ""
-    private var zInput = ""
-    private var directionInput = ""
-    private var timePeriodInput = 0L
+    private lateinit var inputData: InputData
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,25 +69,23 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
     override fun dismissRecordStopScreen() {
         record_stop_button.visibility = View.GONE
         start_button.visibility = View.VISIBLE
+        disconnect_button.visibility = View.VISIBLE
     }
 
     override fun onFileDataEntered(x: String, y: String, z: String, direction: String, timePeriod: Long) {
         start_button.visibility = View.GONE
+        disconnect_button.visibility = View.GONE
         record_start_button.visibility = View.VISIBLE
 
-        xInput = x
-        yInput = y
-        zInput = z
-        directionInput = direction
-        timePeriodInput = timePeriod
+        inputData = InputData(x, y, z, direction, timePeriod)
     }
 
     override fun showPosition(locationData: LocationData) {
         this.runOnUiThread {
-            x_position.text = "X: " + locationData.xPos + " m"
-            y_position.text = "Y: " + locationData.yPos + " m"
-            z_position.text = "Z: " + locationData.zPos + " m"
-            quality_factor.text = "Quality Factor: " + locationData.qualityFactor
+            x_position.text = "X: ${locationData.xPos} m"
+            y_position.text = "Y: ${locationData.yPos} m"
+            z_position.text = "Z: ${locationData.zPos} m"
+            quality_factor.text = "Quality Factor: ${locationData.qualityFactor}"
         }
     }
 
@@ -99,6 +94,7 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
             if (enabled) {
                 connect_button.visibility = View.VISIBLE
                 start_button.visibility = View.GONE
+                disconnect_button.visibility = View.GONE
                 stop_button.visibility = View.GONE
             } else {
                 connect_button.visibility = View.GONE
@@ -111,8 +107,10 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
             if (start) {
                 stop_button.visibility = View.GONE
                 start_button.visibility = View.VISIBLE
+                disconnect_button.visibility = View.VISIBLE
             } else {
                 start_button.visibility = View.GONE
+                disconnect_button.visibility = View.GONE
                 stop_button.visibility = View.VISIBLE
             }
         }
@@ -141,8 +139,12 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
             presenter.onStopClicked()
         }
 
+        disconnect_button.setOnClickListener {
+            presenter.onDisconnectClicked()
+        }
+
         record_start_button.setOnClickListener {
-            presenter.onRecordStartClicked(xInput, yInput, zInput, directionInput, timePeriodInput)
+            presenter.onRecordStartClicked(inputData)
         }
 
         record_stop_button.setOnClickListener {

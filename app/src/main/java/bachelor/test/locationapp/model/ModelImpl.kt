@@ -19,11 +19,11 @@ class ModelImpl(val context: Context): Model {
     }
 
     override fun startDataTransfer() {
-        bluetoothService?.enableNotifications()
+        bluetoothService?.enableCharacteristicNotifications(GET_LOCATION_CHARACTERISTIC)
     }
 
     override fun stopDataTransfer() {
-        bluetoothService?.disableNotifications()
+        bluetoothService?.disableLocationDataNotifications(GET_LOCATION_CHARACTERISTIC)
     }
 
     override fun onConnectionSuccess(success: Boolean) {

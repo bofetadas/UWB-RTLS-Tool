@@ -1,6 +1,7 @@
 package bachelor.test.locationapp.view
 
 import bachelor.test.locationapp.presenter.BasePresenter
+import bachelor.test.locationapp.presenter.InputData
 import bachelor.test.locationapp.presenter.LocationData
 
 interface MainScreenContract {
@@ -18,10 +19,11 @@ interface MainScreenContract {
         fun start()
         fun stop()
         fun onConnectClicked()
+        fun onDisconnectClicked()
         fun onStartClicked()
         fun onStopClicked()
         fun onRegularDataTransferStart()
-        fun onRecordStartClicked(x: String, y: String, z: String, direction: String, timePeriod: Long)
+        fun onRecordStartClicked(inputData: InputData)
         fun onRecordStopClicked()
         fun onTimerDone()
     }
