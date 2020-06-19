@@ -7,7 +7,10 @@ import android.content.IntentFilter
 import bachelor.test.locationapp.model.Model
 import bachelor.test.locationapp.model.ModelImpl
 import bachelor.test.locationapp.model.Observable
-import bachelor.test.locationapp.positioning.*
+import bachelor.test.locationapp.positioning.DistanceData
+import bachelor.test.locationapp.positioning.DistanceObject
+import bachelor.test.locationapp.positioning.GaussNewtonMethod
+import bachelor.test.locationapp.positioning.LocationData
 import bachelor.test.locationapp.view.MainScreenContract
 
 private const val POSITIONS_ARRAY_SIZE = 14
@@ -25,7 +28,6 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     private var model: Model? = null
     private var broadcastReceiver: BroadcastReceiver = BluetoothBroadcastReceiver(this)
     private val gaussNewtonMethod = GaussNewtonMethod()
-    private val accelerometerReader = AccelerometerReader(context, this)
 
     override fun start() {
         model = ModelImpl(context)
@@ -43,10 +45,6 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 
     override fun onConnectClicked() {
         model?.initializeBluetoothConnection()
-    }
-
-    override fun onAccelerationUpdate(accData: AccelerometerData) {
-        view.showAccelerometerData(accData)
     }
 
     override fun onStartClicked() {
