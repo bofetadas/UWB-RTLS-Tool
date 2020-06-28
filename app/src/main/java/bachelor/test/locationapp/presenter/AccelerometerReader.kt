@@ -6,17 +6,28 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import bachelor.test.locationapp.view.MainScreenContract
-import kotlin.math.sqrt
 
 class AccelerometerReader(context: Context, val presenter: MainScreenContract.Presenter):
     SensorEventListener {
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    private val gravity = FloatArray(3)
-    private val linearAcc = FloatArray(3)
+    // Sensors
+    private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    private val linearAcc = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+    private val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+    // Rotation matrices
+    private val R = FloatArray(16)
+    private val I = FloatArray(16)
+
+    // Sensor values arrays
+    private var accValues = FloatArray(4) {0f}
+    private var linearAccValues = FloatArray(4) {0f}
+    private var magnetValues = FloatArray(3)
 
     fun registerListener(){
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager.registerListener(this, linearAcc, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL)
     }
 
     fun unregisterListener(){
@@ -24,41 +35,33 @@ class AccelerometerReader(context: Context, val presenter: MainScreenContract.Pr
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        //println("X ACC: ${event!!.values[0]}")
-        //println("Y ACC: ${event!!.values[1]}")
-        //println("Z ACC: ${event.values[2]}")
-
-        // alpha is calculated as t / (t + dT)
-        // with t, the low-pass filter's time-constant
-        // and dT, the event delivery rate
-        val alpha = 0.8f
-
-        gravity[0] = alpha * gravity[0] + (1 - alpha) * event!!.values[0]
-        gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1]
-        gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2]
-
-        linearAcc[0] = event.values[0] - gravity[0]
-        linearAcc[1] = event.values[1] - gravity[1]
-        linearAcc[2] = event.values[2] - gravity[2]
-
-        val scalarProduct: Float = gravity[0] * linearAcc[0] + gravity[1] * linearAcc[1] + gravity[2] * linearAcc[2]
-        val gravityVectorLength = sqrt(gravity[0] * gravity[0] + gravity[1] * gravity[1] + gravity[2] * gravity[2])
-        val linearAccVectorLength = sqrt(linearAcc[0] * linearAcc[0] + linearAcc[1] * linearAcc[1] + linearAcc[2] * linearAcc[2])
-
-        val cosVectorAngle = scalarProduct / (gravityVectorLength * linearAccVectorLength)
-
-        //println("ACC: $lianearAccVectorLength")
-        //println("ANGLE: $cosVectorAngle")
-        if (linearAccVectorLength > 2) { //increase to detect only bigger accelerations, decrease to make detection more sensitive but noisy - original value: 2
-            if (cosVectorAngle > 0.5) {
-                println("Down")
-            } else if (cosVectorAngle < -0.5) {
-                println("Up")
+        when (event?.sensor?.stringType) {
+            Sensor.STRING_TYPE_ACCELEROMETER -> {
+                accValues[0] = event.values[0]
+                accValues[1] = event.values[1]
+                accValues[2] = event.values[2]
+            }
+            Sensor.STRING_TYPE_LINEAR_ACCELERATION -> {
+                linearAccValues[0] = event.values[0]
+                linearAccValues[1] = event.values[1]
+                linearAccValues[2] = event.values[2]
+            }
+            Sensor.STRING_TYPE_MAGNETIC_FIELD -> {
+                magnetValues = event.values
             }
         }
+        val result = calculateWorldAcceleration()
+        presenter.onAccelerometerUpdate(AccelerometerData(result[0], result[1], result[2], 0f))
+    }
 
-        val accData = AccelerometerData(event.values[0], event.values[1], event.values[2], linearAccVectorLength)
-        presenter.onAccelerometerUpdate(accData)
+    private fun calculateWorldAcceleration(): FloatArray{
+        val resultVector = FloatArray(4) {0f}
+        if (SensorManager.getRotationMatrix(R, I, accValues, magnetValues)) {
+            val inv = FloatArray(16)
+            android.opengl.Matrix.invertM(inv, 0, R, 0)
+            android.opengl.Matrix.multiplyMV(resultVector, 0, inv, 0, linearAccValues, 0)
+        }
+        return resultVector
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int){}

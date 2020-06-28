@@ -40,6 +40,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 
     override fun onConnectClicked() {
         model?.initializeBluetoothConnection()
+        accelerometerReader.registerListener()
     }
 
     override fun onDisconnectClicked() {
