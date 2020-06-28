@@ -15,9 +15,6 @@ class AccelerometerReader(context: Context, val presenter: MainScreenContract.Pr
     private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     private val linearAcc = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
     private val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-    // Rotation matrices
-    private val R = FloatArray(16)
-    private val I = FloatArray(16)
 
     // Sensor values arrays
     private var accValues = FloatArray(4) {0f}
@@ -50,18 +47,21 @@ class AccelerometerReader(context: Context, val presenter: MainScreenContract.Pr
                 magnetValues = event.values
             }
         }
-        val result = calculateWorldAcceleration()
-        presenter.onAccelerometerUpdate(AccelerometerData(result[0], result[1], result[2], 0f))
+        val worldAcc = calculateWorldAcceleration()
+        presenter.onAccelerometerUpdate(worldAcc)
     }
 
-    private fun calculateWorldAcceleration(): FloatArray{
+    private fun calculateWorldAcceleration(): AccelerometerData{
         val resultVector = FloatArray(4) {0f}
+        // Rotation matrices
+        val R = FloatArray(16)
+        val I = FloatArray(16)
         if (SensorManager.getRotationMatrix(R, I, accValues, magnetValues)) {
             val inv = FloatArray(16)
             android.opengl.Matrix.invertM(inv, 0, R, 0)
             android.opengl.Matrix.multiplyMV(resultVector, 0, inv, 0, linearAccValues, 0)
         }
-        return resultVector
+        return AccelerometerData(resultVector[0], resultVector[1], resultVector[2])
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int){}
