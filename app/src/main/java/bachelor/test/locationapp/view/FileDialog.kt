@@ -10,7 +10,7 @@ import android.widget.Spinner
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import bachelor.test.locationapp.R
-import bachelor.test.locationapp.model.Directions
+import bachelor.test.locationapp.presenter.recording.Directions
 
 class FileDialog : DialogFragment(){
 
@@ -65,6 +65,5 @@ class FileDialog : DialogFragment(){
                 && z.isNotBlank()
                 && direction.isNotBlank()
                 && timePeriod != 0L
-
     }
 }

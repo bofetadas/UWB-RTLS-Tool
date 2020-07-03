@@ -1,4 +1,4 @@
-package bachelor.test.locationapp.presenter
+package bachelor.test.locationapp.presenter.recording
 
 import android.content.Context
 import android.os.VibrationEffect

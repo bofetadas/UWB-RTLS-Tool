@@ -1,4 +1,4 @@
-package bachelor.test.locationapp.model
+package bachelor.test.locationapp.presenter.positioning
 
 enum class Movement {
     POSITIVE,

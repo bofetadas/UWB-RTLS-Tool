@@ -1,13 +1,12 @@
-package bachelor.test.locationapp.presenter
+package bachelor.test.locationapp.presenter.recording
 
-import bachelor.test.locationapp.view.MainScreenContract
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class Timer(private val presenter: MainScreenContract.Presenter) {
+class Timer(private val timerCallbacks: TimerCallbacks) {
 
     private var timerJob: Job? = null
 
@@ -23,6 +22,6 @@ class Timer(private val presenter: MainScreenContract.Presenter) {
 
     fun stopTimer(){
         timerJob?.cancel()
-        presenter.onTimerDone()
+        timerCallbacks.onTimerDone()
     }
 }

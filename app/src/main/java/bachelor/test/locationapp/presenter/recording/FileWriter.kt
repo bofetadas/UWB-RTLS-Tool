@@ -1,4 +1,4 @@
-package bachelor.test.locationapp.model
+package bachelor.test.locationapp.presenter.recording
 
 import android.content.Context
 import android.os.Environment.DIRECTORY_DOCUMENTS

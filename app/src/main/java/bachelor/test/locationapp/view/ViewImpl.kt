@@ -10,11 +10,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import bachelor.test.locationapp.BuildConfig
 import bachelor.test.locationapp.R
-import bachelor.test.locationapp.model.MovementData
-import bachelor.test.locationapp.presenter.AccelerometerData
-import bachelor.test.locationapp.presenter.InputData
-import bachelor.test.locationapp.presenter.LocationData
 import bachelor.test.locationapp.presenter.PresenterImpl
+import bachelor.test.locationapp.presenter.positioning.AccelerationData
+import bachelor.test.locationapp.presenter.positioning.LocationData
+import bachelor.test.locationapp.presenter.positioning.MovementData
+import bachelor.test.locationapp.presenter.recording.InputData
 import kotlinx.android.synthetic.main.view.*
 
 class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListener {
@@ -92,7 +92,7 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
         }
     }
 
-    override fun showAccelerometerData(accData: AccelerometerData) {
+    override fun showAcceleration(accData: AccelerationData) {
         this.runOnUiThread {
             x_acc.text = "X Acc: ${accData.xAcc}"
             y_acc.text = "Y Acc: ${accData.yAcc}"
@@ -166,7 +166,7 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
         }
 
         record_start_button.setOnClickListener {
-            presenter.onRecordStartClicked(inputData)
+            presenter.onRecordingDataTransferStart(inputData)
         }
 
         record_stop_button.setOnClickListener {
