@@ -4,10 +4,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
-import bachelor.test.locationapp.model.FileWriter
-import bachelor.test.locationapp.model.Model
-import bachelor.test.locationapp.model.ModelImpl
-import bachelor.test.locationapp.model.Observable
+import bachelor.test.locationapp.model.*
 import bachelor.test.locationapp.view.MainScreenContract
 
 private const val POSITION_LOCATION_BYTE_ARRAY_SIZE = 14
@@ -22,7 +19,8 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     private var recording = false
     private val vibratorFeedback = VibratorFeedback(context)
     private val timer = Timer(this)
-    private val accelerometerReader = AccelerometerReader(context, this)
+    private val sensorFusion = SensorFusion(context, this)
+    private var previousLocation = LocationData(1.8, 1.7, 1.7, -1)
 
     override fun start() {
         model = ModelImpl(context)
@@ -40,7 +38,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 
     override fun onConnectClicked() {
         model?.initializeBluetoothConnection()
-        accelerometerReader.registerListener()
+        sensorFusion.registerListener()
     }
 
     override fun onDisconnectClicked() {
@@ -58,7 +56,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
             view.showMessage("Data recording successfully initialized")
             vibratorFeedback.vibrateOnRecordStart()
             view.showRecordStopScreen()
-            accelerometerReader.registerListener()
+            sensorFusion.registerListener()
         } else {
             view.showMessage("File already exists. Please look into data directory to resolve the issue")
         }
@@ -72,7 +70,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         model?.stopDataTransfer()
         vibratorFeedback.vibrateOnRecordStop()
         view.dismissRecordStopScreen()
-        accelerometerReader.unregisterListener()
+        sensorFusion.unregisterListener()
         recording = false
     }
 
@@ -86,13 +84,13 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 
     override fun onRegularDataTransferStart() {
         model?.startDataTransfer()
-        accelerometerReader.registerListener()
+        sensorFusion.registerListener()
         view.swapStartButton(false)
     }
 
     override fun onStopClicked() {
         model?.stopDataTransfer()
-        accelerometerReader.unregisterListener()
+        sensorFusion.unregisterListener()
         view.swapStartButton(true)
         recording = false
     }
@@ -122,7 +120,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     override fun onBluetoothDisconnectionSuccess(observable: Observable, success: Boolean) {
         view.enableConnectButton(true)
         view.showMessage("Tag disconnected")
-        accelerometerReader.unregisterListener()
+        sensorFusion.unregisterListener()
         recording = false
     }
 
@@ -133,15 +131,40 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
             // The official decawave doc says that only 13 Bytes should be returned
             // I don't know where that extra first Byte is coming from though.
             if (args.size == POSITION_LOCATION_BYTE_ARRAY_SIZE) {
-                val location = getLocationFromByteArray(args)
+                val movement = sensorFusion.getMovementData()
+                var location = getLocationFromByteArray(args)
+                location = compareWithSensorFusionResults(location, movement)
                 view.showPosition(location)
+                view.showMovement(movement)
                 if (recording) {
                     fileWriter.writeToFile(location.toString())
                 }
             }
         } catch (e: TypeCastException){
-            println(e)
+            e.printStackTrace()
         }
+    }
+
+    private fun compareWithSensorFusionResults(location: LocationData, movement: MovementData): LocationData {
+        var filteredXPos = previousLocation.xPos
+        var filteredYPos = previousLocation.yPos
+        var filteredZPos = previousLocation.zPos
+        // X evaluation
+        if ((movement.xAxis == Movement.POSITIVE && location.xPos > previousLocation.xPos) || (movement.xAxis == Movement.NEGATIVE && location.xPos < previousLocation.xPos)){
+            filteredXPos = location.xPos
+            previousLocation.xPos = filteredXPos
+        }
+        // Y evaluation
+        if ((movement.yAxis == Movement.POSITIVE && location.yPos > previousLocation.yPos) || (movement.yAxis == Movement.NEGATIVE && location.yPos < previousLocation.yPos)){
+            filteredYPos = location.yPos
+            previousLocation.yPos = filteredYPos
+        }
+        // Z evaluation
+        if ((movement.zAxis == Movement.POSITIVE && location.zPos > previousLocation.zPos) || (movement.zAxis == Movement.NEGATIVE && location.zPos < previousLocation.zPos)){
+            filteredZPos = location.zPos
+            previousLocation.zPos = filteredZPos
+        }
+        return LocationData(filteredXPos, filteredYPos, filteredZPos, location.qualityFactor)
     }
 
     private fun getLocationFromByteArray(locationByteArray: ByteArray): LocationData {

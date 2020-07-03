@@ -7,6 +7,50 @@
     tools:context=".view.ViewImpl">
 
     <Button
+        android:id="@+id/connect_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="161dp"
+        android:layout_marginTop="106dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="Connect"
+        android:visibility="visible" />
+
+    <Button
+        android:id="@+id/disconnect_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="161dp"
+        android:layout_marginTop="160dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="Disconnect"
+        android:visibility="visible" />
+
+    <Button
+        android:id="@+id/start_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="161dp"
+        android:layout_marginTop="106dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="Start"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/stop_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="161dp"
+        android:layout_marginTop="106dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="Stop"
+        android:visibility="gone" />
+
+    <Button
         android:id="@+id/record_start_button"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -31,13 +75,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <TextView
         android:id="@+id/x_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="468dp"
+        android:layout_marginStart="160dp"
+        android:layout_marginTop="380dp"
         android:text="X Position"
         android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -47,8 +90,8 @@
         android:id="@+id/y_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="496dp"
+        android:layout_marginStart="160dp"
+        android:layout_marginTop="410dp"
         android:text="Y Position"
         android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -58,8 +101,8 @@
         android:id="@+id/z_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="524dp"
+        android:layout_marginStart="160dp"
+        android:layout_marginTop="440dp"
         android:text="Z Position"
         android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -69,8 +112,8 @@
         android:id="@+id/quality_factor"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="552dp"
+        android:layout_marginStart="160dp"
+        android:layout_marginTop="470dp"
         android:text="Quality Factor"
         android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -80,8 +123,8 @@
         android:id="@+id/x_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="220dp"
-        android:layout_marginTop="468dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="520dp"
         android:text="X Acceleration"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -90,8 +133,8 @@
         android:id="@+id/y_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="220dp"
-        android:layout_marginTop="496dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="550dp"
         android:text="Y Acceleration"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -100,64 +143,40 @@
         android:id="@+id/z_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="220dp"
-        android:layout_marginTop="524dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="580dp"
         android:text="Z Acceleration"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/linear_acc"
+        android:id="@+id/x_movement"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="220dp"
-        android:layout_marginTop="552dp"
-        android:text="Linear Acceleration"
+        android:layout_marginTop="520dp"
+        android:text="X Movement"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/connect_button"
+    <TextView
+        android:id="@+id/y_movement"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="161dp"
-        android:layout_marginTop="106dp"
+        android:layout_marginStart="220dp"
+        android:layout_marginTop="550dp"
+        android:text="Y Movement"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="Connect"
-        android:visibility="visible" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/start_button"
+    <TextView
+        android:id="@+id/z_movement"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="161dp"
-        android:layout_marginTop="106dp"
+        android:layout_marginStart="220dp"
+        android:layout_marginTop="580dp"
+        android:text="Z Movement"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="Start"
-        android:visibility="gone" />
-
-    <Button
-        android:id="@+id/disconnect_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="161dp"
-        android:layout_marginTop="160dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="Disconnect"
-        android:visibility="visible" />
-
-    <Button
-        android:id="@+id/stop_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="161dp"
-        android:layout_marginTop="106dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="Stop"
-        android:visibility="gone" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

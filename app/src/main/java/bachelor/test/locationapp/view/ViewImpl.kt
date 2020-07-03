@@ -2,6 +2,7 @@ package bachelor.test.locationapp.view
 
 import android.Manifest
 import android.app.AlertDialog
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -9,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import bachelor.test.locationapp.BuildConfig
 import bachelor.test.locationapp.R
+import bachelor.test.locationapp.model.MovementData
 import bachelor.test.locationapp.presenter.AccelerometerData
 import bachelor.test.locationapp.presenter.InputData
 import bachelor.test.locationapp.presenter.LocationData
@@ -92,10 +94,20 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
 
     override fun showAccelerometerData(accData: AccelerometerData) {
         this.runOnUiThread {
-            x_acc.text = "X ACC: ${accData.xAcc}"
-            y_acc.text = "Y ACC: ${accData.yAcc}"
-            z_acc.text = "Z ACC: ${accData.zAcc}"
-            linear_acc.text = "LINEAR ACC: ${accData.linearAcc}"
+            x_acc.text = "X Acc: ${accData.xAcc}"
+            y_acc.text = "Y Acc: ${accData.yAcc}"
+            z_acc.text = "Z Acc: ${accData.zAcc}"
+            if (accData.xAcc > 0) x_acc.setTextColor(Color.GREEN) else if (accData.xAcc < 0) x_acc.setTextColor(Color.RED) else x_acc.setTextColor(Color.GRAY)
+            if (accData.yAcc > 0) y_acc.setTextColor(Color.GREEN) else if (accData.yAcc < 0) y_acc.setTextColor(Color.RED) else y_acc.setTextColor(Color.GRAY)
+            if (accData.zAcc > 0) z_acc.setTextColor(Color.GREEN) else if (accData.zAcc < 0) z_acc.setTextColor(Color.RED) else z_acc.setTextColor(Color.GRAY)
+        }
+    }
+
+    override fun showMovement(movementData: MovementData) {
+        this.runOnUiThread {
+            x_movement.text = "X Movement: ${movementData.xAxis}"
+            y_movement.text = "Y Movement: ${movementData.yAxis}"
+            z_movement.text = "Z Movement: ${movementData.zAxis}"
         }
     }
 

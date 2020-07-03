@@ -1,5 +1,6 @@
 package bachelor.test.locationapp.view
 
+import bachelor.test.locationapp.model.MovementData
 import bachelor.test.locationapp.presenter.AccelerometerData
 import bachelor.test.locationapp.presenter.BasePresenter
 import bachelor.test.locationapp.presenter.InputData
@@ -9,6 +10,7 @@ interface MainScreenContract {
     interface View : BaseView<Presenter> {
         fun showPosition(locationData: LocationData)
         fun showAccelerometerData(accData: AccelerometerData)
+        fun showMovement(movementData: MovementData)
         fun enableConnectButton(enabled: Boolean)
         fun swapStartButton(start: Boolean)
         fun showMessage(message: String?)
