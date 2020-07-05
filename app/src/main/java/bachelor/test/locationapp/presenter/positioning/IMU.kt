@@ -5,9 +5,12 @@ import android.hardware.SensorManager
 import java.util.*
 import kotlin.collections.ArrayList
 
-private const val DETECTION_THRESHOLD_X = 0.25
-private const val DETECTION_THRESHOLD_Y = 0.25
-private const val DETECTION_THRESHOLD_Z = 0.5
+private const val ACC_DETECTION_THRESHOLD_X = 0.1
+private const val ACC_DETECTION_THRESHOLD_Y = 0.1
+private const val ACC_DETECTION_THRESHOLD_Z = 0.25
+private const val VEL_DETECTION_THRESHOLD_X = 0.03
+private const val VEL_DETECTION_THRESHOLD_Y = 0.03
+private const val VEL_DETECTION_THRESHOLD_Z = 0.05
 
 /*
  * This class' purpose is to figure out whether or not the mobile phone experienced movement on any
@@ -19,7 +22,7 @@ private const val DETECTION_THRESHOLD_Z = 0.5
 class IMU(context: Context, private val outputListener: IMUOutputListener): IMUInputListener {
 
     private val sensorEventListenerImpl = SensorEventListenerImpl(context, this)
-
+    private val trapezoidIntegrator = TrapezoidalIntegration()
     // Sensor values arrays
     private var gravityValues = FloatArray(4) {0f}
     private var linearAccValues = FloatArray(4) {0f}
@@ -27,35 +30,42 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
 
     // World acceleration values
     private var worldAccValues = Collections.synchronizedList(ArrayList<AccelerationData>())
+    @Synchronized get
+    @Synchronized set
+
+    private var timestamp = 0L
 
     fun start(){
         sensorEventListenerImpl.registerListener()
+        timestamp = System.currentTimeMillis()
     }
 
     fun stop(){
         sensorEventListenerImpl.unregisterListener()
     }
 
+    @Synchronized
     fun getMovementData(): MovementData {
-        var xAcc = 0f
-        var yAcc = 0f
-        var zAcc = 0f
+        val xAcc = ArrayList<Float>()
+        val yAcc = ArrayList<Float>()
+        val zAcc = ArrayList<Float>()
         for (acc in worldAccValues){
-            xAcc += acc.xAcc
-            yAcc += acc.yAcc
-            zAcc += acc.zAcc
+            xAcc.add(acc.xAcc)
+            yAcc.add(acc.yAcc)
+            zAcc.add(acc.zAcc)
         }
-        val xAccMean = xAcc / worldAccValues.size
-        val yAccMean = yAcc / worldAccValues.size
-        val zAccMean = zAcc / worldAccValues.size
+        val xVel = trapezoidIntegrator.integrate(timestamp, xAcc)
+        val yVel = trapezoidIntegrator.integrate(timestamp, yAcc)
+        val zVel = trapezoidIntegrator.integrate(timestamp, zAcc)
 
-        // Clear list for next time interval
+        // Set up for next iteration
         worldAccValues.clear()
+        timestamp = System.currentTimeMillis()
 
         return MovementData(
-            evaluateAcc(xAccMean, DETECTION_THRESHOLD_X),
-            evaluateAcc(yAccMean, DETECTION_THRESHOLD_Y),
-            evaluateAcc(zAccMean, DETECTION_THRESHOLD_Z))
+            evaluateAcc(xVel, VEL_DETECTION_THRESHOLD_X),
+            evaluateAcc(yVel, VEL_DETECTION_THRESHOLD_Y),
+            evaluateAcc(zVel, VEL_DETECTION_THRESHOLD_Z))
     }
 
     override fun onGravitySensorUpdate(values: FloatArray){
@@ -87,9 +97,9 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
             android.opengl.Matrix.invertM(inv, 0, R, 0)
             android.opengl.Matrix.multiplyMV(resultVector, 0, inv, 0, linearAccValues, 0)
         }
-        resultVector[0] = eliminateNoise(resultVector[0], DETECTION_THRESHOLD_X)
-        resultVector[1] = eliminateNoise(resultVector[1], DETECTION_THRESHOLD_Y)
-        resultVector[2] = eliminateNoise(resultVector[2], DETECTION_THRESHOLD_Z)
+        resultVector[0] = eliminateNoise(resultVector[0], ACC_DETECTION_THRESHOLD_X)
+        resultVector[1] = eliminateNoise(resultVector[1], ACC_DETECTION_THRESHOLD_Y)
+        resultVector[2] = eliminateNoise(resultVector[2], ACC_DETECTION_THRESHOLD_Z)
 
         // Negating values in order to have positive values in North, East and Up directions.
         val accelerationData = AccelerationData(-resultVector[0], -resultVector[1], -resultVector[2])
