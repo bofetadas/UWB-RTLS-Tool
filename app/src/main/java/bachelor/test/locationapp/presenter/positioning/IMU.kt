@@ -2,15 +2,10 @@ package bachelor.test.locationapp.presenter.positioning
 
 import android.content.Context
 import android.hardware.SensorManager
-import java.util.*
-import kotlin.collections.ArrayList
 
-private const val ACC_DETECTION_THRESHOLD_X = 0.1
-private const val ACC_DETECTION_THRESHOLD_Y = 0.1
+private const val ACC_DETECTION_THRESHOLD_X = 0.05
+private const val ACC_DETECTION_THRESHOLD_Y = 0.05
 private const val ACC_DETECTION_THRESHOLD_Z = 0.25
-private const val VEL_DETECTION_THRESHOLD_X = 0.03
-private const val VEL_DETECTION_THRESHOLD_Y = 0.03
-private const val VEL_DETECTION_THRESHOLD_Z = 0.05
 
 /*
  * This class' purpose is to figure out whether or not the mobile phone experienced movement on any
@@ -22,100 +17,100 @@ private const val VEL_DETECTION_THRESHOLD_Z = 0.05
 class IMU(context: Context, private val outputListener: IMUOutputListener): IMUInputListener {
 
     private val sensorEventListenerImpl = SensorEventListenerImpl(context, this)
-    private val trapezoidIntegrator = TrapezoidalIntegration()
     // Sensor values arrays
     private var gravityValues = FloatArray(4) {0f}
     private var linearAccValues = FloatArray(4) {0f}
     private var magnetValues = FloatArray(3)
 
-    // World acceleration values
-    private var worldAccValues = Collections.synchronizedList(ArrayList<AccelerationData>())
-    @Synchronized get
-    @Synchronized set
-
-    private var timestamp = 0L
+    // IMU calculations relevant variables
+    private var initialTimestamp = System.currentTimeMillis()
+    private var previousAccelerationData = AccelerationData(0f, 0f, 0f, 0f)
+    private var previousVelocityData = VelocityData(0f, 0f, 0f, 0f)
+    private var previousDisplacementData = DisplacementData(0f, 0f, 0f)
 
     fun start(){
         sensorEventListenerImpl.registerListener()
-        timestamp = System.currentTimeMillis()
     }
 
     fun stop(){
         sensorEventListenerImpl.unregisterListener()
     }
 
-    @Synchronized
-    fun getMovementData(): MovementData {
-        val xAcc = ArrayList<Float>()
-        val yAcc = ArrayList<Float>()
-        val zAcc = ArrayList<Float>()
-        for (acc in worldAccValues){
-            xAcc.add(acc.xAcc)
-            yAcc.add(acc.yAcc)
-            zAcc.add(acc.zAcc)
-        }
-        val xVel = trapezoidIntegrator.integrate(timestamp, xAcc)
-        val yVel = trapezoidIntegrator.integrate(timestamp, yAcc)
-        val zVel = trapezoidIntegrator.integrate(timestamp, zAcc)
-
-        // Set up for next iteration
-        worldAccValues.clear()
-        timestamp = System.currentTimeMillis()
-
-        return MovementData(
-            evaluateAcc(xVel, VEL_DETECTION_THRESHOLD_X),
-            evaluateAcc(yVel, VEL_DETECTION_THRESHOLD_Y),
-            evaluateAcc(zVel, VEL_DETECTION_THRESHOLD_Z))
+    fun getDisplacementData(): DisplacementData {
+        val displacementData = previousDisplacementData
+        return displacementData
     }
 
-    override fun onGravitySensorUpdate(values: FloatArray){
+    fun resetMemberVariablesForNextIteration() {
+        initialTimestamp = System.currentTimeMillis()
+        previousAccelerationData = AccelerationData(0f, 0f, 0f, 0f)
+        previousVelocityData = VelocityData(0f, 0f, 0f, 0f)
+        previousDisplacementData = DisplacementData(0f, 0f, 0f)
+    }
+
+    override fun onGravitySensorUpdate(values: FloatArray) {
         gravityValues[0] = values[0]
         gravityValues[1] = values[1]
         gravityValues[2] = values[2]
-        calculateWorldAcceleration()
+        calculateAcceleration()
     }
 
-    override fun onLinearAccelerometerUpdate(values: FloatArray){
+    override fun onLinearAccelerometerUpdate(values: FloatArray) {
         linearAccValues[0] = values[0]
         linearAccValues[1] = values[1]
         linearAccValues[2] = values[2]
-        calculateWorldAcceleration()
+        calculateAcceleration()
     }
 
-    override fun onMagnetometerUpdate(values: FloatArray){
+    override fun onMagnetometerUpdate(values: FloatArray) {
         magnetValues = values
-        calculateWorldAcceleration()
+        calculateAcceleration()
     }
 
-    private fun calculateWorldAcceleration() {
-        val resultVector = FloatArray(4) {0f}
+    @Synchronized
+    private fun calculateAcceleration() {
         // Rotation matrices
         val R = FloatArray(16)
         val I = FloatArray(16)
         if (SensorManager.getRotationMatrix(R, I, gravityValues, magnetValues)) {
+            val resultVector = FloatArray(4) {0f}
             val inv = FloatArray(16)
             android.opengl.Matrix.invertM(inv, 0, R, 0)
             android.opengl.Matrix.multiplyMV(resultVector, 0, inv, 0, linearAccValues, 0)
-        }
-        resultVector[0] = eliminateNoise(resultVector[0], ACC_DETECTION_THRESHOLD_X)
-        resultVector[1] = eliminateNoise(resultVector[1], ACC_DETECTION_THRESHOLD_Y)
-        resultVector[2] = eliminateNoise(resultVector[2], ACC_DETECTION_THRESHOLD_Z)
+            resultVector[0] = eliminateNoise(resultVector[0], ACC_DETECTION_THRESHOLD_X)
+            resultVector[1] = eliminateNoise(resultVector[1], ACC_DETECTION_THRESHOLD_Y)
+            resultVector[2] = eliminateNoise(resultVector[2], ACC_DETECTION_THRESHOLD_Z)
 
-        // Negating values in order to have positive values in North, East and Up directions.
-        val accelerationData = AccelerationData(-resultVector[0], -resultVector[1], -resultVector[2])
-        worldAccValues.add(accelerationData)
-        outputListener.onWorldAccelerationCalculated(accelerationData)
+            val currentTimestamp: Float = (System.currentTimeMillis() - initialTimestamp).toFloat() / 1000
+            // Negating values in order to have positive values in North, East and Up directions.
+            val accelerationData = AccelerationData(-resultVector[0], -resultVector[1], -resultVector[2], currentTimestamp)
+            calculateDisplacement(accelerationData)
+            outputListener.onWorldAccelerationCalculated(accelerationData)
+        }
     }
 
     private fun eliminateNoise(acc: Float, threshold: Double): Float {
         return if (acc > -threshold && acc < threshold) 0f else acc
     }
 
-    private fun evaluateAcc(acc: Float, threshold: Double): Movement {
-        return when {
-            acc < -threshold -> Movement.NEGATIVE
-            acc > threshold -> Movement.POSITIVE
-            else -> Movement.NONE
-        }
+    private fun calculateDisplacement(accelerationData: AccelerationData){
+        calculateVelocity(accelerationData)
+    }
+
+    private fun calculateVelocity(accelerationData: AccelerationData){
+        val xVelocity = previousVelocityData.xVel + ((accelerationData.xAcc + previousAccelerationData.xAcc) / 2) * (accelerationData.timestamp - previousAccelerationData.timestamp)
+        val yVelocity = previousVelocityData.yVel + ((accelerationData.yAcc + previousAccelerationData.yAcc) / 2) * (accelerationData.timestamp - previousAccelerationData.timestamp)
+        val zVelocity = previousVelocityData.zVel + ((accelerationData.zAcc + previousAccelerationData.zAcc) / 2) * (accelerationData.timestamp - previousAccelerationData.timestamp)
+        previousAccelerationData = AccelerationData(accelerationData.xAcc, accelerationData.yAcc, accelerationData.zAcc, accelerationData.timestamp)
+        val velocityData = VelocityData(xVelocity, yVelocity, zVelocity, accelerationData.timestamp)
+        calculateDisplacement(velocityData)
+    }
+
+    private fun calculateDisplacement(velocityData: VelocityData){
+        val xDisplacement = previousDisplacementData.xDisplacement + ((velocityData.xVel + previousVelocityData.xVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+        val yDisplacement = previousDisplacementData.yDisplacement + ((velocityData.yVel + previousVelocityData.yVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+        val zDisplacement = previousDisplacementData.zDisplacement + ((velocityData.zVel + previousVelocityData.zVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+        previousVelocityData = VelocityData(velocityData.xVel, velocityData.yVel, velocityData.zVel, velocityData.timestamp)
+        previousDisplacementData = DisplacementData(xDisplacement, yDisplacement, zDisplacement)
     }
 }

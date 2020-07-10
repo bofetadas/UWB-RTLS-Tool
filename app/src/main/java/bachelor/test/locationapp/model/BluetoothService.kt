@@ -8,9 +8,9 @@ import java.util.*
 
 const val GET_LOCATION_CHARACTERISTIC = "003BBDF2-C634-4B3D-AB56-7EC889B89A37"
 private const val GET_PROXY_POSITIONS = "F4A67D7D-379D-4183-9C03-4B6EA5103291"
-private const val TAG_MAC = "F0:74:2F:98:DE:90"
 private const val SET_LOCATION_MODE_CHARACTERISTIC = "A02B947E-DF97-4516-996A-1882521E0EAD"
 private const val DESCRIPTOR = "00002902-0000-1000-8000-00805F9B34FB"
+private const val TAG_MAC = "F0:74:2F:98:DE:90"
 private val POSITION_MODE = byteArrayOf(0x00)
 
 class BluetoothService(private val model: ModelImpl) {
