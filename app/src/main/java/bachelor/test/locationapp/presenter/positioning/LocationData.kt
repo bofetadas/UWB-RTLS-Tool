@@ -1,6 +1,6 @@
 package bachelor.test.locationapp.presenter.positioning
 
-data class LocationData(var xPos: Float, var yPos: Float, var zPos: Float, val qualityFactor: Int) {
+data class LocationData(val xPos: Float = 1f, val yPos: Float = 2.7f, val zPos: Float = 1f, val qualityFactor: Int = -1) {
 
     override fun toString(): String {
         return "$xPos, $yPos, $zPos, $qualityFactor"

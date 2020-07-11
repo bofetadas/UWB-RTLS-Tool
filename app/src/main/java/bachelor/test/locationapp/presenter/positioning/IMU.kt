@@ -3,9 +3,9 @@ package bachelor.test.locationapp.presenter.positioning
 import android.content.Context
 import android.hardware.SensorManager
 
-private const val ACC_DETECTION_THRESHOLD_X = 0.05
-private const val ACC_DETECTION_THRESHOLD_Y = 0.05
-private const val ACC_DETECTION_THRESHOLD_Z = 0.25
+private const val ACC_DETECTION_THRESHOLD_X = 0.05f
+private const val ACC_DETECTION_THRESHOLD_Y = 0.05f
+private const val ACC_DETECTION_THRESHOLD_Z = 0.25f
 
 /*
  * This class' purpose is to figure out whether or not the mobile phone experienced movement on any
@@ -22,18 +22,20 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
     private var linearAccValues = FloatArray(4) {0f}
     private var magnetValues = FloatArray(3)
 
-    // IMU calculations relevant variables
+    // For IMU calculations relevant variables
     private var initialTimestamp = System.currentTimeMillis()
-    private var previousAccelerationData = AccelerationData(0f, 0f, 0f, 0f)
-    private var previousVelocityData = VelocityData(0f, 0f, 0f, 0f)
-    private var previousDisplacementData = DisplacementData(0f, 0f, 0f)
+    private var previousAccelerationData = AccelerationData()
+    private var previousVelocityData = VelocityData()
+    private var previousDisplacementData = DisplacementData()
 
     fun start(){
+        initialTimestamp = System.currentTimeMillis()
         sensorEventListenerImpl.registerListener()
     }
 
     fun stop(){
         sensorEventListenerImpl.unregisterListener()
+        resetMemberVariablesForNextIteration()
     }
 
     fun getDisplacementData(): DisplacementData {
@@ -42,10 +44,9 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
     }
 
     fun resetMemberVariablesForNextIteration() {
-        initialTimestamp = System.currentTimeMillis()
-        previousAccelerationData = AccelerationData(0f, 0f, 0f, 0f)
-        previousVelocityData = VelocityData(0f, 0f, 0f, 0f)
-        previousDisplacementData = DisplacementData(0f, 0f, 0f)
+        previousAccelerationData = AccelerationData()
+        previousVelocityData = VelocityData()
+        previousDisplacementData = DisplacementData()
     }
 
     override fun onGravitySensorUpdate(values: FloatArray) {
@@ -85,11 +86,11 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
             // Negating values in order to have positive values in North, East and Up directions.
             val accelerationData = AccelerationData(-resultVector[0], -resultVector[1], -resultVector[2], currentTimestamp)
             calculateDisplacement(accelerationData)
-            outputListener.onWorldAccelerationCalculated(accelerationData)
+            outputListener.onAccelerationCalculated(accelerationData)
         }
     }
 
-    private fun eliminateNoise(acc: Float, threshold: Double): Float {
+    private fun eliminateNoise(acc: Float, threshold: Float): Float {
         return if (acc > -threshold && acc < threshold) 0f else acc
     }
 
@@ -107,9 +108,9 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
     }
 
     private fun calculateDisplacement(velocityData: VelocityData){
-        val xDisplacement = previousDisplacementData.xDisplacement + ((velocityData.xVel + previousVelocityData.xVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
-        val yDisplacement = previousDisplacementData.yDisplacement + ((velocityData.yVel + previousVelocityData.yVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
-        val zDisplacement = previousDisplacementData.zDisplacement + ((velocityData.zVel + previousVelocityData.zVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+        val xDisplacement = previousDisplacementData.xDispl + ((velocityData.xVel + previousVelocityData.xVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+        val yDisplacement = previousDisplacementData.yDispl + ((velocityData.yVel + previousVelocityData.yVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+        val zDisplacement = previousDisplacementData.zDispl + ((velocityData.zVel + previousVelocityData.zVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
         previousVelocityData = VelocityData(velocityData.xVel, velocityData.yVel, velocityData.zVel, velocityData.timestamp)
         previousDisplacementData = DisplacementData(xDisplacement, yDisplacement, zDisplacement)
     }

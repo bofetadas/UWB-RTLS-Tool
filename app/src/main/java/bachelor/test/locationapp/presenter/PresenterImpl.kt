@@ -21,7 +21,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     private val recordingImpl: Recording = RecordingImpl(context, this)
     private var recording = false
 
-    // Lifecycle events functions
+    // Android Lifecycle event functions
     override fun start() {
         model = ModelImpl(context)
         model?.addObserver(this)
@@ -36,7 +36,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         }
     }
 
-    // UI click events functions
+    // UI click event functions
     override fun onConnectClicked() {
         model?.initializeBluetoothConnection()
     }
