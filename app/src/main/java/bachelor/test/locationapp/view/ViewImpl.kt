@@ -14,7 +14,9 @@ import bachelor.test.locationapp.presenter.PresenterImpl
 import bachelor.test.locationapp.presenter.positioning.AccelerationData
 import bachelor.test.locationapp.presenter.positioning.LocationData
 import bachelor.test.locationapp.presenter.positioning.MovementData
+import bachelor.test.locationapp.presenter.positioning.UWBIMUDisplacementData
 import bachelor.test.locationapp.presenter.recording.InputData
+import bachelor.test.locationapp.presenter.recording.RecordingModes
 import kotlinx.android.synthetic.main.view.*
 
 class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListener {
@@ -54,11 +56,32 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
             .setTitle("Do you want to save the received Location Data?")
             .setMessage("Data will be saved to /Android/data/${BuildConfig.APPLICATION_ID}/files/Documents directory on device")
             .setPositiveButton("YES"){_, _ ->
-                val filenameDialog = FileDialog()
-                filenameDialog.show(supportFragmentManager, "View")
+                presenter.onUserWantsToRecordData()
             }
             .setNegativeButton("NO"){_, _ ->
                 presenter.onRegularDataTransferStart()
+            }
+            .create()
+            .show()
+    }
+
+    override fun showRecordingOptionsDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Do you want to record locations or displacements?")
+            .setMessage("Data will be saved to /Android/data/${BuildConfig.APPLICATION_ID}/files/Documents directory on device")
+            .setPositiveButton("POSITIONS"){_, _ ->
+                val filenameDialog = FileDialog()
+                val bundle = Bundle()
+                bundle.putSerializable("Mode", RecordingModes.P)
+                filenameDialog.arguments = bundle
+                filenameDialog.show(supportFragmentManager, "View")
+            }
+            .setNegativeButton("DISPLACEMENTS"){_, _ ->
+                val filenameDialog = FileDialog()
+                val bundle = Bundle()
+                bundle.putSerializable("Mode", RecordingModes.D)
+                filenameDialog.arguments = bundle
+                filenameDialog.show(supportFragmentManager, "View")
             }
             .create()
             .show()
@@ -75,12 +98,12 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
         disconnect_button.visibility = View.VISIBLE
     }
 
-    override fun onFileDataEntered(x: String, y: String, z: String, direction: String, timePeriod: Long) {
+    override fun onFileDataEntered(modes: RecordingModes, x: String, y: String, z: String, direction: String, timePeriod: Long) {
         start_button.visibility = View.GONE
         disconnect_button.visibility = View.GONE
         record_start_button.visibility = View.VISIBLE
 
-        inputData = InputData(x, y, z, direction, timePeriod)
+        inputData = InputData(modes, x, y, z, direction, timePeriod)
     }
 
     override fun showPosition(locationData: LocationData) {
@@ -109,6 +132,46 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
             y_movement.text = "Y Movement: ${movementData.yAxis}"
             z_movement.text = "Z Movement: ${movementData.zAxis}"
         }
+    }
+
+    override fun showDisplacement(displacementData: UWBIMUDisplacementData) {
+        this.runOnUiThread {
+            uwb_x_displacement.text = "UWB X Displ: ${displacementData.uwbDisplacementData.xDispl}"
+            uwb_y_displacement.text = "UWB Y Displ: ${displacementData.uwbDisplacementData.yDispl}"
+            uwb_z_displacement.text = "UWB Z Displ: ${displacementData.uwbDisplacementData.zDispl}"
+            imu_x_displacement.text = "IMU X Displ: ${displacementData.imuDisplacementData.xDispl}"
+            imu_y_displacement.text = "IMU Y Displ: ${displacementData.imuDisplacementData.yDispl}"
+            imu_z_displacement.text = "IMU Z Displ: ${displacementData.imuDisplacementData.zDispl}"
+        }
+    }
+
+    override fun showLocationViews() {
+        uwb_x_displacement.visibility = View.GONE
+        uwb_y_displacement.visibility = View.GONE
+        uwb_z_displacement.visibility = View.GONE
+        imu_x_displacement.visibility = View.GONE
+        imu_y_displacement.visibility = View.GONE
+        imu_z_displacement.visibility = View.GONE
+
+        x_position.visibility = View.VISIBLE
+        y_position.visibility = View.VISIBLE
+        z_position.visibility = View.VISIBLE
+        quality_factor.visibility = View.VISIBLE
+
+    }
+
+    override fun showDisplacementViews() {
+        x_position.visibility = View.GONE
+        y_position.visibility = View.GONE
+        z_position.visibility = View.GONE
+        quality_factor.visibility = View.GONE
+
+        uwb_x_displacement.visibility = View.VISIBLE
+        uwb_y_displacement.visibility = View.VISIBLE
+        uwb_z_displacement.visibility = View.VISIBLE
+        imu_x_displacement.visibility = View.VISIBLE
+        imu_y_displacement.visibility = View.VISIBLE
+        imu_z_displacement.visibility = View.VISIBLE
     }
 
     override fun enableConnectButton(enabled: Boolean) {

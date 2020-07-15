@@ -11,6 +11,7 @@ import bachelor.test.locationapp.presenter.positioning.*
 import bachelor.test.locationapp.presenter.recording.InputData
 import bachelor.test.locationapp.presenter.recording.Recording
 import bachelor.test.locationapp.presenter.recording.RecordingImpl
+import bachelor.test.locationapp.presenter.recording.RecordingModes
 import bachelor.test.locationapp.view.MainScreenContract
 
 class PresenterImpl(private val context: Context, private val view: MainScreenContract.View): MainScreenContract.Presenter, Observer {
@@ -20,6 +21,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     private val positioningImpl: Positioning = PositioningImpl(context, this)
     private val recordingImpl: Recording = RecordingImpl(context, this)
     private var recording = false
+    private var recordingMode = RecordingModes.P
 
     // Android Lifecycle event functions
     override fun start() {
@@ -58,22 +60,34 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         recording = false
     }
 
+    override fun onUserWantsToRecordData() {
+        view.showRecordingOptionsDialog()
+    }
+
     override fun onRegularDataTransferStart() {
         model?.startDataTransfer()
         positioningImpl.startIMU()
         view.swapStartButton(false)
+        view.showLocationViews()
     }
 
     override fun onRecordingDataTransferStart(inputData: InputData) {
-        val success = recordingImpl.createFile(inputData.xInput, inputData.yInput, inputData.zInput, inputData.direction)
+        val success = recordingImpl.createFile(inputData.mode, inputData.xInput, inputData.yInput, inputData.zInput, inputData.direction)
         if (success) {
-            recording = true
             model?.startDataTransfer()
+            recording = true
             recordingImpl.startTimer(inputData.timePeriod)
             recordingImpl.vibrateOnRecordStart()
+            recordingMode = inputData.mode
+            if (recordingMode == RecordingModes.P) {
+                view.showLocationViews()
+            }
+            else if (recordingMode == RecordingModes.D){
+                view.showDisplacementViews()
+            }
             positioningImpl.startIMU()
-            view.showMessage("Data recording successfully initialized")
             view.showRecordStopScreen()
+            view.showMessage("Data recording successfully initialized")
         } else {
             view.showMessage("File already exists. Please look into data directory to resolve the issue")
         }
@@ -106,6 +120,13 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         view.showMovement(movementData)
     }
 
+    override fun onDisplacementUpdate(displacementData: UWBIMUDisplacementData) {
+        view.showDisplacement(displacementData)
+        if (recording){
+            recordingImpl.writeToFile(displacementData.toString())
+        }
+    }
+
     // Bluetooth callback functions
     override fun onBluetoothEnabled() {
         view.showMessage("Bluetooth successfully turned on")
@@ -136,9 +157,9 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     }
 
     override fun onBluetoothCharacteristicChange(observable: Observable, args: Any) {
-        try{
+        try {
             args as ByteArray
-            positioningImpl.calculateLocation(args)
+            positioningImpl.getLocalizationData(recordingMode, args)
         } catch(e: TypeCastException){
             throw e
         }

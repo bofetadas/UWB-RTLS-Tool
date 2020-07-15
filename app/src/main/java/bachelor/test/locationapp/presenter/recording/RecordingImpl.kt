@@ -10,12 +10,13 @@ class RecordingImpl(context: Context, private val presenter: MainScreenContract.
     private val timer = Timer(this)
 
     override fun createFile(
+        mode: RecordingModes,
         xInput: String,
         yInput: String,
         zInput: String,
         direction: String
     ): Boolean {
-        return fileWriter.createFile(xInput, yInput, zInput, direction)
+        return fileWriter.createFile(mode, xInput, yInput, zInput, direction)
     }
 
     override fun writeToFile(line: String) {

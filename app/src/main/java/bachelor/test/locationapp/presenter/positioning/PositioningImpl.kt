@@ -1,6 +1,7 @@
 package bachelor.test.locationapp.presenter.positioning
 
 import android.content.Context
+import bachelor.test.locationapp.presenter.recording.RecordingModes
 import bachelor.test.locationapp.view.MainScreenContract
 
 private const val POSITION_LOCATION_BYTE_ARRAY_SIZE = 14
@@ -26,16 +27,56 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
         imu.stop()
     }
 
-    override fun calculateLocation(byteArray: ByteArray) {
+    override fun getLocalizationData(mode: RecordingModes, byteArray: ByteArray) {
         val location = if (byteArray.size == POSITION_LOCATION_BYTE_ARRAY_SIZE) {
             converter.getLocationFromByteArray(byteArray)
         } else {
             previousLocation
         }
-        val displacement = imu.getDisplacementData()
-        imu.resetMemberVariablesForNextIteration()
-        val filteredLocation = mergeLocationDataWithDisplacementData(location, displacement)
+        if (mode == RecordingModes.P) {
+            calculateLocation(location)
+        } else {
+            calculateDisplacementOnly(location)
+        }
+    }
+
+    private fun calculateLocation(location: LocationData) {
+        val imuDisplacement = imu.getDisplacementData()
+        val filteredLocation = mergeLocationDataWithDisplacementData(location, imuDisplacement)
         presenter.onLocationUpdate(filteredLocation)
+        // Make IMU ready fir next iteration
+        val actualVelocityX = (filteredLocation.xPos - previousLocation.xPos) * 10
+        val actualVelocityY = (filteredLocation.yPos - previousLocation.yPos) * 10
+        val actualVelocityZ = (filteredLocation.zPos - previousLocation.zPos) * 10
+        val actualVelocityData = VelocityData(actualVelocityX, actualVelocityY, actualVelocityZ)
+        val actualDisplacementX = filteredLocation.xPos - previousLocation.xPos
+        val actualDisplacementY = filteredLocation.yPos - previousLocation.yPos
+        val actualDisplacementZ = filteredLocation.zPos - previousLocation.zPos
+        val actualDisplacementData = DisplacementData(actualDisplacementX, actualDisplacementY, actualDisplacementZ)
+        val uwbDisplacement = DisplacementData(previousLocation.xPos - location.xPos, previousLocation.yPos - location.yPos, previousLocation.zPos - location.zPos)
+        println("UWB X Displ: ${uwbDisplacement.xDispl}, UWB Y Displ: ${uwbDisplacement.yDispl}, UWB Z Displ: ${uwbDisplacement.zDispl}")
+        println("IMU X Displ: ${imuDisplacement.xDispl}, IMU Y Displ: ${imuDisplacement.yDispl}, IMU Z Displ: ${imuDisplacement.zDispl}")
+        imu.resetMemberVariablesForNextIteration(actualVelocityData, actualDisplacementData)
+
+    }
+
+    private fun calculateDisplacementOnly(location: LocationData) {
+        val uwbDisplacement = DisplacementData(previousLocation.xPos - location.xPos, previousLocation.yPos - location.yPos, previousLocation.zPos - location.zPos)
+        val imuDisplacement = imu.getDisplacementData()
+        val filteredLocation = mergeLocationDataWithDisplacementData(location, imuDisplacement)
+        val actualVelocityX = (filteredLocation.xPos - previousLocation.xPos) * 10
+        val actualVelocityY = (filteredLocation.yPos - previousLocation.yPos) * 10
+        val actualVelocityZ = (filteredLocation.zPos - previousLocation.zPos) * 10
+        val actualVelocityData = VelocityData(actualVelocityX, actualVelocityY, actualVelocityZ)
+        val actualDisplacementX = filteredLocation.xPos - previousLocation.xPos
+        val actualDisplacementY = filteredLocation.yPos - previousLocation.yPos
+        val actualDisplacementZ = filteredLocation.zPos - previousLocation.zPos
+        val actualDisplacementData = DisplacementData(actualDisplacementX, actualDisplacementY, actualDisplacementZ)
+        println("UWB X Displ: ${uwbDisplacement.xDispl}, UWB Y Displ: ${uwbDisplacement.yDispl}, UWB Z Displ: ${uwbDisplacement.zDispl}")
+        println("IMU X Displ: ${imuDisplacement.xDispl}, IMU Y Displ: ${imuDisplacement.yDispl}, IMU Z Displ: ${imuDisplacement.zDispl}")
+        imu.resetMemberVariablesForNextIteration(actualVelocityData, actualDisplacementData)
+        previousLocation = filteredLocation
+        presenter.onDisplacementUpdate(UWBIMUDisplacementData(uwbDisplacement, imuDisplacement))
     }
 
     // IMU callback

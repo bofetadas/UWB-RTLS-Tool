@@ -18,6 +18,7 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
 
     private val sensorEventListenerImpl = SensorEventListenerImpl(context, this)
     // Sensor values arrays
+    private var accelerometerValues = FloatArray(4) {0f}
     private var gravityValues = FloatArray(4) {0f}
     private var linearAccValues = FloatArray(4) {0f}
     private var magnetValues = FloatArray(3)
@@ -35,7 +36,7 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
 
     fun stop(){
         sensorEventListenerImpl.unregisterListener()
-        resetMemberVariablesForNextIteration()
+        resetMemberVariablesForNextIteration(null, null)
     }
 
     fun getDisplacementData(): DisplacementData {
@@ -43,10 +44,25 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
         return displacementData
     }
 
-    fun resetMemberVariablesForNextIteration() {
-        previousAccelerationData = AccelerationData()
-        previousVelocityData = VelocityData()
-        previousDisplacementData = DisplacementData()
+    fun resetMemberVariablesForNextIteration(actualVelocity: VelocityData?, actualDisplacement: DisplacementData?) {
+        if (actualVelocity != null) {
+            previousVelocityData = VelocityData(actualVelocity.xVel, actualVelocity.yVel, actualVelocity.zVel, previousVelocityData.timestamp)
+        } else {
+            previousVelocityData = VelocityData(timestamp = previousVelocityData.timestamp)
+        }
+        if (actualDisplacement != null){
+            previousDisplacementData = DisplacementData(actualDisplacement.xDispl, actualDisplacement.yDispl, actualDisplacement.zDispl)
+        } else {
+            previousDisplacementData = DisplacementData()
+        }
+        previousAccelerationData = AccelerationData(timestamp = previousAccelerationData.timestamp)
+    }
+
+    override fun onAccelerometerUpdate(values: FloatArray) {
+        accelerometerValues[0] = values[0]
+        accelerometerValues[1] = values[1]
+        accelerometerValues[2] = values[2]
+        calculateAcceleration()
     }
 
     override fun onGravitySensorUpdate(values: FloatArray) {
@@ -73,7 +89,7 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
         // Rotation matrices
         val R = FloatArray(16)
         val I = FloatArray(16)
-        if (SensorManager.getRotationMatrix(R, I, gravityValues, magnetValues)) {
+        if (SensorManager.getRotationMatrix(R, I, accelerometerValues, magnetValues)) {
             val resultVector = FloatArray(4) {0f}
             val inv = FloatArray(16)
             android.opengl.Matrix.invertM(inv, 0, R, 0)
@@ -90,27 +106,31 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
         }
     }
 
-    private fun eliminateNoise(acc: Float, threshold: Float): Float {
-        return if (acc > -threshold && acc < threshold) 0f else acc
+    private fun eliminateNoise(value: Float, threshold: Float): Float {
+        return if (value > -threshold && value < threshold) 0f else value
     }
 
     private fun calculateDisplacement(accelerationData: AccelerationData){
         calculateVelocity(accelerationData)
     }
 
-    private fun calculateVelocity(accelerationData: AccelerationData){
+    private fun calculateVelocity(accelerationData: AccelerationData) {
         val xVelocity = previousVelocityData.xVel + ((accelerationData.xAcc + previousAccelerationData.xAcc) / 2) * (accelerationData.timestamp - previousAccelerationData.timestamp)
         val yVelocity = previousVelocityData.yVel + ((accelerationData.yAcc + previousAccelerationData.yAcc) / 2) * (accelerationData.timestamp - previousAccelerationData.timestamp)
         val zVelocity = previousVelocityData.zVel + ((accelerationData.zAcc + previousAccelerationData.zAcc) / 2) * (accelerationData.timestamp - previousAccelerationData.timestamp)
+        println("IMU X Vel: $xVelocity, IMU Y Vel: $yVelocity, IMU Z Vel: $zVelocity")
         previousAccelerationData = AccelerationData(accelerationData.xAcc, accelerationData.yAcc, accelerationData.zAcc, accelerationData.timestamp)
         val velocityData = VelocityData(xVelocity, yVelocity, zVelocity, accelerationData.timestamp)
         calculateDisplacement(velocityData)
     }
 
-    private fun calculateDisplacement(velocityData: VelocityData){
-        val xDisplacement = previousDisplacementData.xDispl + ((velocityData.xVel + previousVelocityData.xVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
-        val yDisplacement = previousDisplacementData.yDispl + ((velocityData.yVel + previousVelocityData.yVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
-        val zDisplacement = previousDisplacementData.zDispl + ((velocityData.zVel + previousVelocityData.zVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+    private fun calculateDisplacement(velocityData: VelocityData) {
+        var xDisplacement = previousDisplacementData.xDispl + ((velocityData.xVel + previousVelocityData.xVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+        var yDisplacement = previousDisplacementData.yDispl + ((velocityData.yVel + previousVelocityData.yVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+        var zDisplacement = previousDisplacementData.zDispl + ((velocityData.zVel + previousVelocityData.zVel) / 2) * (velocityData.timestamp - previousVelocityData.timestamp)
+        xDisplacement = eliminateNoise(xDisplacement, 0.001f)
+        yDisplacement = eliminateNoise(yDisplacement, 0.001f)
+        zDisplacement = eliminateNoise(zDisplacement, 0.001f)
         previousVelocityData = VelocityData(velocityData.xVel, velocityData.yVel, velocityData.zVel, velocityData.timestamp)
         previousDisplacementData = DisplacementData(xDisplacement, yDisplacement, zDisplacement)
     }

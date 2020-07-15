@@ -11,12 +11,14 @@ import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import bachelor.test.locationapp.R
 import bachelor.test.locationapp.presenter.recording.Directions
+import bachelor.test.locationapp.presenter.recording.RecordingModes
 
 class FileDialog : DialogFragment(){
 
     private var fileDialogListener : FileDialogListener? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val mode = arguments!!["Mode"] as RecordingModes
         val builder = AlertDialog.Builder(activity)
         val inflater = activity!!.layoutInflater
 
@@ -40,7 +42,7 @@ class FileDialog : DialogFragment(){
                 val directionInput = directionSpinner.selectedItem.toString()
                 val timePeriodInput = timePeriodEditText.text.toString().toLong()
                 if (isValid(xInput, yInput, zInput, directionInput, timePeriodInput)) {
-                    fileDialogListener?.onFileDataEntered(xInput, yInput, zInput, directionInput, timePeriodInput)
+                    fileDialogListener?.onFileDataEntered(mode, xInput, yInput, zInput, directionInput, timePeriodInput)
                 }
                 else{
                     Toast.makeText(context, "Please specify valid coordinates, direction and time period. Recording not started", Toast.LENGTH_SHORT).show()

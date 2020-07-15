@@ -10,11 +10,11 @@ class FileWriter(private val context: Context) {
 
     lateinit var file: File
 
-    fun createFile(x: String, y: String, z: String, direction: String): Boolean{
+    fun createFile(mode: RecordingModes, x: String, y: String, z: String, direction: String): Boolean{
         val sdf = SimpleDateFormat("dd-MM-yyyy-HH-mm-ss", Locale.GERMANY)
         val date = Date()
 
-        file = File(context.getExternalFilesDir(DIRECTORY_DOCUMENTS), "$direction(${x}_${y}_${z})_${sdf.format(date)}.txt")
+        file = File(context.getExternalFilesDir(DIRECTORY_DOCUMENTS), "${mode}_${direction}(${x}_${y}_${z})_${sdf.format(date)}.txt")
         return file.createNewFile()
     }
 

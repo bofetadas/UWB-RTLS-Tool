@@ -83,6 +83,7 @@
         android:layout_marginTop="380dp"
         android:text="X Position"
         android:translationZ="90dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -94,6 +95,7 @@
         android:layout_marginTop="410dp"
         android:text="Y Position"
         android:translationZ="90dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -105,6 +107,7 @@
         android:layout_marginTop="440dp"
         android:text="Z Position"
         android:translationZ="90dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -116,6 +119,79 @@
         android:layout_marginTop="470dp"
         android:text="Quality Factor"
         android:translationZ="90dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/uwb_x_displacement"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="380dp"
+        android:text="UWB X Displ:"
+        android:translationZ="90dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/uwb_y_displacement"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="410dp"
+        android:text="UWB Y Displ:"
+        android:translationZ="90dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/uwb_z_displacement"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="440dp"
+        android:text="UWB Z Displ:"
+        android:translationZ="90dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/imu_x_displacement"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="250dp"
+        android:layout_marginTop="380dp"
+        android:text="IMU X Displ:"
+        android:translationZ="90dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/imu_y_displacement"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="250dp"
+        android:layout_marginTop="410dp"
+        android:text="IMU Y Displ:"
+        android:translationZ="90dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/imu_z_displacement"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="250dp"
+        android:layout_marginTop="440dp"
+        android:text="IMU Z Displ:"
+        android:translationZ="90dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -123,7 +199,7 @@
         android:id="@+id/x_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="160dp"
         android:layout_marginTop="520dp"
         android:text="X Acceleration"
         app:layout_constraintStart_toStartOf="parent"
@@ -133,7 +209,7 @@
         android:id="@+id/y_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="160dp"
         android:layout_marginTop="550dp"
         android:text="Y Acceleration"
         app:layout_constraintStart_toStartOf="parent"
@@ -143,7 +219,7 @@
         android:id="@+id/z_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="160dp"
         android:layout_marginTop="580dp"
         android:text="Z Acceleration"
         app:layout_constraintStart_toStartOf="parent"
@@ -156,6 +232,7 @@
         android:layout_marginStart="220dp"
         android:layout_marginTop="520dp"
         android:text="X Movement"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -166,6 +243,7 @@
         android:layout_marginStart="220dp"
         android:layout_marginTop="550dp"
         android:text="Y Movement"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -176,6 +254,7 @@
         android:layout_marginStart="220dp"
         android:layout_marginTop="580dp"
         android:text="Z Movement"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
