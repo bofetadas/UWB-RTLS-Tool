@@ -38,7 +38,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         }
     }
 
-    // UI click event functions
+    // UI click functions
     override fun onConnectClicked() {
         model?.initializeBluetoothConnection()
     }
