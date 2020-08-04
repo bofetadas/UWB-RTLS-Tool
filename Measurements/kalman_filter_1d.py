@@ -1,17 +1,19 @@
-from matplotlib import pyplot as plt
 import numpy as np
 import sys
+from matplotlib import pyplot as plt
 
 process_noise = 0.001
 measurement_noise = 0.1
 process_noise_variance = process_noise * process_noise
 measurement_noise_variance = measurement_noise * measurement_noise
+
 initial_state_estimate_x = 3
 initial_state_estimate_error_x = 0.2
 initial_state_estimate_y = 0
 initial_state_estimate_error_y = 0.2
 initial_state_estimate_z = 1.9
 initial_state_estimate_error_z = 0.2
+
 predicted_state_estimate_x = initial_state_estimate_x
 predicted_state_estimate_error_x = initial_state_estimate_error_x + process_noise_variance
 predicted_state_estimate_y = initial_state_estimate_y
