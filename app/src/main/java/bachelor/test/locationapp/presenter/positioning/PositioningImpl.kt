@@ -3,7 +3,6 @@ package bachelor.test.locationapp.presenter.positioning
 import android.content.Context
 import bachelor.test.locationapp.view.MainScreenContract
 
-private const val POSITION_LOCATION_BYTE_ARRAY_SIZE = 14
 private const val UWB_X_WEIGHT = 1f
 private const val UWB_Y_WEIGHT = 1f
 private const val UWB_Z_WEIGHT = 0.8f
@@ -12,11 +11,14 @@ private const val IMU_Y_WEIGHT = 1f - UWB_Y_WEIGHT
 private const val IMU_Z_WEIGHT = 1f - UWB_Z_WEIGHT
 
 // Entry class for handling positioning logic
-class PositioningImpl(context: Context, private val presenter: MainScreenContract.Presenter): Positioning, IMUOutputListener {
+class PositioningImpl(context: Context, private val presenter: MainScreenContract.Presenter): Positioning, IMUOutputListener, KalmanFilterCallback {
 
+    private var previousLocation = LocationData()
     private val converter = ByteArrayToLocationDataConverter()
     private val imu = IMU(context, this)
-    private var previousLocation = LocationData()
+    private val kalmanFilterImpl = KalmanFilterImpl(this)
+    private val kalmanFilterStrategies = KalmanFilterImplStrategies()
+    private var kalmanFilterStrategy: (accData: AccelerationData, locationData: LocationData) -> Unit = kalmanFilterStrategies.configureStrategy
 
     override fun startIMU() {
         imu.start()
@@ -27,20 +29,24 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     }
 
     override fun calculateLocation(byteArray: ByteArray) {
-        val location = if (byteArray.size == POSITION_LOCATION_BYTE_ARRAY_SIZE) {
-            converter.getLocationFromByteArray(byteArray)
-        } else {
-            previousLocation
-        }
-        val displacement = imu.getDisplacementData()
-        imu.resetMemberVariablesForNextIteration()
-        val filteredLocation = mergeLocationDataWithDisplacementData(location, displacement)
-        presenter.onLocationUpdate(filteredLocation)
+        //val displacement = imu.getDisplacementData()
+        //imu.resetMemberVariablesForNextIteration()
+        val uwbLocation = converter.getLocationFromByteArray(byteArray)
+        val imuAcceleration = imu.calculateAcceleration()
+        kalmanFilterStrategy.invoke(imuAcceleration, uwbLocation)
+
+        //kalmanFilterImpl.predict(controlVector)
+        //kalmanFilterImpl.correct(location)
+        //val filteredLocation = mergeLocationDataWithDisplacementData(location, displacement)
     }
 
     // IMU callback
     override fun onAccelerationCalculated(accelerationData: AccelerationData) {
         presenter.onAccelerometerUpdate(accelerationData)
+    }
+    // Kalman Filter callback
+    override fun onNewEstimate(locationData: LocationData) {
+        presenter.onLocationUpdate(locationData)
     }
 
     private fun mergeLocationDataWithDisplacementData(location: LocationData, displacement: DisplacementData): LocationData {
@@ -55,5 +61,17 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
         val filteredZPos = previousLocation.zPos - (UWB_Z_WEIGHT * zDifference + IMU_Z_WEIGHT * displacement.zDispl)
         previousLocation = LocationData(filteredXPos, filteredYPos, filteredZPos, location.qualityFactor)
         return previousLocation
+    }
+
+    private inner class KalmanFilterImplStrategies {
+        val configureStrategy: (accData: AccelerationData, locationData: LocationData) -> Unit = { _, locationData ->
+            kalmanFilterImpl.configure(locationData)
+            kalmanFilterStrategy = estimateStrategy
+        }
+
+        val estimateStrategy: (accData: AccelerationData, locationData: LocationData) -> Unit = { accData, locationData ->
+            kalmanFilterImpl.predict(accData)
+            kalmanFilterImpl.correct(locationData)
+        }
     }
 }

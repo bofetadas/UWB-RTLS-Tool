@@ -53,26 +53,27 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
         gravityValues[0] = values[0]
         gravityValues[1] = values[1]
         gravityValues[2] = values[2]
-        calculateAcceleration()
+        //calculateAcceleration()
     }
 
     override fun onLinearAccelerometerUpdate(values: FloatArray) {
         linearAccValues[0] = values[0]
         linearAccValues[1] = values[1]
         linearAccValues[2] = values[2]
-        calculateAcceleration()
+        //calculateAcceleration()
     }
 
     override fun onMagnetometerUpdate(values: FloatArray) {
         magnetValues = values
-        calculateAcceleration()
+        //calculateAcceleration()
     }
 
     @Synchronized
-    private fun calculateAcceleration() {
+    fun calculateAcceleration(): AccelerationData {
         // Rotation matrices
         val R = FloatArray(16)
         val I = FloatArray(16)
+        var accelerationData = AccelerationData()
         if (SensorManager.getRotationMatrix(R, I, gravityValues, magnetValues)) {
             val resultVector = FloatArray(4) {0f}
             val inv = FloatArray(16)
@@ -84,10 +85,11 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
 
             val currentTimestamp: Float = (System.currentTimeMillis() - initialTimestamp).toFloat() / 1000
             // Negating values in order to have positive values in North, East and Up directions.
-            val accelerationData = AccelerationData(-resultVector[0], -resultVector[1], -resultVector[2], currentTimestamp)
-            calculateDisplacement(accelerationData)
+            accelerationData = AccelerationData(-resultVector[0], -resultVector[1], -resultVector[2], currentTimestamp)
+            //calculateDisplacement(accelerationData)
             outputListener.onAccelerationCalculated(accelerationData)
         }
+        return accelerationData
     }
 
     private fun eliminateNoise(acc: Float, threshold: Float): Float {
