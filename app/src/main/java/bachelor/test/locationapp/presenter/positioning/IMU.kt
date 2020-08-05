@@ -79,9 +79,9 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
             val inv = FloatArray(16)
             android.opengl.Matrix.invertM(inv, 0, R, 0)
             android.opengl.Matrix.multiplyMV(resultVector, 0, inv, 0, linearAccValues, 0)
-            resultVector[0] = eliminateNoise(resultVector[0], ACC_DETECTION_THRESHOLD_X)
-            resultVector[1] = eliminateNoise(resultVector[1], ACC_DETECTION_THRESHOLD_Y)
-            resultVector[2] = eliminateNoise(resultVector[2], ACC_DETECTION_THRESHOLD_Z)
+            //resultVector[0] = eliminateNoise(resultVector[0], ACC_DETECTION_THRESHOLD_X)
+            //resultVector[1] = eliminateNoise(resultVector[1], ACC_DETECTION_THRESHOLD_Y)
+            //resultVector[2] = eliminateNoise(resultVector[2], ACC_DETECTION_THRESHOLD_Z)
 
             val currentTimestamp: Float = (System.currentTimeMillis() - initialTimestamp).toFloat() / 1000
             // Negating values in order to have positive values in North, East and Up directions.

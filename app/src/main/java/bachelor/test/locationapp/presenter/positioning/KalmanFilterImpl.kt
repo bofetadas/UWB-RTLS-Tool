@@ -7,8 +7,8 @@ class KalmanFilterImpl(private val kalmanFilterCallback: KalmanFilterCallback) {
     private lateinit var kalmanFilter: KalmanFilter
     private val kalmanFilterConfigurator = KalmanFilterConfigurator()
     private val kalmanFilterStrategies = KalmanFilterStrategies()
-    private var predictStrategy: (accData: AccelerationData) -> Unit = kalmanFilterStrategies.notConfigured
-    private var correctStrategy: (locationData: LocationData) -> Unit = kalmanFilterStrategies.notConfigured
+    private var predictStrategy: (p0: Any?, p1: Any?) -> Unit = kalmanFilterStrategies.notConfigured
+    private var correctStrategy: (locationData: LocationData, accData: AccelerationData) -> Unit = kalmanFilterStrategies.notConfigured
 
     fun configure(initialLocation: LocationData){
         kalmanFilter = kalmanFilterConfigurator.configureKalmanFilter(initialLocation)
@@ -16,22 +16,21 @@ class KalmanFilterImpl(private val kalmanFilterCallback: KalmanFilterCallback) {
         correctStrategy = kalmanFilterStrategies.correct
     }
 
-    fun predict(accData: AccelerationData){
-        predictStrategy.invoke(accData)
+    fun predict(){
+        predictStrategy.invoke(null, null)
     }
 
-    fun correct(locationData: LocationData){
-        correctStrategy.invoke(locationData)
+    fun correct(locationData: LocationData, accelerationData: AccelerationData){
+        correctStrategy.invoke(locationData, accelerationData)
     }
 
     private inner class KalmanFilterStrategies {
-        val predict: (accData: AccelerationData) -> Unit  = { accData ->
-            val controlVector = ArrayRealVector(doubleArrayOf(accData.xAcc.toDouble(), accData.yAcc.toDouble(), accData.zAcc.toDouble()))
-            kalmanFilter.predict(controlVector)
+        val predict: (p0: Any?, p1: Any?) -> Unit  = {_, _ ->
+            kalmanFilter.predict()
         }
 
-        val correct: (locationData: LocationData) -> Unit = { locationData ->
-            val measurementVector = ArrayRealVector(doubleArrayOf(locationData.xPos.toDouble(), locationData.yPos.toDouble(), locationData.zPos.toDouble()))
+        val correct: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = { locationData, accelerationData ->
+            val measurementVector = ArrayRealVector(doubleArrayOf(locationData.xPos.toDouble(), locationData.yPos.toDouble(), locationData.zPos.toDouble(), accelerationData.xAcc.toDouble()/10, accelerationData.yAcc.toDouble()/10, accelerationData.zAcc.toDouble()/10))
             kalmanFilter.correct(measurementVector)
             val currentEstimate = kalmanFilter.stateEstimation
             val currentEstimateError = kalmanFilter.errorCovariance
@@ -49,6 +48,6 @@ class KalmanFilterImpl(private val kalmanFilterCallback: KalmanFilterCallback) {
             kalmanFilterCallback.onNewEstimate(estimatedLocationData)
         }
 
-        val notConfigured: (any: Any) -> Unit = { throw IllegalAccessError("You need to call KalmanFilterImpl().configure before making use of it.")}
+        val notConfigured: (p0: Any?, p1: Any?) -> Unit = {_, _ -> throw IllegalAccessError("You need to call KalmanFilterImpl().configure before making use of it.")}
     }
 }

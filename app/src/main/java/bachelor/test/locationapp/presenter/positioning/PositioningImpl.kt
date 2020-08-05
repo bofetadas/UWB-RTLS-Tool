@@ -17,8 +17,8 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     private val converter = ByteArrayToLocationDataConverter()
     private val imu = IMU(context, this)
     private val kalmanFilterImpl = KalmanFilterImpl(this)
-    private val kalmanFilterStrategies = KalmanFilterImplStrategies()
-    private var kalmanFilterStrategy: (accData: AccelerationData, locationData: LocationData) -> Unit = kalmanFilterStrategies.configureStrategy
+    private val kalmanFilterImplStrategies = KalmanFilterImplStrategies()
+    private var kalmanFilterImplStrategy: (locationData: LocationData, accData: AccelerationData) -> Unit = kalmanFilterImplStrategies.configureStrategy
 
     override fun startIMU() {
         imu.start()
@@ -33,7 +33,7 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
         //imu.resetMemberVariablesForNextIteration()
         val uwbLocation = converter.getLocationFromByteArray(byteArray)
         val imuAcceleration = imu.calculateAcceleration()
-        kalmanFilterStrategy.invoke(imuAcceleration, uwbLocation)
+        kalmanFilterImplStrategy.invoke(uwbLocation, imuAcceleration)
 
         //kalmanFilterImpl.predict(controlVector)
         //kalmanFilterImpl.correct(location)
@@ -64,14 +64,14 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     }
 
     private inner class KalmanFilterImplStrategies {
-        val configureStrategy: (accData: AccelerationData, locationData: LocationData) -> Unit = { _, locationData ->
+        val configureStrategy: (locationData: LocationData, accData: AccelerationData) -> Unit = { locationData, _ ->
             kalmanFilterImpl.configure(locationData)
-            kalmanFilterStrategy = estimateStrategy
+            kalmanFilterImplStrategy = estimateStrategy
         }
 
-        val estimateStrategy: (accData: AccelerationData, locationData: LocationData) -> Unit = { accData, locationData ->
-            kalmanFilterImpl.predict(accData)
-            kalmanFilterImpl.correct(locationData)
+        val estimateStrategy: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = { locationData, accData ->
+            kalmanFilterImpl.predict()
+            kalmanFilterImpl.correct(locationData, accData)
         }
     }
 }
