@@ -30,7 +30,7 @@ class KalmanFilterImpl(private val kalmanFilterCallback: KalmanFilterCallback) {
         }
 
         val correct: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = { locationData, accelerationData ->
-            val measurementVector = ArrayRealVector(doubleArrayOf(locationData.xPos.toDouble(), locationData.yPos.toDouble(), locationData.zPos.toDouble(), accelerationData.xAcc.toDouble()/10, accelerationData.yAcc.toDouble()/10, accelerationData.zAcc.toDouble()/10))
+            val measurementVector = ArrayRealVector(doubleArrayOf(locationData.xPos.toDouble(), locationData.yPos.toDouble(), locationData.zPos.toDouble(), accelerationData.xAcc.toDouble(), accelerationData.yAcc.toDouble(), accelerationData.zAcc.toDouble()))
             kalmanFilter.correct(measurementVector)
             val currentEstimate = kalmanFilter.stateEstimation
             val currentEstimateError = kalmanFilter.errorCovariance
