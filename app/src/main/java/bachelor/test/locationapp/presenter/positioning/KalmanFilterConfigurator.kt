@@ -7,15 +7,16 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.linear.ArrayRealVector
 import kotlin.math.pow
 
-// For every 100ms when a new UWB location result comes in, we want the Kalman Filter to calculate the best estimate.
+// For every 100ms when a new UWB location result comes in, we want the Kalman Filter to calculate
+// the best estimate.
 private const val TIME_DELTA = 0.1
 // Studies reveal that the highest acceleration change for pedestrians lies between 0.7m/s**2
 // and 1.4m/s**2.
 // For tweaking reasons, the best MAX_ACCELERATION value still has to be determined empirically.
 private const val MAX_ACCELERATION = 0.8 * TIME_DELTA
 // For the process covariance matrix to contain appropriate values, we have to multiply it with
-// the variance of MAX_ACCELERATION which is the half to maximum change of the fastest changing variable (acceleration)
-// for each time frame of 100ms.
+// the variance of MAX_ACCELERATION which is half to maximum of the change of the fastest changing
+// variable (acceleration) for each time frame of 100ms.
 private const val MAX_ACCELERATION_VARIANCE = MAX_ACCELERATION * MAX_ACCELERATION
 
 class KalmanFilterConfigurator {
@@ -520,21 +521,21 @@ class KalmanFilterConfigurator {
         measurementNoiseMatrix.setEntry(3, 0, 0.0)
         measurementNoiseMatrix.setEntry(3, 1, 0.0)
         measurementNoiseMatrix.setEntry(3, 2, 0.0)
-        measurementNoiseMatrix.setEntry(3, 3, 0.05)
-        measurementNoiseMatrix.setEntry(3, 4, 0.001)
-        measurementNoiseMatrix.setEntry(3, 5, 0.001)
+        measurementNoiseMatrix.setEntry(3, 3, 0.000242)
+        measurementNoiseMatrix.setEntry(3, 4, 0.000014)
+        measurementNoiseMatrix.setEntry(3, 5, 0.000038)
         measurementNoiseMatrix.setEntry(4, 0, 0.0)
         measurementNoiseMatrix.setEntry(4, 1, 0.0)
         measurementNoiseMatrix.setEntry(4, 2, 0.0)
-        measurementNoiseMatrix.setEntry(4, 3, 0.001)
-        measurementNoiseMatrix.setEntry(4, 4, 0.05)
-        measurementNoiseMatrix.setEntry(4, 5, 0.001)
+        measurementNoiseMatrix.setEntry(4, 3, 0.000014)
+        measurementNoiseMatrix.setEntry(4, 4, 0.000429)
+        measurementNoiseMatrix.setEntry(4, 5, -0.000065)
         measurementNoiseMatrix.setEntry(5, 0, 0.0)
         measurementNoiseMatrix.setEntry(5, 1, 0.0)
         measurementNoiseMatrix.setEntry(5, 2, 0.0)
-        measurementNoiseMatrix.setEntry(5, 3, 0.01)
-        measurementNoiseMatrix.setEntry(5, 4, 0.01)
-        measurementNoiseMatrix.setEntry(5, 5, 0.2)
+        measurementNoiseMatrix.setEntry(5, 3, 0.000038)
+        measurementNoiseMatrix.setEntry(5, 4, -0.000065)
+        measurementNoiseMatrix.setEntry(5, 5, 0.009696)
 
         return DefaultMeasurementModel(measurementMatrix, measurementNoiseMatrix)
     }
