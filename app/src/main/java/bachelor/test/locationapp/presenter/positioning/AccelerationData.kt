@@ -1,3 +1,3 @@
 package bachelor.test.locationapp.presenter.positioning
 
-data class AccelerationData(val xAcc: Float = 0f, val yAcc: Float = 0f, val zAcc: Float = 0f, val timestamp: Float = 0f)
+data class AccelerationData(val xAcc: Double = 0.0, val yAcc: Double = 0.0, val zAcc: Double = 0.0, val timestamp: Float = 0f)

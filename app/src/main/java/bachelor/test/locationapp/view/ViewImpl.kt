@@ -13,7 +13,6 @@ import bachelor.test.locationapp.R
 import bachelor.test.locationapp.presenter.PresenterImpl
 import bachelor.test.locationapp.presenter.positioning.AccelerationData
 import bachelor.test.locationapp.presenter.positioning.LocationData
-import bachelor.test.locationapp.presenter.positioning.MovementData
 import bachelor.test.locationapp.presenter.recording.InputData
 import kotlinx.android.synthetic.main.view.*
 
@@ -100,14 +99,6 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
             if (accData.xAcc > 0) x_acc.setTextColor(Color.GREEN) else if (accData.xAcc < 0) x_acc.setTextColor(Color.RED) else x_acc.setTextColor(Color.GRAY)
             if (accData.yAcc > 0) y_acc.setTextColor(Color.GREEN) else if (accData.yAcc < 0) y_acc.setTextColor(Color.RED) else y_acc.setTextColor(Color.GRAY)
             if (accData.zAcc > 0) z_acc.setTextColor(Color.GREEN) else if (accData.zAcc < 0) z_acc.setTextColor(Color.RED) else z_acc.setTextColor(Color.GRAY)
-        }
-    }
-
-    override fun showMovement(movementData: MovementData) {
-        this.runOnUiThread {
-            x_movement.text = "X Movement: ${movementData.xAxis}"
-            y_movement.text = "Y Movement: ${movementData.yAxis}"
-            z_movement.text = "Z Movement: ${movementData.zAxis}"
         }
     }
 

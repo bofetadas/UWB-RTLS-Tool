@@ -1,5 +1,5 @@
 package bachelor.test.locationapp.presenter.positioning
 
-interface KalmanFilterCallback {
+interface KalmanFilterOutputListener {
     fun onNewEstimate(locationData: LocationData)
 }
