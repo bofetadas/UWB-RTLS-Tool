@@ -24,11 +24,13 @@ def evaulate_and_plot_data(directory):
         sample_count += get_sample_count(filename)
         with open(filename) as f:
             for line in f:
-                x_acc = round(float(line.split(',')[0]), 5)
+                print(line)
+                print(type(line.split(' ')[0]))
+                x_acc = round(float(line.split(' ')[0]), 3)
                 x_array.append(x_acc)
-                y_acc = round(float(line.split(',')[1]), 5)
+                y_acc = round(float(line.split(' ')[1]), 3)
                 y_array.append(y_acc)
-                z_acc = round(float(line.split(',')[2]), 5)
+                z_acc = round(float(line.split(' ')[2]), 3)
                 z_array.append(z_acc)
                 accelerations_array.append([x_acc, y_acc, z_acc])
     coordinate_matrix = np.matrix(accelerations_array)
