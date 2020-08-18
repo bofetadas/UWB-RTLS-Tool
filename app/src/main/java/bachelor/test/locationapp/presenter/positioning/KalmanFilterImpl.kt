@@ -452,21 +452,21 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[3, 0] =  0.0
         measurementNoiseCovarianceMatrix[3, 1] =  0.0
         measurementNoiseCovarianceMatrix[3, 2] =  0.0
-        measurementNoiseCovarianceMatrix[3, 3] =  0.000073
-        measurementNoiseCovarianceMatrix[3, 4] =  -0.000001
-        measurementNoiseCovarianceMatrix[3, 5] =  0.0
+        measurementNoiseCovarianceMatrix[3, 3] =  0.000641
+        measurementNoiseCovarianceMatrix[3, 4] =  0.000050
+        measurementNoiseCovarianceMatrix[3, 5] =  -0.000045
         measurementNoiseCovarianceMatrix[4, 0] =  0.0
         measurementNoiseCovarianceMatrix[4, 1] =  0.0
         measurementNoiseCovarianceMatrix[4, 2] =  0.0
-        measurementNoiseCovarianceMatrix[4, 3] =  -0.000001
-        measurementNoiseCovarianceMatrix[4, 4] =  0.000076
-        measurementNoiseCovarianceMatrix[4, 5] =  0.000001
+        measurementNoiseCovarianceMatrix[4, 3] =  0.000050
+        measurementNoiseCovarianceMatrix[4, 4] =  0.000276
+        measurementNoiseCovarianceMatrix[4, 5] =  0.000168
         measurementNoiseCovarianceMatrix[5, 0] =  0.0
         measurementNoiseCovarianceMatrix[5, 1] =  0.0
         measurementNoiseCovarianceMatrix[5, 2] =  0.0
-        measurementNoiseCovarianceMatrix[5, 3] =  0.0
-        measurementNoiseCovarianceMatrix[5, 4] =  0.000001
-        measurementNoiseCovarianceMatrix[5, 5] =  0.000087
+        measurementNoiseCovarianceMatrix[5, 3] =  -0.000045
+        measurementNoiseCovarianceMatrix[5, 4] =  0.000168
+        measurementNoiseCovarianceMatrix[5, 5] =  0.009926
 
         solver = LinearSolverFactory_DDRM.symmPosDef(dimenX);
 

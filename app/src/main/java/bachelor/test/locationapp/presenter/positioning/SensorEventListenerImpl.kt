@@ -12,11 +12,13 @@ class SensorEventListenerImpl(context: Context, private val imu: IMUInputListene
     // Sensors
     private val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
     private val linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+    private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     private val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
     fun registerListener(){
         sensorManager.registerListener(this, gravitySensor, SensorManager.SENSOR_DELAY_FASTEST)
         sensorManager.registerListener(this, linearAccelerometer, SensorManager.SENSOR_DELAY_FASTEST)
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST)
         sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST)
     }
 
@@ -31,6 +33,9 @@ class SensorEventListenerImpl(context: Context, private val imu: IMUInputListene
             }
             Sensor.STRING_TYPE_LINEAR_ACCELERATION -> {
                 imu.onLinearAccelerometerUpdate(event.values)
+            }
+            Sensor.STRING_TYPE_ACCELEROMETER -> {
+                imu.onAccelerometerUpdate(event.values)
             }
             Sensor.STRING_TYPE_MAGNETIC_FIELD -> {
                 imu.onMagnetometerUpdate(event.values)
