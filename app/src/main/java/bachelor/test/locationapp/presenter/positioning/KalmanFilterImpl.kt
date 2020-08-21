@@ -12,13 +12,13 @@ private const val TIME_DELTA = 0.1
 // Studies reveal that the highest acceleration change for pedestrians lies between 0.7m/s**2
 // and 1.4m/s**2.
 // For tweaking reasons, the best MAX_ACCELERATION value still has to be determined empirically.
-private const val MAX_ACCELERATION = 0.8 * TIME_DELTA
+private const val MAX_ACCELERATION = 100 * TIME_DELTA
 // For the process covariance matrix to contain appropriate values, we have to multiply it with
 // the variance of MAX_ACCELERATION which is half to maximum of the change of the fastest changing
 // variable (acceleration) for each time frame of 100ms.
 private const val MAX_ACCELERATION_VARIANCE = MAX_ACCELERATION * MAX_ACCELERATION
 
-class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutputListener): bachelor.test.locationapp.presenter.positioning.KalmanFilter {
+class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutputListener): KalmanFilter {
 
     // Kinematics matrices
     // F
@@ -42,10 +42,10 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     private lateinit var a: DMatrixRMaj
     private lateinit var b: DMatrixRMaj
     private lateinit var y: DMatrixRMaj
-    private lateinit var S:DMatrixRMaj
-    private lateinit var S_inv:DMatrixRMaj
-    private lateinit var c:DMatrixRMaj
-    private lateinit var d:DMatrixRMaj
+    private lateinit var S: DMatrixRMaj
+    private lateinit var S_inv: DMatrixRMaj
+    private lateinit var c: DMatrixRMaj
+    private lateinit var d: DMatrixRMaj
     private lateinit var K: DMatrixRMaj
 
     private lateinit var solver: LinearSolverDense<DMatrixRMaj>

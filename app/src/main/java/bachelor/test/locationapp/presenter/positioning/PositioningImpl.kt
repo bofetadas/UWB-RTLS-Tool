@@ -33,6 +33,7 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     // Kalman Filter callback
     override fun onNewEstimate(locationData: LocationData) {
         presenter.onLocationUpdate(locationData)
+        //UnityPlayer.UnitySendMessage("BluetoothLE", "onMessageReceived", filteredLocation.toString())
     }
 
     private inner class KalmanFilterImplStrategies {
