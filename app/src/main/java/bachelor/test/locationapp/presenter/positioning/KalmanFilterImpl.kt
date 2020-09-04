@@ -5,32 +5,25 @@ import org.ejml.dense.row.CommonOps_DDRM.*
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM
 import org.ejml.interfaces.linsol.LinearSolverDense
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 // For every 100ms when a new UWB location result comes in, we want the Kalman Filter to calculate
 // the best estimate.
 private const val TIME_DELTA = 0.1
-// Studies reveal that the highest acceleration change for pedestrians lies between 0.7m/s**2
-// and 1.4m/s**2.
-// For tweaking reasons, the best MAX_ACCELERATION value still has to be determined empirically.
-private const val MAX_ACCELERATION = 100 * TIME_DELTA
-// For the process covariance matrix to contain appropriate values, we have to multiply it with
-// the variance of MAX_ACCELERATION which is half to maximum of the change of the fastest changing
-// variable (acceleration) for each time frame of 100ms.
-private const val MAX_ACCELERATION_VARIANCE = MAX_ACCELERATION * MAX_ACCELERATION
 
 class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutputListener): KalmanFilter {
-
-    // Kinematics matrices
-    // F
-    private lateinit var stateTransitionMatrix: DMatrixRMaj
-    // Q
-    private lateinit var processNoiseCovarianceMatrix: DMatrixRMaj
 
     // State estimate matrices
     // x
     private lateinit var stateVector: DMatrixRMaj
     // P
     private lateinit var stateNoiseCovarianceMatrix: DMatrixRMaj
+
+    // Kinematics matrices
+    // F
+    private lateinit var stateTransitionMatrix: DMatrixRMaj
+    // Q
+    private lateinit var processNoiseCovarianceMatrix: DMatrixRMaj
 
     // Measurement matrices
     // H
@@ -50,7 +43,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
 
     private lateinit var solver: LinearSolverDense<DMatrixRMaj>
     private val kalmanFilterStrategies = KalmanFilterStrategies()
-    private var predictStrategy: (p0: Any?, p1: Any?) -> Unit = kalmanFilterStrategies.notConfigured
+    private var predictStrategy: (locationData: LocationData?, accelerationData: AccelerationData?) -> Unit = kalmanFilterStrategies.notConfigured
     private var correctStrategy: (locationData: LocationData, accData: AccelerationData) -> Unit = kalmanFilterStrategies.notConfigured
 
     override fun configure(initialLocationData: LocationData){
@@ -73,6 +66,29 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         d = DMatrixRMaj(dimenX, dimenZ)
         K = DMatrixRMaj(dimenX, dimenZ)
 
+        setStateVector(initialLocationData)
+        setStateCovarianceMatrix()
+        setStateTransitionMatrix()
+        setProcessCovarianceMatrix()
+        setMeasurementTransitionMatrix()
+        setMeasurementCovarianceMatrix()
+
+        solver = LinearSolverFactory_DDRM.symmPosDef(dimenX)
+
+        // Set appropriate strategies since the filter is now configured
+        predictStrategy = kalmanFilterStrategies.predict
+        correctStrategy = kalmanFilterStrategies.correct
+    }
+
+    override fun predict(accelerationData: AccelerationData){
+        predictStrategy.invoke(null, accelerationData)
+    }
+
+    override fun correct(locationData: LocationData, accelerationData: AccelerationData){
+        correctStrategy.invoke(locationData, accelerationData)
+    }
+
+    private fun setStateVector(initialLocationData: LocationData) {
         // x
         stateVector[0, 0] = initialLocationData.xPos
         stateVector[1, 0] = initialLocationData.yPos
@@ -83,90 +99,9 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         stateVector[6, 0] = 0.001
         stateVector[7, 0] = 0.001
         stateVector[8, 0] = 0.001
+    }
 
-        // P
-        stateNoiseCovarianceMatrix[0, 0] =  1.0
-        stateNoiseCovarianceMatrix[0, 1] =  0.0
-        stateNoiseCovarianceMatrix[0, 2] =  0.0
-        stateNoiseCovarianceMatrix[0, 3] =  0.0
-        stateNoiseCovarianceMatrix[0, 4] =  0.0
-        stateNoiseCovarianceMatrix[0, 5] =  0.0
-        stateNoiseCovarianceMatrix[0, 6] =  0.0
-        stateNoiseCovarianceMatrix[0, 7] =  0.0
-        stateNoiseCovarianceMatrix[0, 8] =  0.0
-        stateNoiseCovarianceMatrix[1, 0] =  0.0
-        stateNoiseCovarianceMatrix[1, 1] =  1.0
-        stateNoiseCovarianceMatrix[1, 2] =  0.0
-        stateNoiseCovarianceMatrix[1, 3] =  0.0
-        stateNoiseCovarianceMatrix[1, 4] =  0.0
-        stateNoiseCovarianceMatrix[1, 5] =  0.0
-        stateNoiseCovarianceMatrix[1, 6] =  0.0
-        stateNoiseCovarianceMatrix[1, 7] =  0.0
-        stateNoiseCovarianceMatrix[1, 8] =  0.0
-        stateNoiseCovarianceMatrix[2, 0] =  0.0
-        stateNoiseCovarianceMatrix[2, 1] =  0.0
-        stateNoiseCovarianceMatrix[2, 2] =  1.0
-        stateNoiseCovarianceMatrix[2, 3] =  0.0
-        stateNoiseCovarianceMatrix[2, 4] =  0.0
-        stateNoiseCovarianceMatrix[2, 5] =  0.0
-        stateNoiseCovarianceMatrix[2, 6] =  0.0
-        stateNoiseCovarianceMatrix[2, 7] =  0.0
-        stateNoiseCovarianceMatrix[2, 8] =  0.0
-        stateNoiseCovarianceMatrix[3, 0] =  0.0
-        stateNoiseCovarianceMatrix[3, 1] =  0.0
-        stateNoiseCovarianceMatrix[3, 2] =  0.0
-        stateNoiseCovarianceMatrix[3, 3] =  1.0
-        stateNoiseCovarianceMatrix[3, 4] =  0.0
-        stateNoiseCovarianceMatrix[3, 5] =  0.0
-        stateNoiseCovarianceMatrix[3, 6] =  0.0
-        stateNoiseCovarianceMatrix[3, 7] =  0.0
-        stateNoiseCovarianceMatrix[3, 8] =  0.0
-        stateNoiseCovarianceMatrix[4, 0] =  0.0
-        stateNoiseCovarianceMatrix[4, 1] =  0.0
-        stateNoiseCovarianceMatrix[4, 2] =  0.0
-        stateNoiseCovarianceMatrix[4, 3] =  0.0
-        stateNoiseCovarianceMatrix[4, 4] =  1.0
-        stateNoiseCovarianceMatrix[4, 5] =  0.0
-        stateNoiseCovarianceMatrix[4, 6] =  0.0
-        stateNoiseCovarianceMatrix[4, 7] =  0.0
-        stateNoiseCovarianceMatrix[4, 8] =  0.0
-        stateNoiseCovarianceMatrix[5, 0] =  0.0
-        stateNoiseCovarianceMatrix[5, 1] =  0.0
-        stateNoiseCovarianceMatrix[5, 2] =  0.0
-        stateNoiseCovarianceMatrix[5, 3] =  0.0
-        stateNoiseCovarianceMatrix[5, 4] =  0.0
-        stateNoiseCovarianceMatrix[5, 5] =  1.0
-        stateNoiseCovarianceMatrix[5, 6] =  0.0
-        stateNoiseCovarianceMatrix[5, 7] =  0.0
-        stateNoiseCovarianceMatrix[5, 8] =  0.0
-        stateNoiseCovarianceMatrix[6, 0] =  0.0
-        stateNoiseCovarianceMatrix[6, 1] =  0.0
-        stateNoiseCovarianceMatrix[6, 2] =  0.0
-        stateNoiseCovarianceMatrix[6, 3] =  0.0
-        stateNoiseCovarianceMatrix[6, 4] =  0.0
-        stateNoiseCovarianceMatrix[6, 5] =  0.0
-        stateNoiseCovarianceMatrix[6, 6] =  1.0
-        stateNoiseCovarianceMatrix[6, 7] =  0.0
-        stateNoiseCovarianceMatrix[6, 8] =  0.0
-        stateNoiseCovarianceMatrix[7, 0] =  0.0
-        stateNoiseCovarianceMatrix[7, 1] =  0.0
-        stateNoiseCovarianceMatrix[7, 2] =  0.0
-        stateNoiseCovarianceMatrix[7, 3] =  0.0
-        stateNoiseCovarianceMatrix[7, 4] =  0.0
-        stateNoiseCovarianceMatrix[7, 5] =  0.0
-        stateNoiseCovarianceMatrix[7, 6] =  0.0
-        stateNoiseCovarianceMatrix[7, 7] =  1.0
-        stateNoiseCovarianceMatrix[7, 8] =  0.0
-        stateNoiseCovarianceMatrix[8, 0] =  0.0
-        stateNoiseCovarianceMatrix[8, 1] =  0.0
-        stateNoiseCovarianceMatrix[8, 2] =  0.0
-        stateNoiseCovarianceMatrix[8, 3] =  0.0
-        stateNoiseCovarianceMatrix[8, 4] =  0.0
-        stateNoiseCovarianceMatrix[8, 5] =  0.0
-        stateNoiseCovarianceMatrix[8, 6] =  0.0
-        stateNoiseCovarianceMatrix[8, 7] =  0.0
-        stateNoiseCovarianceMatrix[8, 8] =  1.0
-
+    private fun setStateTransitionMatrix() {
         // F
         stateTransitionMatrix[0, 0] =  1.0
         stateTransitionMatrix[0, 1] =  0.0
@@ -249,93 +184,265 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         stateTransitionMatrix[8, 6] =  0.0
         stateTransitionMatrix[8, 7] =  0.0
         stateTransitionMatrix[8, 8] =  1.0
+    }
 
-        // Complete covariance Q
-        processNoiseCovarianceMatrix[0, 0] =  0.25*TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[0, 1] =  0.25*TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[0, 2] =  0.25*TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[0, 3] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[0, 4] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[0, 5] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[0, 6] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[0, 7] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[0, 8] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[1, 0] =  0.25*TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[1, 1] =  0.25*TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[1, 2] =  0.25*TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[1, 3] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[1, 4] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[1, 5] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[1, 6] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[1, 7] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[1, 8] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[2, 0] =  0.25*TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[2, 1] =  0.25*TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[2, 2] =  0.25*TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[2, 3] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[2, 4] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[2, 5] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[2, 6] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[2, 7] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[2, 8] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[3, 0] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[3, 1] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[3, 2] =  0.5*TIME_DELTA.pow(3)
+    private fun setStateCovarianceMatrix(){
+        // P
+        stateNoiseCovarianceMatrix[0, 0] =  1.0
+        stateNoiseCovarianceMatrix[0, 1] =  0.0
+        stateNoiseCovarianceMatrix[0, 2] =  0.0
+        stateNoiseCovarianceMatrix[0, 3] =  0.0
+        stateNoiseCovarianceMatrix[0, 4] =  0.0
+        stateNoiseCovarianceMatrix[0, 5] =  0.0
+        stateNoiseCovarianceMatrix[0, 6] =  0.0
+        stateNoiseCovarianceMatrix[0, 7] =  0.0
+        stateNoiseCovarianceMatrix[0, 8] =  0.0
+        stateNoiseCovarianceMatrix[1, 0] =  0.0
+        stateNoiseCovarianceMatrix[1, 1] =  1.0
+        stateNoiseCovarianceMatrix[1, 2] =  0.0
+        stateNoiseCovarianceMatrix[1, 3] =  0.0
+        stateNoiseCovarianceMatrix[1, 4] =  0.0
+        stateNoiseCovarianceMatrix[1, 5] =  0.0
+        stateNoiseCovarianceMatrix[1, 6] =  0.0
+        stateNoiseCovarianceMatrix[1, 7] =  0.0
+        stateNoiseCovarianceMatrix[1, 8] =  0.0
+        stateNoiseCovarianceMatrix[2, 0] =  0.0
+        stateNoiseCovarianceMatrix[2, 1] =  0.0
+        stateNoiseCovarianceMatrix[2, 2] =  1.0
+        stateNoiseCovarianceMatrix[2, 3] =  0.0
+        stateNoiseCovarianceMatrix[2, 4] =  0.0
+        stateNoiseCovarianceMatrix[2, 5] =  0.0
+        stateNoiseCovarianceMatrix[2, 6] =  0.0
+        stateNoiseCovarianceMatrix[2, 7] =  0.0
+        stateNoiseCovarianceMatrix[2, 8] =  0.0
+        stateNoiseCovarianceMatrix[3, 0] =  0.0
+        stateNoiseCovarianceMatrix[3, 1] =  0.0
+        stateNoiseCovarianceMatrix[3, 2] =  0.0
+        stateNoiseCovarianceMatrix[3, 3] =  0.1
+        stateNoiseCovarianceMatrix[3, 4] =  0.0
+        stateNoiseCovarianceMatrix[3, 5] =  0.0
+        stateNoiseCovarianceMatrix[3, 6] =  0.0
+        stateNoiseCovarianceMatrix[3, 7] =  0.0
+        stateNoiseCovarianceMatrix[3, 8] =  0.0
+        stateNoiseCovarianceMatrix[4, 0] =  0.0
+        stateNoiseCovarianceMatrix[4, 1] =  0.0
+        stateNoiseCovarianceMatrix[4, 2] =  0.0
+        stateNoiseCovarianceMatrix[4, 3] =  0.0
+        stateNoiseCovarianceMatrix[4, 4] =  0.1
+        stateNoiseCovarianceMatrix[4, 5] =  0.0
+        stateNoiseCovarianceMatrix[4, 6] =  0.0
+        stateNoiseCovarianceMatrix[4, 7] =  0.0
+        stateNoiseCovarianceMatrix[4, 8] =  0.0
+        stateNoiseCovarianceMatrix[5, 0] =  0.0
+        stateNoiseCovarianceMatrix[5, 1] =  0.0
+        stateNoiseCovarianceMatrix[5, 2] =  0.0
+        stateNoiseCovarianceMatrix[5, 3] =  0.0
+        stateNoiseCovarianceMatrix[5, 4] =  0.0
+        stateNoiseCovarianceMatrix[5, 5] =  0.1
+        stateNoiseCovarianceMatrix[5, 6] =  0.0
+        stateNoiseCovarianceMatrix[5, 7] =  0.0
+        stateNoiseCovarianceMatrix[5, 8] =  0.0
+        stateNoiseCovarianceMatrix[6, 0] =  0.0
+        stateNoiseCovarianceMatrix[6, 1] =  0.0
+        stateNoiseCovarianceMatrix[6, 2] =  0.0
+        stateNoiseCovarianceMatrix[6, 3] =  0.0
+        stateNoiseCovarianceMatrix[6, 4] =  0.0
+        stateNoiseCovarianceMatrix[6, 5] =  0.0
+        stateNoiseCovarianceMatrix[6, 6] =  0.1
+        stateNoiseCovarianceMatrix[6, 7] =  0.0
+        stateNoiseCovarianceMatrix[6, 8] =  0.0
+        stateNoiseCovarianceMatrix[7, 0] =  0.0
+        stateNoiseCovarianceMatrix[7, 1] =  0.0
+        stateNoiseCovarianceMatrix[7, 2] =  0.0
+        stateNoiseCovarianceMatrix[7, 3] =  0.0
+        stateNoiseCovarianceMatrix[7, 4] =  0.0
+        stateNoiseCovarianceMatrix[7, 5] =  0.0
+        stateNoiseCovarianceMatrix[7, 6] =  0.0
+        stateNoiseCovarianceMatrix[7, 7] =  0.1
+        stateNoiseCovarianceMatrix[7, 8] =  0.0
+        stateNoiseCovarianceMatrix[8, 0] =  0.0
+        stateNoiseCovarianceMatrix[8, 1] =  0.0
+        stateNoiseCovarianceMatrix[8, 2] =  0.0
+        stateNoiseCovarianceMatrix[8, 3] =  0.0
+        stateNoiseCovarianceMatrix[8, 4] =  0.0
+        stateNoiseCovarianceMatrix[8, 5] =  0.0
+        stateNoiseCovarianceMatrix[8, 6] =  0.0
+        stateNoiseCovarianceMatrix[8, 7] =  0.0
+        stateNoiseCovarianceMatrix[8, 8] =  0.1
+    }
+
+    private fun setProcessCovarianceMatrix() {
+        // Complete Covariance Q
+        /*processNoiseCovarianceMatrix[0, 0] =  0.25 * TIME_DELTA.pow(4)
+        processNoiseCovarianceMatrix[0, 1] =  0.25 * TIME_DELTA.pow(4)
+        processNoiseCovarianceMatrix[0, 2] =  0.25 * TIME_DELTA.pow(4)
+        processNoiseCovarianceMatrix[0, 3] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[0, 4] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[0, 5] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[0, 6] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[0, 7] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[0, 8] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[1, 0] =  0.25 * TIME_DELTA.pow(4)
+        processNoiseCovarianceMatrix[1, 1] =  0.25 * TIME_DELTA.pow(4)
+        processNoiseCovarianceMatrix[1, 2] =  0.25 * TIME_DELTA.pow(4)
+        processNoiseCovarianceMatrix[1, 3] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[1, 4] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[1, 5] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[1, 6] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[1, 7] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[1, 8] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[2, 0] =  0.25 * TIME_DELTA.pow(4)
+        processNoiseCovarianceMatrix[2, 1] =  0.25 * TIME_DELTA.pow(4)
+        processNoiseCovarianceMatrix[2, 2] =  0.25 * TIME_DELTA.pow(4)
+        processNoiseCovarianceMatrix[2, 3] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[2, 4] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[2, 5] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[2, 6] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[2, 7] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[2, 8] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[3, 0] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[3, 1] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[3, 2] =  0.5 * TIME_DELTA.pow(3)
         processNoiseCovarianceMatrix[3, 3] =  TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[3, 4] =  TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[3, 5] =  TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[3, 6] =  TIME_DELTA
         processNoiseCovarianceMatrix[3, 7] =  TIME_DELTA
         processNoiseCovarianceMatrix[3, 8] =  TIME_DELTA
-        processNoiseCovarianceMatrix[4, 0] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[4, 1] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[4, 2] =  0.5*TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[4, 0] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[4, 1] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[4, 2] =  0.5 * TIME_DELTA.pow(3)
         processNoiseCovarianceMatrix[4, 3] =  TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[4, 4] =  TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[4, 5] =  TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[4, 6] =  TIME_DELTA
         processNoiseCovarianceMatrix[4, 7] =  TIME_DELTA
         processNoiseCovarianceMatrix[4, 8] =  TIME_DELTA
-        processNoiseCovarianceMatrix[5, 0] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[5, 1] =  0.5*TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[5, 2] =  0.5*TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[5, 0] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[5, 1] =  0.5 * TIME_DELTA.pow(3)
+        processNoiseCovarianceMatrix[5, 2] =  0.5 * TIME_DELTA.pow(3)
         processNoiseCovarianceMatrix[5, 3] =  TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[5, 4] =  TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[5, 5] =  TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[5, 6] =  TIME_DELTA
         processNoiseCovarianceMatrix[5, 7] =  TIME_DELTA
         processNoiseCovarianceMatrix[5, 8] =  TIME_DELTA
-        processNoiseCovarianceMatrix[6, 0] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[6, 1] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[6, 2] =  0.5*TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[6, 0] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[6, 1] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[6, 2] =  0.5 * TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[6, 3] =  TIME_DELTA
         processNoiseCovarianceMatrix[6, 4] =  TIME_DELTA
         processNoiseCovarianceMatrix[6, 5] =  TIME_DELTA
         processNoiseCovarianceMatrix[6, 6] =  1.0
         processNoiseCovarianceMatrix[6, 7] =  1.0
         processNoiseCovarianceMatrix[6, 8] =  1.0
-        processNoiseCovarianceMatrix[7, 0] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[7, 1] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[7, 2] =  0.5*TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[7, 0] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[7, 1] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[7, 2] =  0.5 * TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[7, 3] =  TIME_DELTA
         processNoiseCovarianceMatrix[7, 4] =  TIME_DELTA
         processNoiseCovarianceMatrix[7, 5] =  TIME_DELTA
         processNoiseCovarianceMatrix[7, 6] =  1.0
         processNoiseCovarianceMatrix[7, 7] =  1.0
         processNoiseCovarianceMatrix[7, 8] =  1.0
-        processNoiseCovarianceMatrix[8, 0] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[8, 1] =  0.5*TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[8, 2] =  0.5*TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[8, 0] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[8, 1] =  0.5 * TIME_DELTA.pow(2)
+        processNoiseCovarianceMatrix[8, 2] =  0.5 * TIME_DELTA.pow(2)
         processNoiseCovarianceMatrix[8, 3] =  TIME_DELTA
         processNoiseCovarianceMatrix[8, 4] =  TIME_DELTA
         processNoiseCovarianceMatrix[8, 5] =  TIME_DELTA
         processNoiseCovarianceMatrix[8, 6] =  1.0
         processNoiseCovarianceMatrix[8, 7] =  1.0
-        processNoiseCovarianceMatrix[8, 8] =  1.0
-        for (i in processNoiseCovarianceMatrix.data.indices){
+        processNoiseCovarianceMatrix[8, 8] =  1.0*/
+        /*for (i in processNoiseCovarianceMatrix.data.indices){
             processNoiseCovarianceMatrix[i] *= MAX_ACCELERATION_VARIANCE
-        }
+        }*/
 
+        // Simple Experimental Q
+        processNoiseCovarianceMatrix[0, 0] =  0.25
+        processNoiseCovarianceMatrix[0, 1] =  0.0
+        processNoiseCovarianceMatrix[0, 2] =  0.0
+        processNoiseCovarianceMatrix[0, 3] =  0.0
+        processNoiseCovarianceMatrix[0, 4] =  0.0
+        processNoiseCovarianceMatrix[0, 5] =  0.0
+        processNoiseCovarianceMatrix[0, 6] =  0.0
+        processNoiseCovarianceMatrix[0, 7] =  0.0
+        processNoiseCovarianceMatrix[0, 8] =  0.0
+        processNoiseCovarianceMatrix[1, 0] =  0.0
+        processNoiseCovarianceMatrix[1, 1] =  0.25
+        processNoiseCovarianceMatrix[1, 2] =  0.0
+        processNoiseCovarianceMatrix[1, 3] =  0.0
+        processNoiseCovarianceMatrix[1, 4] =  0.0
+        processNoiseCovarianceMatrix[1, 5] =  0.0
+        processNoiseCovarianceMatrix[1, 6] =  0.0
+        processNoiseCovarianceMatrix[1, 7] =  0.0
+        processNoiseCovarianceMatrix[1, 8] =  0.0
+        processNoiseCovarianceMatrix[2, 0] =  0.0
+        processNoiseCovarianceMatrix[2, 1] =  0.0
+        processNoiseCovarianceMatrix[2, 2] =  0.25
+        processNoiseCovarianceMatrix[2, 3] =  0.0
+        processNoiseCovarianceMatrix[2, 4] =  0.0
+        processNoiseCovarianceMatrix[2, 5] =  0.0
+        processNoiseCovarianceMatrix[2, 6] =  0.0
+        processNoiseCovarianceMatrix[2, 7] =  0.0
+        processNoiseCovarianceMatrix[2, 8] =  0.0
+        processNoiseCovarianceMatrix[3, 0] =  0.0
+        processNoiseCovarianceMatrix[3, 1] =  0.0
+        processNoiseCovarianceMatrix[3, 2] =  0.0
+        processNoiseCovarianceMatrix[3, 3] =  0.5
+        processNoiseCovarianceMatrix[3, 4] =  0.0
+        processNoiseCovarianceMatrix[3, 5] =  0.0
+        processNoiseCovarianceMatrix[3, 6] =  0.0
+        processNoiseCovarianceMatrix[3, 7] =  0.0
+        processNoiseCovarianceMatrix[3, 8] =  0.0
+        processNoiseCovarianceMatrix[4, 0] =  0.0
+        processNoiseCovarianceMatrix[4, 1] =  0.0
+        processNoiseCovarianceMatrix[4, 2] =  0.0
+        processNoiseCovarianceMatrix[4, 3] =  0.0
+        processNoiseCovarianceMatrix[4, 4] =  0.5
+        processNoiseCovarianceMatrix[4, 5] =  0.0
+        processNoiseCovarianceMatrix[4, 6] =  0.0
+        processNoiseCovarianceMatrix[4, 7] =  0.0
+        processNoiseCovarianceMatrix[4, 8] =  0.0
+        processNoiseCovarianceMatrix[5, 0] =  0.0
+        processNoiseCovarianceMatrix[5, 1] =  0.0
+        processNoiseCovarianceMatrix[5, 2] =  0.0
+        processNoiseCovarianceMatrix[5, 3] =  0.0
+        processNoiseCovarianceMatrix[5, 4] =  0.0
+        processNoiseCovarianceMatrix[5, 5] =  0.5
+        processNoiseCovarianceMatrix[5, 6] =  0.0
+        processNoiseCovarianceMatrix[5, 7] =  0.0
+        processNoiseCovarianceMatrix[5, 8] =  0.0
+        processNoiseCovarianceMatrix[6, 0] =  0.0
+        processNoiseCovarianceMatrix[6, 1] =  0.0
+        processNoiseCovarianceMatrix[6, 2] =  0.0
+        processNoiseCovarianceMatrix[6, 3] =  0.0
+        processNoiseCovarianceMatrix[6, 4] =  0.0
+        processNoiseCovarianceMatrix[6, 5] =  0.0
+        processNoiseCovarianceMatrix[6, 6] =  1.0
+        processNoiseCovarianceMatrix[6, 7] =  0.0
+        processNoiseCovarianceMatrix[6, 8] =  0.0
+        processNoiseCovarianceMatrix[7, 0] =  0.0
+        processNoiseCovarianceMatrix[7, 1] =  0.0
+        processNoiseCovarianceMatrix[7, 2] =  0.0
+        processNoiseCovarianceMatrix[7, 3] =  0.0
+        processNoiseCovarianceMatrix[7, 4] =  0.0
+        processNoiseCovarianceMatrix[7, 5] =  0.0
+        processNoiseCovarianceMatrix[7, 6] =  0.0
+        processNoiseCovarianceMatrix[7, 7] =  1.0
+        processNoiseCovarianceMatrix[7, 8] =  0.0
+        processNoiseCovarianceMatrix[8, 0] =  0.0
+        processNoiseCovarianceMatrix[8, 1] =  0.0
+        processNoiseCovarianceMatrix[8, 2] =  0.0
+        processNoiseCovarianceMatrix[8, 3] =  0.0
+        processNoiseCovarianceMatrix[8, 4] =  0.0
+        processNoiseCovarianceMatrix[8, 5] =  0.0
+        processNoiseCovarianceMatrix[8, 6] =  0.0
+        processNoiseCovarianceMatrix[8, 7] =  0.0
+        processNoiseCovarianceMatrix[8, 8] =  1.0
+    }
+
+    private fun setMeasurementTransitionMatrix() {
         // H
         measurementTransitionMatrix[0, 0] = 1.0
         measurementTransitionMatrix[0, 1] = 0.0
@@ -391,47 +498,11 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementTransitionMatrix[5, 6] = 0.0
         measurementTransitionMatrix[5, 7] = 0.0
         measurementTransitionMatrix[5, 8] = 1.0
+    }
 
-        // Diagonal Covariance R
-        /*measurementNoiseCovarianceMatrix[0, 0] =  0.005
-        measurementNoiseCovarianceMatrix[0, 1] =  0.0
-        measurementNoiseCovarianceMatrix[0, 2] =  0.0
-        measurementNoiseCovarianceMatrix[0, 3] =  0.0
-        measurementNoiseCovarianceMatrix[0, 4] =  0.0
-        measurementNoiseCovarianceMatrix[0, 5] =  0.0
-        measurementNoiseCovarianceMatrix[1, 0] =  0.0
-        measurementNoiseCovarianceMatrix[1, 1] =  0.0137
-        measurementNoiseCovarianceMatrix[1, 2] =  0.0
-        measurementNoiseCovarianceMatrix[1, 3] =  0.0
-        measurementNoiseCovarianceMatrix[1, 4] =  0.0
-        measurementNoiseCovarianceMatrix[1, 5] =  0.0
-        measurementNoiseCovarianceMatrix[2, 0] =  0.0
-        measurementNoiseCovarianceMatrix[2, 1] =  0.0
-        measurementNoiseCovarianceMatrix[2, 2] =  0.029
-        measurementNoiseCovarianceMatrix[2, 3] =  0.0
-        measurementNoiseCovarianceMatrix[2, 4] =  0.0
-        measurementNoiseCovarianceMatrix[2, 5] =  0.0
-        measurementNoiseCovarianceMatrix[3, 0] =  0.0
-        measurementNoiseCovarianceMatrix[3, 1] =  0.0
-        measurementNoiseCovarianceMatrix[3, 2] =  0.0
-        measurementNoiseCovarianceMatrix[3, 3] =  0.000073
-        measurementNoiseCovarianceMatrix[3, 4] =  0.0
-        measurementNoiseCovarianceMatrix[3, 5] =  0.0
-        measurementNoiseCovarianceMatrix[4, 0] =  0.0
-        measurementNoiseCovarianceMatrix[4, 1] =  0.0
-        measurementNoiseCovarianceMatrix[4, 2] =  0.0
-        measurementNoiseCovarianceMatrix[4, 3] =  0.0
-        measurementNoiseCovarianceMatrix[4, 4] =  0.000076
-        measurementNoiseCovarianceMatrix[4, 5] =  0.0
-        measurementNoiseCovarianceMatrix[5, 0] =  0.0
-        measurementNoiseCovarianceMatrix[5, 1] =  0.0
-        measurementNoiseCovarianceMatrix[5, 2] =  0.0
-        measurementNoiseCovarianceMatrix[5, 3] =  0.0
-        measurementNoiseCovarianceMatrix[5, 4] =  0.0
-        measurementNoiseCovarianceMatrix[5, 5] =  0.000087*/
-
+    private fun setMeasurementCovarianceMatrix() {
         // Complete Covariance R
-        measurementNoiseCovarianceMatrix[0, 0] =  0.005
+        /*measurementNoiseCovarianceMatrix[0, 0] =  0.005
         measurementNoiseCovarianceMatrix[0, 1] =  0.0023
         measurementNoiseCovarianceMatrix[0, 2] =  0.0018
         measurementNoiseCovarianceMatrix[0, 3] =  0.0
@@ -466,59 +537,100 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[5, 2] =  0.0
         measurementNoiseCovarianceMatrix[5, 3] =  -0.000045
         measurementNoiseCovarianceMatrix[5, 4] =  0.000168
+        measurementNoiseCovarianceMatrix[5, 5] =  0.009926*/
+
+        // Simple R
+        measurementNoiseCovarianceMatrix[0, 0] =  0.0001
+        measurementNoiseCovarianceMatrix[0, 1] =  0.0
+        measurementNoiseCovarianceMatrix[0, 2] =  0.0
+        measurementNoiseCovarianceMatrix[0, 3] =  0.0
+        measurementNoiseCovarianceMatrix[0, 4] =  0.0
+        measurementNoiseCovarianceMatrix[0, 5] =  0.0
+        measurementNoiseCovarianceMatrix[1, 0] =  0.0
+        measurementNoiseCovarianceMatrix[1, 1] =  0.0001
+        measurementNoiseCovarianceMatrix[1, 2] =  0.0
+        measurementNoiseCovarianceMatrix[1, 3] =  0.0
+        measurementNoiseCovarianceMatrix[1, 4] =  0.0
+        measurementNoiseCovarianceMatrix[1, 5] =  0.0
+        measurementNoiseCovarianceMatrix[2, 0] =  0.0
+        measurementNoiseCovarianceMatrix[2, 1] =  0.0
+        measurementNoiseCovarianceMatrix[2, 2] =  0.029
+        measurementNoiseCovarianceMatrix[2, 3] =  0.0
+        measurementNoiseCovarianceMatrix[2, 4] =  0.0
+        measurementNoiseCovarianceMatrix[2, 5] =  0.0
+        measurementNoiseCovarianceMatrix[3, 0] =  0.0
+        measurementNoiseCovarianceMatrix[3, 1] =  0.0
+        measurementNoiseCovarianceMatrix[3, 2] =  0.0
+        measurementNoiseCovarianceMatrix[3, 3] =  0.0001
+        measurementNoiseCovarianceMatrix[3, 4] =  0.0
+        measurementNoiseCovarianceMatrix[3, 5] =  0.0
+        measurementNoiseCovarianceMatrix[4, 0] =  0.0
+        measurementNoiseCovarianceMatrix[4, 1] =  0.0
+        measurementNoiseCovarianceMatrix[4, 2] =  0.0
+        measurementNoiseCovarianceMatrix[4, 3] =  0.0
+        measurementNoiseCovarianceMatrix[4, 4] =  0.0001
+        measurementNoiseCovarianceMatrix[4, 5] =  0.0
+        measurementNoiseCovarianceMatrix[5, 0] =  0.0
+        measurementNoiseCovarianceMatrix[5, 1] =  0.0
+        measurementNoiseCovarianceMatrix[5, 2] =  0.0
+        measurementNoiseCovarianceMatrix[5, 3] =  0.0
+        measurementNoiseCovarianceMatrix[5, 4] =  0.0
         measurementNoiseCovarianceMatrix[5, 5] =  0.009926
-
-        solver = LinearSolverFactory_DDRM.symmPosDef(dimenX);
-
-        // Set appropriate strategies since the filter is now configured
-        predictStrategy = kalmanFilterStrategies.predict
-        correctStrategy = kalmanFilterStrategies.correct
-    }
-
-    override fun predict(){
-        predictStrategy.invoke(null, null)
-    }
-
-    override fun correct(locationData: LocationData, accelerationData: AccelerationData){
-        correctStrategy.invoke(locationData, accelerationData)
     }
 
     private inner class KalmanFilterStrategies {
-        val predict: (p0: Any?, p1: Any?) -> Unit  = {_, _ ->
-            // x = F x
+        val predict: (locationData: LocationData?, accelerationData: AccelerationData?) -> Unit  = { _, accelerationData ->
+            // Current overall acceleration
+            val overallAcceleration = sqrt(accelerationData!!.xAcc.pow(2) + accelerationData.yAcc.pow(2) + accelerationData.zAcc.pow(2))
+            val length = processNoiseCovarianceMatrix.numElements
+            val data = DoubleArray(length)
+            System.arraycopy(processNoiseCovarianceMatrix.data, 0, data, 0, length)
+            val q = DMatrixRMaj(data)
+            val dimension = sqrt(length.toFloat()).toInt()
+            q.numRows = dimension
+            q.numCols = dimension
+            for (i in q.data.indices){
+                q[i] *= overallAcceleration
+            }
+            println("Overall Acc: $overallAcceleration")
+
+            // x = F * x
             mult(stateTransitionMatrix, stateVector, a)
             stateVector.set(a)
 
-            // P = F P F' + Q
+            // P = F * P * F' + Q
             mult(stateTransitionMatrix, stateNoiseCovarianceMatrix, b)
             multTransB(b, stateTransitionMatrix, stateNoiseCovarianceMatrix)
-            addEquals(stateNoiseCovarianceMatrix, processNoiseCovarianceMatrix)
+            addEquals(stateNoiseCovarianceMatrix, q)
         }
 
-        val correct: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = { locationData, accelerationData ->
-            // y = z - H x
+        val correct: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = correct@ { locationData, accelerationData ->
+            // y = z - H * x
             val measurementVector = DMatrixRMaj(doubleArrayOf(locationData.xPos, locationData.yPos, locationData.zPos, accelerationData.xAcc, accelerationData.yAcc, accelerationData.zAcc))
             mult(measurementTransitionMatrix, stateVector, y)
             subtract(measurementVector, y, y)
 
-            // S = H P H' + R
+            // S = H * P * H' + R
             mult(measurementTransitionMatrix, stateNoiseCovarianceMatrix, c)
             multTransB(c, measurementTransitionMatrix, S)
             addEquals(S, measurementNoiseCovarianceMatrix)
 
-            // K = PH'S^(-1)
+            // K = P * H' * S^(-1)
             if(!solver.setA(S)){
-                throw RuntimeException("Invert failed")
+                println("RESET")
+                // Reset P to avoid diverging Kalman Filter
+                setStateCovarianceMatrix()
+                return@correct
             }
             solver.invert(S_inv)
             multTransA(measurementTransitionMatrix, S_inv, d)
             mult(stateNoiseCovarianceMatrix, d, K)
 
-            // x = x + Ky
+            // x = x + K * y
             mult(K,y,a)
             addEquals(stateVector, a)
 
-            // P = (I-kH)P = P - (KH)P = P-K(HP)
+            // P = (I - k * H) * P = P - (K * H) * P = P - K * (H * P)
             mult(measurementTransitionMatrix, stateNoiseCovarianceMatrix, c)
             mult(K, c, b)
             subtractEquals(stateNoiseCovarianceMatrix, b)

@@ -3,6 +3,8 @@ package bachelor.test.locationapp.presenter.positioning
 import android.content.Context
 import bachelor.test.locationapp.view.MainScreenContract
 
+private const val POSITION_BYTE_ARRAY_SIZE = 14
+
 // Entry class for handling positioning logic
 class PositioningImpl(context: Context, private val presenter: MainScreenContract.Presenter): Positioning, IMUOutputListener, KalmanFilterOutputListener {
 
@@ -10,7 +12,7 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     private val imu = IMU(context, this)
     private val kalmanFilterImpl = KalmanFilterImpl(this)
     private val kalmanFilterImplStrategies = KalmanFilterImplStrategies()
-    private var kalmanFilterImplStrategy: (locationData: LocationData, accData: AccelerationData) -> Unit = kalmanFilterImplStrategies.configureStrategy
+    private var kalmanFilterImplStrategy: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = kalmanFilterImplStrategies.configureStrategy
 
     override fun startIMU() {
         imu.start()
@@ -21,6 +23,7 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     }
 
     override fun calculateLocation(byteArray: ByteArray) {
+        if (byteArray.size != POSITION_BYTE_ARRAY_SIZE) return
         val uwbLocation = converter.getLocationFromByteArray(byteArray)
         val imuAcceleration = imu.calculateAcceleration()
         kalmanFilterImplStrategy.invoke(uwbLocation, imuAcceleration)
@@ -42,9 +45,9 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
             kalmanFilterImplStrategy = estimateStrategy
         }
 
-        val estimateStrategy: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = { locationData, accData ->
-            kalmanFilterImpl.predict()
-            kalmanFilterImpl.correct(locationData, accData)
+        val estimateStrategy: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = { locationData, accelerationData ->
+            kalmanFilterImpl.predict(accelerationData)
+            kalmanFilterImpl.correct(locationData, accelerationData)
         }
     }
 }
