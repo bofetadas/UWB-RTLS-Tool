@@ -359,7 +359,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         }*/
 
         // Simple Experimental Q
-        processNoiseCovarianceMatrix[0, 0] =  0.25
+        processNoiseCovarianceMatrix[0, 0] =  0.1
         processNoiseCovarianceMatrix[0, 1] =  0.0
         processNoiseCovarianceMatrix[0, 2] =  0.0
         processNoiseCovarianceMatrix[0, 3] =  0.0
@@ -369,7 +369,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[0, 7] =  0.0
         processNoiseCovarianceMatrix[0, 8] =  0.0
         processNoiseCovarianceMatrix[1, 0] =  0.0
-        processNoiseCovarianceMatrix[1, 1] =  0.25
+        processNoiseCovarianceMatrix[1, 1] =  0.1
         processNoiseCovarianceMatrix[1, 2] =  0.0
         processNoiseCovarianceMatrix[1, 3] =  0.0
         processNoiseCovarianceMatrix[1, 4] =  0.0
@@ -379,7 +379,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[1, 8] =  0.0
         processNoiseCovarianceMatrix[2, 0] =  0.0
         processNoiseCovarianceMatrix[2, 1] =  0.0
-        processNoiseCovarianceMatrix[2, 2] =  0.25
+        processNoiseCovarianceMatrix[2, 2] =  0.01
         processNoiseCovarianceMatrix[2, 3] =  0.0
         processNoiseCovarianceMatrix[2, 4] =  0.0
         processNoiseCovarianceMatrix[2, 5] =  0.0
@@ -389,7 +389,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[3, 0] =  0.0
         processNoiseCovarianceMatrix[3, 1] =  0.0
         processNoiseCovarianceMatrix[3, 2] =  0.0
-        processNoiseCovarianceMatrix[3, 3] =  0.5
+        processNoiseCovarianceMatrix[3, 3] =  0.2
         processNoiseCovarianceMatrix[3, 4] =  0.0
         processNoiseCovarianceMatrix[3, 5] =  0.0
         processNoiseCovarianceMatrix[3, 6] =  0.0
@@ -399,7 +399,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[4, 1] =  0.0
         processNoiseCovarianceMatrix[4, 2] =  0.0
         processNoiseCovarianceMatrix[4, 3] =  0.0
-        processNoiseCovarianceMatrix[4, 4] =  0.5
+        processNoiseCovarianceMatrix[4, 4] =  0.2
         processNoiseCovarianceMatrix[4, 5] =  0.0
         processNoiseCovarianceMatrix[4, 6] =  0.0
         processNoiseCovarianceMatrix[4, 7] =  0.0
@@ -409,7 +409,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[5, 2] =  0.0
         processNoiseCovarianceMatrix[5, 3] =  0.0
         processNoiseCovarianceMatrix[5, 4] =  0.0
-        processNoiseCovarianceMatrix[5, 5] =  0.5
+        processNoiseCovarianceMatrix[5, 5] =  0.02
         processNoiseCovarianceMatrix[5, 6] =  0.0
         processNoiseCovarianceMatrix[5, 7] =  0.0
         processNoiseCovarianceMatrix[5, 8] =  0.0
@@ -419,7 +419,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[6, 3] =  0.0
         processNoiseCovarianceMatrix[6, 4] =  0.0
         processNoiseCovarianceMatrix[6, 5] =  0.0
-        processNoiseCovarianceMatrix[6, 6] =  1.0
+        processNoiseCovarianceMatrix[6, 6] =  0.5
         processNoiseCovarianceMatrix[6, 7] =  0.0
         processNoiseCovarianceMatrix[6, 8] =  0.0
         processNoiseCovarianceMatrix[7, 0] =  0.0
@@ -429,7 +429,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[7, 4] =  0.0
         processNoiseCovarianceMatrix[7, 5] =  0.0
         processNoiseCovarianceMatrix[7, 6] =  0.0
-        processNoiseCovarianceMatrix[7, 7] =  1.0
+        processNoiseCovarianceMatrix[7, 7] =  0.5
         processNoiseCovarianceMatrix[7, 8] =  0.0
         processNoiseCovarianceMatrix[8, 0] =  0.0
         processNoiseCovarianceMatrix[8, 1] =  0.0
@@ -439,7 +439,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[8, 5] =  0.0
         processNoiseCovarianceMatrix[8, 6] =  0.0
         processNoiseCovarianceMatrix[8, 7] =  0.0
-        processNoiseCovarianceMatrix[8, 8] =  1.0
+        processNoiseCovarianceMatrix[8, 8] =  0.05
     }
 
     private fun setMeasurementTransitionMatrix() {
@@ -540,14 +540,14 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[5, 5] =  0.009926*/
 
         // Simple R
-        measurementNoiseCovarianceMatrix[0, 0] =  0.0001
+        measurementNoiseCovarianceMatrix[0, 0] =  0.005
         measurementNoiseCovarianceMatrix[0, 1] =  0.0
         measurementNoiseCovarianceMatrix[0, 2] =  0.0
         measurementNoiseCovarianceMatrix[0, 3] =  0.0
         measurementNoiseCovarianceMatrix[0, 4] =  0.0
         measurementNoiseCovarianceMatrix[0, 5] =  0.0
         measurementNoiseCovarianceMatrix[1, 0] =  0.0
-        measurementNoiseCovarianceMatrix[1, 1] =  0.0001
+        measurementNoiseCovarianceMatrix[1, 1] =  0.0137
         measurementNoiseCovarianceMatrix[1, 2] =  0.0
         measurementNoiseCovarianceMatrix[1, 3] =  0.0
         measurementNoiseCovarianceMatrix[1, 4] =  0.0
