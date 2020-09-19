@@ -540,7 +540,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[5, 5] =  0.009926*/
 
         // Simple R
-        measurementNoiseCovarianceMatrix[0, 0] =  0.005
+        measurementNoiseCovarianceMatrix[0, 0] =  1.0
         measurementNoiseCovarianceMatrix[0, 1] =  0.0
         measurementNoiseCovarianceMatrix[0, 2] =  0.0
         measurementNoiseCovarianceMatrix[0, 3] =  0.0
@@ -554,14 +554,14 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[1, 5] =  0.0
         measurementNoiseCovarianceMatrix[2, 0] =  0.0
         measurementNoiseCovarianceMatrix[2, 1] =  0.0
-        measurementNoiseCovarianceMatrix[2, 2] =  0.5
+        measurementNoiseCovarianceMatrix[2, 2] =  1.5
         measurementNoiseCovarianceMatrix[2, 3] =  0.0
         measurementNoiseCovarianceMatrix[2, 4] =  0.0
         measurementNoiseCovarianceMatrix[2, 5] =  0.0
         measurementNoiseCovarianceMatrix[3, 0] =  0.0
         measurementNoiseCovarianceMatrix[3, 1] =  0.0
         measurementNoiseCovarianceMatrix[3, 2] =  0.0
-        measurementNoiseCovarianceMatrix[3, 3] =  0.0001
+        measurementNoiseCovarianceMatrix[3, 3] =  1.0
         measurementNoiseCovarianceMatrix[3, 4] =  0.0
         measurementNoiseCovarianceMatrix[3, 5] =  0.0
         measurementNoiseCovarianceMatrix[4, 0] =  0.0
@@ -575,12 +575,12 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[5, 2] =  0.0
         measurementNoiseCovarianceMatrix[5, 3] =  0.0
         measurementNoiseCovarianceMatrix[5, 4] =  0.0
-        measurementNoiseCovarianceMatrix[5, 5] =  0.5
+        measurementNoiseCovarianceMatrix[5, 5] =  1.5
     }
 
     private inner class KalmanFilterStrategies {
         val predict: (locationData: LocationData?, accelerationData: AccelerationData?) -> Unit  = { _, accelerationData ->
-            // With each prediction update the process noise covariance matrix with the current overall acceleration to make the filter more adaptive
+            // With each prediction, update the process noise covariance matrix with the current overall acceleration to make the filter more adaptive
             val currentProcessNoiseCovarianceMatrix = applyCurrentOverallAccelerationToProcessNoiseCovarianceMatrix(accelerationData!!)
 
             // x = F * x
@@ -616,7 +616,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             mult(stateNoiseCovarianceMatrix, d, K)
 
             // x = x + K * y
-            mult(K,y,a)
+            mult(K, y, a)
             addEquals(stateVector, a)
 
             // P = (I - k * H) * P = P - (K * H) * P = P - K * (H * P)
@@ -633,8 +633,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             val size = processNoiseCovarianceMatrix.numElements
             val data = DoubleArray(size)
             System.arraycopy(processNoiseCovarianceMatrix.data, 0, data, 0, size)
-            val dimension = sqrt(size.toFloat()).toInt()
-            val q = DMatrixRMaj.wrap(dimension, dimension, data)
+            val q = DMatrixRMaj.wrap(processNoiseCovarianceMatrix.numRows, processNoiseCovarianceMatrix.numCols, data)
             val overallAcceleration = calculateOverallAcceleration(accelerationData)
             for (i in q.data.indices){
                 // TODO: Square or not square?
