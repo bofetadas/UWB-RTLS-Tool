@@ -19,6 +19,6 @@ class FileWriter(private val context: Context) {
     }
 
     fun writeToFile(message: String){
-        file.appendText("$message, ${System.currentTimeMillis()}\n")
+        file.appendText("$message\n")
     }
 }

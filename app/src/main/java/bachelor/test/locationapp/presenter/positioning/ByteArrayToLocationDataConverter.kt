@@ -13,8 +13,7 @@ class ByteArrayToLocationDataConverter {
         val zByteArray = byteArrayOf(locationByteArray[12], locationByteArray[11], locationByteArray[10], locationByteArray[9])
         val zPosition = zByteArray.transformIntoSignedDouble()
 
-        val qualityFactor = locationByteArray[13].toInt()
-        return LocationData(xPosition, yPosition, zPosition, qualityFactor)
+        return LocationData(xPosition, yPosition, zPosition)
     }
 
     private fun ByteArray.transformIntoSignedDouble() =
@@ -22,9 +21,7 @@ class ByteArrayToLocationDataConverter {
                 ((this[1].toInt() and 0xFF) shl 16) or
                 ((this[2].toInt() and 0xFF) shl 8) or
                 (this[3].toInt() and 0xFF))
-                // Cast to double
-                .toDouble()
-                // Divide by 1000 to be in meter units
-                / 1000)
+                // Divide by 1000.0 to be in double meter units
+                / 1000.0)
 
 }

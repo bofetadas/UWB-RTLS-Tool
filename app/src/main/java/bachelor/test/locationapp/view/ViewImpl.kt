@@ -14,6 +14,7 @@ import bachelor.test.locationapp.presenter.PresenterImpl
 import bachelor.test.locationapp.presenter.positioning.AccelerationData
 import bachelor.test.locationapp.presenter.positioning.LocationData
 import bachelor.test.locationapp.presenter.recording.InputData
+import bachelor.test.locationapp.utils.StringUtil
 import kotlinx.android.synthetic.main.view.*
 
 class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListener {
@@ -82,20 +83,27 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
         inputData = InputData(x, y, z, direction, timePeriod)
     }
 
-    override fun showPosition(locationData: LocationData) {
+    override fun showUWBPosition(uwbLocationData: LocationData) {
         this.runOnUiThread {
-            x_position.text = "X: ${locationData.xPos} m"
-            y_position.text = "Y: ${locationData.yPos} m"
-            z_position.text = "Z: ${locationData.zPos} m"
-            quality_factor.text = "Quality Factor: ${locationData.qualityFactor}"
+            uwb_x_position.text = "UWB X: ${StringUtil.inEuropeanNotation(uwbLocationData.xPos)} m"
+            uwb_y_position.text = "UWB Y: ${StringUtil.inEuropeanNotation(uwbLocationData.yPos)} m"
+            uwb_z_position.text = "UWB Z: ${StringUtil.inEuropeanNotation(uwbLocationData.zPos)} m"
+        }
+    }
+
+    override fun showFilteredPosition(filteredLocationData: LocationData) {
+        this.runOnUiThread {
+            filtered_x_position.text = "Filter X: ${StringUtil.inEuropeanNotation(filteredLocationData.xPos)} m"
+            filtered_y_position.text = "Filter Y: ${StringUtil.inEuropeanNotation(filteredLocationData.yPos)} m"
+            filtered_z_position.text = "Filter Z: ${StringUtil.inEuropeanNotation(filteredLocationData.zPos)} m"
         }
     }
 
     override fun showAcceleration(accData: AccelerationData) {
         this.runOnUiThread {
-            x_acc.text = "X Acc: ${accData.xAcc}"
-            y_acc.text = "Y Acc: ${accData.yAcc}"
-            z_acc.text = "Z Acc: ${accData.zAcc}"
+            x_acc.text = "X Acc: ${StringUtil.inEuropeanNotation(accData.xAcc)}"
+            y_acc.text = "Y Acc: ${StringUtil.inEuropeanNotation(accData.yAcc)}"
+            z_acc.text = "Z Acc: ${StringUtil.inEuropeanNotation(accData.zAcc)}"
             if (accData.xAcc > 0) x_acc.setTextColor(Color.GREEN) else if (accData.xAcc < 0) x_acc.setTextColor(Color.RED) else x_acc.setTextColor(Color.GRAY)
             if (accData.yAcc > 0) y_acc.setTextColor(Color.GREEN) else if (accData.yAcc < 0) y_acc.setTextColor(Color.RED) else y_acc.setTextColor(Color.GRAY)
             if (accData.zAcc > 0) z_acc.setTextColor(Color.GREEN) else if (accData.zAcc < 0) z_acc.setTextColor(Color.RED) else z_acc.setTextColor(Color.GRAY)

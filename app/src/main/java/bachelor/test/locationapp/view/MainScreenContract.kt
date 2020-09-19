@@ -7,7 +7,8 @@ import bachelor.test.locationapp.presenter.recording.InputData
 
 interface MainScreenContract {
     interface View : BaseView<Presenter> {
-        fun showPosition(locationData: LocationData)
+        fun showUWBPosition(uwbLocationData: LocationData)
+        fun showFilteredPosition(filteredLocationData: LocationData)
         fun showAcceleration(accData: AccelerationData)
         fun enableConnectButton(enabled: Boolean)
         fun swapStartButton(start: Boolean)
@@ -28,7 +29,9 @@ interface MainScreenContract {
         fun onRecordingDataTransferStart(inputData: InputData)
         fun onRecordStopClicked()
         fun onTimerDone()
-        fun onLocationUpdate(locationData: LocationData)
+        // Contains raw UWB Positions as well as Filtered Positions for recording purposes.
+        // In regular, non-recording mode, uwb data won't be needed
+        fun onLocationUpdate(uwbLocationData: LocationData, filteredLocationData: LocationData)
         fun onAccelerometerUpdate(accData: AccelerationData)
     }
 }

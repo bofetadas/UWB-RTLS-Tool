@@ -12,7 +12,7 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     private val imu = IMU(context, this)
     private val kalmanFilterImpl = KalmanFilterImpl(this)
     private val kalmanFilterImplStrategies = KalmanFilterImplStrategies()
-    private var kalmanFilterImplStrategy: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = kalmanFilterImplStrategies.configureStrategy
+    private var kalmanFilterImplStrategy: (uwbLocationData: LocationData, accelerationData: AccelerationData) -> Unit = kalmanFilterImplStrategies.configureStrategy
 
     override fun startIMU() {
         imu.start()
@@ -34,20 +34,20 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
         presenter.onAccelerometerUpdate(accelerationData)
     }
     // Kalman Filter callback
-    override fun onNewEstimate(locationData: LocationData) {
-        presenter.onLocationUpdate(locationData)
+    override fun onNewEstimate(uwbLocationData: LocationData, filteredLocationData: LocationData) {
+        presenter.onLocationUpdate(uwbLocationData, filteredLocationData)
         //UnityPlayer.UnitySendMessage("BluetoothLE", "onMessageReceived", filteredLocation.toString())
     }
 
     private inner class KalmanFilterImplStrategies {
-        val configureStrategy: (locationData: LocationData, accData: AccelerationData) -> Unit = { locationData, _ ->
-            kalmanFilterImpl.configure(locationData)
+        val configureStrategy: (uwbLocationData: LocationData, accData: AccelerationData) -> Unit = { uwbLocationData, _ ->
+            kalmanFilterImpl.configure(uwbLocationData)
             kalmanFilterImplStrategy = estimateStrategy
         }
 
-        val estimateStrategy: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = { locationData, accelerationData ->
+        val estimateStrategy: (uwbLocationData: LocationData, accelerationData: AccelerationData) -> Unit = { uwbLocationData, accelerationData ->
             kalmanFilterImpl.predict(accelerationData)
-            kalmanFilterImpl.correct(locationData, accelerationData)
+            kalmanFilterImpl.correct(uwbLocationData, accelerationData)
         }
     }
 }

@@ -76,45 +76,64 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/x_position"
+        android:id="@+id/filtered_x_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="160dp"
+        android:layout_marginStart="220dp"
         android:layout_marginTop="380dp"
-        android:text="X Position"
-        android:translationZ="90dp"
+        android:text="Filtered X Pos"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/y_position"
+        android:id="@+id/filtered_y_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="160dp"
+        android:layout_marginStart="220dp"
         android:layout_marginTop="410dp"
-        android:text="Y Position"
-        android:translationZ="90dp"
+        android:text="Filtered Y Pos"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/z_position"
+        android:id="@+id/filtered_z_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="160dp"
+        android:layout_marginStart="220dp"
         android:layout_marginTop="440dp"
-        android:text="Z Position"
+        android:text="Filtered Z Pos"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/uwb_x_position"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="380dp"
+        android:text="UWB X Pos"
         android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/quality_factor"
+        android:id="@+id/uwb_y_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="160dp"
-        android:layout_marginTop="470dp"
-        android:text="Quality Factor"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="410dp"
+        android:text="UWB Y Pos"
+        android:translationZ="90dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/uwb_z_position"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="440dp"
+        android:text="UWB Z Pos"
         android:translationZ="90dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -123,9 +142,9 @@
         android:id="@+id/x_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="160dp"
         android:layout_marginTop="520dp"
-        android:text="X Acceleration"
+        android:text="X Acc"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -133,9 +152,9 @@
         android:id="@+id/y_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="160dp"
         android:layout_marginTop="550dp"
-        android:text="Y Acceleration"
+        android:text="Y Acc"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -143,39 +162,9 @@
         android:id="@+id/z_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="160dp"
         android:layout_marginTop="580dp"
-        android:text="Z Acceleration"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/x_movement"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="220dp"
-        android:layout_marginTop="520dp"
-        android:text="X Movement"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/y_movement"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="220dp"
-        android:layout_marginTop="550dp"
-        android:text="Y Movement"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/z_movement"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="220dp"
-        android:layout_marginTop="580dp"
-        android:text="Z Movement"
+        android:text="Z Acc"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

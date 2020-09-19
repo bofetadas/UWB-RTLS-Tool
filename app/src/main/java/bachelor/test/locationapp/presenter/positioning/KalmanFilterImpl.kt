@@ -593,9 +593,9 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             addEquals(stateNoiseCovarianceMatrix, currentProcessNoiseCovarianceMatrix)
         }
 
-        val correct: (locationData: LocationData, accelerationData: AccelerationData) -> Unit = correct@ { locationData, accelerationData ->
+        val correct: (uwbLocationData: LocationData, accelerationData: AccelerationData) -> Unit = correct@ { uwbLocationData, accelerationData ->
             // y = z - H * x
-            val measurementVector = DMatrixRMaj(doubleArrayOf(locationData.xPos, locationData.yPos, locationData.zPos, accelerationData.xAcc, accelerationData.yAcc, accelerationData.zAcc))
+            val measurementVector = DMatrixRMaj(doubleArrayOf(uwbLocationData.xPos, uwbLocationData.yPos, uwbLocationData.zPos, accelerationData.xAcc, accelerationData.yAcc, accelerationData.zAcc))
             mult(measurementTransitionMatrix, stateVector, y)
             subtract(measurementVector, y, y)
 
@@ -624,7 +624,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             mult(K, c, b)
             subtractEquals(stateNoiseCovarianceMatrix, b)
 
-            kalmanFilterOutputListener.onNewEstimate(LocationData(stateVector[0, 0], stateVector[1, 0], stateVector[2, 0]))
+            kalmanFilterOutputListener.onNewEstimate(uwbLocationData, LocationData(stateVector[0, 0], stateVector[1, 0], stateVector[2, 0]))
         }
 
         val notConfigured: (p0: Any?, p1: Any?) -> Unit = {_, _ -> throw IllegalAccessError("You need to call KalmanFilterImpl().configure() before making use of it.")}
