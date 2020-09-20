@@ -13,7 +13,8 @@ interface MainScreenContract {
         fun enableConnectButton(enabled: Boolean)
         fun swapStartButton(start: Boolean)
         fun showMessage(message: String?)
-        fun showRecordingDialog()
+        fun showRecordingOptionsDialog()
+        fun showRecordingDetailsDialog()
         fun showRecordStopScreen()
         fun dismissRecordStopScreen()
     }
@@ -26,7 +27,7 @@ interface MainScreenContract {
         fun onStartClicked()
         fun onStopClicked()
         fun onRegularDataTransferStart()
-        fun onRecordingDataTransferStart(inputData: InputData)
+        fun onRecordingDataTransferStart(inputData: InputData?)
         fun onRecordStopClicked()
         fun onTimerDone()
         // Contains raw UWB Positions as well as Filtered Positions for recording purposes.

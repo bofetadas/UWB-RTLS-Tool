@@ -10,9 +10,9 @@ class Timer(private val timerCallbacks: TimerCallbacks) {
 
     private var timerJob: Job? = null
 
-    fun startTimer(timePeriod: Long){
-        // Check for a negative integer - negative integers mean the recording has to be stopped manually
-        if (timePeriod > 0) {
+    fun startTimer(timePeriod: Long?){
+        // Check for a null or negative integer - null or negative integers mean the recording has to be stopped manually
+        if (timePeriod != null && timePeriod > 0) {
             timerJob = CoroutineScope(Main).launch {
                 delay(timePeriod * 1000)
                 stopTimer()

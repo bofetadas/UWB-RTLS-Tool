@@ -5,24 +5,23 @@ import bachelor.test.locationapp.view.MainScreenContract
 
 // Entry class for handling recording logic
 class RecordingImpl(context: Context, private val presenter: MainScreenContract.Presenter): Recording, TimerCallbacks {
-    private val fileWriter = FileWriter(context)
+    private val fileController = FileController(context)
     private val vibratorFeedback = VibratorFeedback(context)
     private val timer = Timer(this)
 
-    override fun createFile(
-        xInput: String,
-        yInput: String,
-        zInput: String,
-        direction: String
-    ): Boolean {
-        return fileWriter.createFile(xInput, yInput, zInput, direction)
+    override fun createRecordingMovementFile(): Boolean {
+        return fileController.createRecordingMovementFile()
+    }
+
+    override fun createRecordingFixedPositionFile(xInput: String, yInput: String, zInput: String, direction: String): Boolean {
+        return fileController.createRecordingFixedPositionFile(xInput, yInput, zInput, direction)
     }
 
     override fun writeToFile(line: String) {
-        fileWriter.writeToFile(line)
+        fileController.writeToFile(line)
     }
 
-    override fun startTimer(timePeriod: Long) {
+    override fun startTimer(timePeriod: Long?) {
         timer.startTimer(timePeriod)
     }
 

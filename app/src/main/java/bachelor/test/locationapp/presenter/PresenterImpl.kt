@@ -51,7 +51,7 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     }
 
     override fun onStartClicked() {
-        view.showRecordingDialog()
+        view.showRecordingOptionsDialog()
     }
 
     override fun onStopClicked() {
@@ -67,12 +67,16 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         view.swapStartButton(false)
     }
 
-    override fun onRecordingDataTransferStart(inputData: InputData) {
-        val success = recordingImpl.createFile(inputData.xInput, inputData.yInput, inputData.zInput, inputData.direction)
+    override fun onRecordingDataTransferStart(inputData: InputData?) {
+        val success = if (inputData == null){
+            recordingImpl.createRecordingMovementFile()
+        } else {
+            recordingImpl.createRecordingFixedPositionFile(inputData.xInput, inputData.yInput, inputData.zInput, inputData.direction)
+        }
         if (success) {
             recording = true
             model?.startDataTransfer()
-            recordingImpl.startTimer(inputData.timePeriod)
+            recordingImpl.startTimer(inputData?.timePeriod)
             recordingImpl.vibrateOnRecordStart()
             positioningImpl.startIMU()
             view.showMessage("Data recording successfully initialized")

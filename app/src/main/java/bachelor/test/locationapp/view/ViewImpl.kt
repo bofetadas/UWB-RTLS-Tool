@@ -17,11 +17,11 @@ import bachelor.test.locationapp.presenter.recording.InputData
 import bachelor.test.locationapp.utils.StringUtil
 import kotlinx.android.synthetic.main.view.*
 
-class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListener {
+class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPositionDialogListener {
 
     private lateinit var presenter: MainScreenContract.Presenter
 
-    private lateinit var inputData: InputData
+    private var recordingDetailsData: InputData? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,16 +49,36 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
         enableConnectButton(true)
     }
 
-    override fun showRecordingDialog() {
+    override fun showRecordingOptionsDialog() {
         AlertDialog.Builder(this)
-            .setTitle("Do you want to save the received Location Data?")
-            .setMessage("Data will be saved to /Android/data/${BuildConfig.APPLICATION_ID}/files/Documents directory on device")
+            .setTitle("Do you want to record position data?")
+            .setMessage("Data will be saved to the following device directory:\n\n" +
+                    "/Android/data/${BuildConfig.APPLICATION_ID}/files/Documents/")
             .setPositiveButton("YES"){_, _ ->
-                val filenameDialog = FileDialog()
-                filenameDialog.show(supportFragmentManager, "View")
+                showRecordingDetailsDialog()
+                /*val recordingDetailDialog = RecordingDetailDialog()
+                recordingDetailDialog.show(supportFragmentManager, "View")*/
             }
             .setNegativeButton("NO"){_, _ ->
                 presenter.onRegularDataTransferStart()
+            }
+            .create()
+            .show()
+    }
+
+    override fun showRecordingDetailsDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("What kind of recording would you like to start?")
+            .setMessage("Do you want to record data at a fixed position or during a movement?")
+            .setPositiveButton("Movement"){_, _ ->
+                // By setting 'recordingDetailsData' to null, we signalize the presenter that a recording of a movement is about to start
+                // since for a movement no more necessary information is needed.
+                recordingDetailsData = null
+                prepareViewForRecording()
+            }
+            .setNegativeButton("Fixed Position"){_, _ ->
+                val recordingFixedPositionDialog = RecordingFixedPositionDialog()
+                recordingFixedPositionDialog.show(supportFragmentManager, "View")
             }
             .create()
             .show()
@@ -76,11 +96,12 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
     }
 
     override fun onFileDataEntered(x: String, y: String, z: String, direction: String, timePeriod: Long) {
-        start_button.visibility = View.GONE
+        /*start_button.visibility = View.GONE
         disconnect_button.visibility = View.GONE
-        record_start_button.visibility = View.VISIBLE
-
-        inputData = InputData(x, y, z, direction, timePeriod)
+        record_start_button.visibility = View.VISIBLE*/
+        // By setting 'recordingDetailsData' to actual recording details data, we signalize the presenter that a recording of a fixed position is about to start.
+        recordingDetailsData = InputData(x, y, z, direction, timePeriod)
+        prepareViewForRecording()
     }
 
     override fun showUWBPosition(uwbLocationData: LocationData) {
@@ -147,6 +168,12 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
         this.presenter = presenter
     }
 
+    private fun prepareViewForRecording(){
+        start_button.visibility = View.GONE
+        disconnect_button.visibility = View.GONE
+        record_start_button.visibility = View.VISIBLE
+    }
+
     private fun setOnClickListeners() {
         connect_button.setOnClickListener {
             presenter.onConnectClicked()
@@ -165,7 +192,7 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, FileDialogListene
         }
 
         record_start_button.setOnClickListener {
-            presenter.onRecordingDataTransferStart(inputData)
+            presenter.onRecordingDataTransferStart(recordingDetailsData)
         }
 
         record_stop_button.setOnClickListener {
