@@ -7,10 +7,7 @@ import android.content.IntentFilter
 import bachelor.test.locationapp.model.Model
 import bachelor.test.locationapp.model.ModelImpl
 import bachelor.test.locationapp.model.Observable
-import bachelor.test.locationapp.presenter.positioning.AccelerationData
-import bachelor.test.locationapp.presenter.positioning.LocationData
-import bachelor.test.locationapp.presenter.positioning.Positioning
-import bachelor.test.locationapp.presenter.positioning.PositioningImpl
+import bachelor.test.locationapp.presenter.positioning.*
 import bachelor.test.locationapp.presenter.recording.InputData
 import bachelor.test.locationapp.presenter.recording.Recording
 import bachelor.test.locationapp.presenter.recording.RecordingImpl
@@ -106,8 +103,12 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
         }
     }
 
-    override fun onAccelerometerUpdate(accData: AccelerationData) {
-        view.showAcceleration(accData)
+    override fun onAccelerometerUpdate(accelerationData: AccelerationData) {
+        view.showAcceleration(accelerationData)
+    }
+
+    override fun onOrientationUpdate(orientationData: OrientationData) {
+        view.showOrientation(orientationData)
     }
 
     // Bluetooth callback functions

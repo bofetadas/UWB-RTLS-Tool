@@ -6,13 +6,13 @@ import bachelor.test.locationapp.view.MainScreenContract
 private const val POSITION_BYTE_ARRAY_SIZE = 14
 
 // Entry class for handling positioning logic
-class PositioningImpl(context: Context, private val presenter: MainScreenContract.Presenter): Positioning, IMUOutputListener, KalmanFilterOutputListener {
+class PositioningImpl(context: Context, private val presenter: MainScreenContract.Presenter): Positioning, KalmanFilterOutputListener {
 
     private val converter = ByteArrayToLocationDataConverter()
-    private val imu = IMU(context, this)
+    private val imu = IMU(context)
     private val kalmanFilterImpl = KalmanFilterImpl(this)
     private val kalmanFilterImplStrategies = KalmanFilterImplStrategies()
-    private var kalmanFilterImplStrategy: (uwbLocationData: LocationData, accelerationData: AccelerationData) -> Unit = kalmanFilterImplStrategies.configureStrategy
+    private var kalmanFilterImplStrategy: (uwbLocationData: LocationData, accelerationData: AccelerationData, orientationData: OrientationData) -> Unit = kalmanFilterImplStrategies.configureStrategy
 
     override fun startIMU() {
         imu.start()
@@ -25,14 +25,14 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     override fun calculateLocation(byteArray: ByteArray) {
         if (byteArray.size != POSITION_BYTE_ARRAY_SIZE) return
         val uwbLocation = converter.getLocationFromByteArray(byteArray)
-        val imuAcceleration = imu.calculateAcceleration()
-        kalmanFilterImplStrategy.invoke(uwbLocation, imuAcceleration)
+        val imuData = imu.getIMUData()
+        val imuAcceleration = imuData.accelerationData
+        val imuOrientation = imuData.orientationData
+        kalmanFilterImplStrategy.invoke(uwbLocation, imuAcceleration, imuOrientation)
+        presenter.onAccelerometerUpdate(imuData.accelerationData)
+        presenter.onOrientationUpdate(imuData.orientationData)
     }
 
-    // IMU callback
-    override fun onAccelerationCalculated(accelerationData: AccelerationData) {
-        presenter.onAccelerometerUpdate(accelerationData)
-    }
     // Kalman Filter callback
     override fun onNewEstimate(uwbLocationData: LocationData, filteredLocationData: LocationData) {
         presenter.onLocationUpdate(uwbLocationData, filteredLocationData)
@@ -40,14 +40,14 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     }
 
     private inner class KalmanFilterImplStrategies {
-        val configureStrategy: (uwbLocationData: LocationData, accData: AccelerationData) -> Unit = { uwbLocationData, _ ->
+        val configureStrategy: (uwbLocationData: LocationData, accData: AccelerationData, orientationData: OrientationData) -> Unit = { uwbLocationData, _, _ ->
             kalmanFilterImpl.configure(uwbLocationData)
             kalmanFilterImplStrategy = estimateStrategy
         }
 
-        val estimateStrategy: (uwbLocationData: LocationData, accelerationData: AccelerationData) -> Unit = { uwbLocationData, accelerationData ->
+        val estimateStrategy: (uwbLocationData: LocationData, accelerationData: AccelerationData, orientationData: OrientationData) -> Unit = { uwbLocationData, accelerationData, orientationData ->
             kalmanFilterImpl.predict(accelerationData)
-            kalmanFilterImpl.correct(uwbLocationData, accelerationData)
+            kalmanFilterImpl.correct(uwbLocationData, accelerationData, orientationData)
         }
     }
 }

@@ -3,10 +3,8 @@ package bachelor.test.locationapp.presenter.positioning
 import android.content.Context
 import android.hardware.SensorManager
 
-private const val ACC_DETECTION_THRESHOLD_X = 0.05f
-private const val ACC_DETECTION_THRESHOLD_Y = 0.05f
-private const val ACC_DETECTION_THRESHOLD_Z = 0.1f
-private const val GRAVITY_HAMBURG = 9.81399f
+private const val GRAVITY = 9.81399f
+private const val DECLINATION = 3.39
 
 /*
  * This class' purpose is to figure out whether or not the mobile phone experienced movement on any
@@ -15,13 +13,12 @@ private const val GRAVITY_HAMBURG = 9.81399f
  * This information is used to determine later whether new position data coming from the tag should
  * be applied or dropped.
  */
-class IMU(context: Context, private val outputListener: IMUOutputListener): IMUInputListener {
+class IMU(context: Context): IMUInputListener {
 
     private val sensorEventListenerImpl = SensorEventListenerImpl(context, this)
     // Sensor values arrays
+    private var accelerationValues = FloatArray(3) {0f}
     private var gravityValues = FloatArray(3) {0f}
-    private var linearAccValues = FloatArray(4) {0f}
-    private var accValues = FloatArray(3) {0f}
     private var magnetValues = FloatArray(3)
 
     fun start(){
@@ -32,81 +29,46 @@ class IMU(context: Context, private val outputListener: IMUOutputListener): IMUI
         sensorEventListenerImpl.unregisterListener()
     }
 
-    override fun onGravitySensorUpdate(values: FloatArray) {
-        gravityValues[0] = values[0]
-        gravityValues[1] = values[1]
-        gravityValues[2] = values[2]
-    }
-
-    override fun onLinearAccelerometerUpdate(values: FloatArray) {
-        linearAccValues[0] = values[0]
-        linearAccValues[1] = values[1]
-        linearAccValues[2] = values[2]
-    }
-
     override fun onAccelerometerUpdate(values: FloatArray) {
-        accValues = values
+        accelerationValues = values
+    }
+
+    override fun onGravitySensorUpdate(values: FloatArray) {
+        gravityValues = values
     }
 
     override fun onMagnetometerUpdate(values: FloatArray) {
         magnetValues = values
     }
 
-    /*@Synchronized
-    fun calculateAcceleration(): AccelerationData {
-        // Rotation matrices
-        val R = FloatArray(16)
-        val I = FloatArray(16)
-        var accelerationData = AccelerationData()
-        if (SensorManager.getRotationMatrix(R, I, gravityValues, magnetValues)) {
-            val resultVector = FloatArray(4) {0f}
-            val inv = FloatArray(16)
-            android.opengl.Matrix.invertM(inv, 0, R, 0)
-            android.opengl.Matrix.multiplyMV(resultVector, 0, inv, 0, linearAccValues, 0)
-            resultVector[0] = eliminateNoise(resultVector[0], ACC_DETECTION_THRESHOLD_X)
-            resultVector[1] = eliminateNoise(resultVector[1], ACC_DETECTION_THRESHOLD_Y)
-            resultVector[2] = eliminateNoise(resultVector[2], ACC_DETECTION_THRESHOLD_Z)
-
-            // Negating values in order to have positive values in North, East and Up directions.
-            accelerationData = AccelerationData(-resultVector[0].toDouble(), -resultVector[1].toDouble(), -resultVector[2].toDouble(), System.currentTimeMillis().toFloat())
-            outputListener.onAccelerationCalculated(accelerationData)
-        }
-        return accelerationData
-    }*/
-
     @Synchronized
-    fun calculateAcceleration(): AccelerationData {
-        /*val timestampBeforeAccelerationCalculation = System.currentTimeMillis() - initialTimestamp
-        println("Before: $timestampBeforeAccelerationCalculation")*/
-        // Rotation matrices
-        val R = FloatArray(9)
-        //val Rinv = FloatArray(16)
-        val absoluteAcceleration = FloatArray(3)
-        //Calculate rotation matrix from gravity and magnetic sensor data
-        SensorManager.getRotationMatrix(R, null, gravityValues, magnetValues)
+    fun getIMUData(): IMUData {
+        // Calculate rotation matrix from gravity and magnetic sensor data
+        val rotationMatrix = FloatArray(9)
+        SensorManager.getRotationMatrix(rotationMatrix, null, gravityValues, magnetValues)
 
-        //World coordinate system transformation for acceleration
-        absoluteAcceleration[0] = R[0] * accValues[0] + R[1] * accValues[1] + R[2] * accValues[2]
-        absoluteAcceleration[1] = R[3] * accValues[0] + R[4] * accValues[1] + R[5] * accValues[2]
-        absoluteAcceleration[2] = R[6] * accValues[0] + R[7] * accValues[1] + R[8] * accValues[2]
-        val accelerationData = AccelerationData(-absoluteAcceleration[0].toDouble(), -absoluteAcceleration[1].toDouble(), -absoluteAcceleration[2].toDouble() + GRAVITY_HAMBURG, System.currentTimeMillis().toFloat())
-        /*val Q = FloatArray(4)
-        val sensorDataVector = floatArrayOf(gravityValues[0], gravityValues[1], gravityValues[2], gyroscopeValues[0], gyroscopeValues[1], gyroscopeValues[2], magnetValues[0], magnetValues[1], magnetValues[2])
-        //val I = FloatArray(9)
-        SensorManager.getQuaternionFromVector(Q, sensorDataVector)
-        SensorManager.getRotationMatrixFromVector(R, Q)
-        android.opengl.Matrix.invertM(Rinv, 0, R, 0)
-        android.opengl.Matrix.multiplyMV(absoluteAcceleration, 0, Rinv, 0, linearAccValues, 0)
-        val accelerationData = AccelerationData(-resultVector[0], -resultVector[1], -resultVector[2], System.currentTimeMillis().toFloat())*/
-        /*val timestampAfterAccelerationCalculation = System.currentTimeMillis() - initialTimestamp
-        println("After: $timestampAfterAccelerationCalculation")
-        val accelerationCalculationLength = (timestampAfterAccelerationCalculation - timestampBeforeAccelerationCalculation) / 1000.0
-        println("Acceleration Calculation Length: ${accelerationCalculationLength}s")*/
-        outputListener.onAccelerationCalculated(accelerationData)
-        return accelerationData
+        // Calculate world acceleration and orientation
+        val acceleration = calculateAcceleration(rotationMatrix)
+        val orientation = calculateOrientation(rotationMatrix)
+        return IMUData(acceleration, orientation)
     }
 
-    private fun eliminateNoise(acc: Float, threshold: Float): Float {
-        return if (acc > -threshold && acc < threshold) 0f else acc
+    // Transform device acceleration into world acceleration
+    private fun calculateAcceleration(rotationMatrix: FloatArray): AccelerationData {
+        val acceleration = FloatArray(3)
+        acceleration[0] = rotationMatrix[0] * accelerationValues[0] + rotationMatrix[1] * accelerationValues[1] + rotationMatrix[2] * accelerationValues[2]
+        acceleration[1] = rotationMatrix[3] * accelerationValues[0] + rotationMatrix[4] * accelerationValues[1] + rotationMatrix[5] * accelerationValues[2]
+        acceleration[2] = rotationMatrix[6] * accelerationValues[0] + rotationMatrix[7] * accelerationValues[1] + rotationMatrix[8] * accelerationValues[2]
+        return AccelerationData(-acceleration[0].toDouble(), -acceleration[1].toDouble(), -acceleration[2].toDouble() + GRAVITY)
+    }
+
+    // Transform device orientation into world orientation
+    private fun calculateOrientation(rotationMatrix: FloatArray): OrientationData {
+        val orientation = FloatArray(3)
+        SensorManager.getOrientation(rotationMatrix, orientation)
+        val yaw = Math.toDegrees(orientation[0].toDouble()) + DECLINATION
+        val pitch = Math.toDegrees(orientation[1].toDouble())
+        val roll = Math.toDegrees(orientation[2].toDouble())
+        return OrientationData(yaw, pitch, roll)
     }
 }

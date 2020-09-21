@@ -13,6 +13,7 @@ import bachelor.test.locationapp.R
 import bachelor.test.locationapp.presenter.PresenterImpl
 import bachelor.test.locationapp.presenter.positioning.AccelerationData
 import bachelor.test.locationapp.presenter.positioning.LocationData
+import bachelor.test.locationapp.presenter.positioning.OrientationData
 import bachelor.test.locationapp.presenter.recording.InputData
 import bachelor.test.locationapp.utils.StringUtil
 import kotlinx.android.synthetic.main.view.*
@@ -128,6 +129,14 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPos
             if (accData.xAcc > 0) x_acc.setTextColor(Color.GREEN) else if (accData.xAcc < 0) x_acc.setTextColor(Color.RED) else x_acc.setTextColor(Color.GRAY)
             if (accData.yAcc > 0) y_acc.setTextColor(Color.GREEN) else if (accData.yAcc < 0) y_acc.setTextColor(Color.RED) else y_acc.setTextColor(Color.GRAY)
             if (accData.zAcc > 0) z_acc.setTextColor(Color.GREEN) else if (accData.zAcc < 0) z_acc.setTextColor(Color.RED) else z_acc.setTextColor(Color.GRAY)
+        }
+    }
+
+    override fun showOrientation(orientationData: OrientationData) {
+        this.runOnUiThread {
+            yaw.text = "Yaw: ${StringUtil.inEuropeanNotation(orientationData.yaw)}"
+            pitch.text = "Pitch: ${StringUtil.inEuropeanNotation(orientationData.pitch)}"
+            roll.text = "Roll: ${StringUtil.inEuropeanNotation(orientationData.roll)}"
         }
     }
 

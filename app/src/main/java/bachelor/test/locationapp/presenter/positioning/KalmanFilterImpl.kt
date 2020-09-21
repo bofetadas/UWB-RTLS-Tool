@@ -11,6 +11,15 @@ import kotlin.math.sqrt
 // the best estimate.
 private const val TIME_DELTA = 0.1
 
+// Roll threshold to detect whether the device is lying on its screen so it is facing down to the ground
+private const val ORIENTATION_ROLL_THRESHOLD = 50f
+
+// Measurement Noise Covariance values for the Z acceleration at index [5, 5]
+// Since the device's accelerometer delivers highly noisy Z acceleration values when the device is lying
+// on its screen facing down to the ground, we have to adjust the measurement noise for these situations
+private const val MEASUREMENT_NOISE_RELIABLE_Z_ACCELERATION = 10.0
+private const val MEASUREMENT_NOISE_UNRELIABLE_Z_ACCELERATION = 50.0
+
 class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutputListener): KalmanFilter {
 
     // State estimate matrices
@@ -34,17 +43,17 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     // Helper matrices during Kalman Filter estimation process
     private lateinit var a: DMatrixRMaj
     private lateinit var b: DMatrixRMaj
+    private lateinit var c: DMatrixRMaj
+    private lateinit var d: DMatrixRMaj
     private lateinit var y: DMatrixRMaj
     private lateinit var S: DMatrixRMaj
     private lateinit var S_inv: DMatrixRMaj
-    private lateinit var c: DMatrixRMaj
-    private lateinit var d: DMatrixRMaj
     private lateinit var K: DMatrixRMaj
 
     private lateinit var solver: LinearSolverDense<DMatrixRMaj>
     private val kalmanFilterStrategies = KalmanFilterStrategies()
-    private var predictStrategy: (locationData: LocationData?, accelerationData: AccelerationData?) -> Unit = kalmanFilterStrategies.notConfigured
-    private var correctStrategy: (locationData: LocationData, accData: AccelerationData) -> Unit = kalmanFilterStrategies.notConfigured
+    private var predictStrategy: (locationData: LocationData?, accelerationData: AccelerationData?, orientationData: OrientationData?) -> Unit = kalmanFilterStrategies.notConfigured
+    private var correctStrategy: (locationData: LocationData, accData: AccelerationData, orientationData: OrientationData) -> Unit = kalmanFilterStrategies.notConfigured
 
     override fun configure(initialLocationData: LocationData){
         stateVector = DMatrixRMaj(9, 1)
@@ -81,11 +90,11 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     }
 
     override fun predict(accelerationData: AccelerationData){
-        predictStrategy.invoke(null, accelerationData)
+        predictStrategy.invoke(null, accelerationData, null)
     }
 
-    override fun correct(locationData: LocationData, accelerationData: AccelerationData){
-        correctStrategy.invoke(locationData, accelerationData)
+    override fun correct(locationData: LocationData, accelerationData: AccelerationData, orientationData: OrientationData){
+        correctStrategy.invoke(locationData, accelerationData, orientationData)
     }
 
     private fun setStateVector(initialLocationData: LocationData) {
@@ -188,7 +197,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
 
     private fun setStateCovarianceMatrix(){
         // P
-        stateNoiseCovarianceMatrix[0, 0] =  1.0
+        stateNoiseCovarianceMatrix[0, 0] =  0.1
         stateNoiseCovarianceMatrix[0, 1] =  0.0
         stateNoiseCovarianceMatrix[0, 2] =  0.0
         stateNoiseCovarianceMatrix[0, 3] =  0.0
@@ -198,7 +207,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         stateNoiseCovarianceMatrix[0, 7] =  0.0
         stateNoiseCovarianceMatrix[0, 8] =  0.0
         stateNoiseCovarianceMatrix[1, 0] =  0.0
-        stateNoiseCovarianceMatrix[1, 1] =  1.0
+        stateNoiseCovarianceMatrix[1, 1] =  0.1
         stateNoiseCovarianceMatrix[1, 2] =  0.0
         stateNoiseCovarianceMatrix[1, 3] =  0.0
         stateNoiseCovarianceMatrix[1, 4] =  0.0
@@ -208,7 +217,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         stateNoiseCovarianceMatrix[1, 8] =  0.0
         stateNoiseCovarianceMatrix[2, 0] =  0.0
         stateNoiseCovarianceMatrix[2, 1] =  0.0
-        stateNoiseCovarianceMatrix[2, 2] =  1.0
+        stateNoiseCovarianceMatrix[2, 2] =  0.01
         stateNoiseCovarianceMatrix[2, 3] =  0.0
         stateNoiseCovarianceMatrix[2, 4] =  0.0
         stateNoiseCovarianceMatrix[2, 5] =  0.0
@@ -272,92 +281,6 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     }
 
     private fun setProcessCovarianceMatrix() {
-        // Complete Covariance Q
-        /*processNoiseCovarianceMatrix[0, 0] =  0.25 * TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[0, 1] =  0.25 * TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[0, 2] =  0.25 * TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[0, 3] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[0, 4] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[0, 5] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[0, 6] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[0, 7] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[0, 8] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[1, 0] =  0.25 * TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[1, 1] =  0.25 * TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[1, 2] =  0.25 * TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[1, 3] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[1, 4] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[1, 5] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[1, 6] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[1, 7] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[1, 8] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[2, 0] =  0.25 * TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[2, 1] =  0.25 * TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[2, 2] =  0.25 * TIME_DELTA.pow(4)
-        processNoiseCovarianceMatrix[2, 3] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[2, 4] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[2, 5] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[2, 6] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[2, 7] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[2, 8] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[3, 0] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[3, 1] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[3, 2] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[3, 3] =  TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[3, 4] =  TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[3, 5] =  TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[3, 6] =  TIME_DELTA
-        processNoiseCovarianceMatrix[3, 7] =  TIME_DELTA
-        processNoiseCovarianceMatrix[3, 8] =  TIME_DELTA
-        processNoiseCovarianceMatrix[4, 0] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[4, 1] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[4, 2] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[4, 3] =  TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[4, 4] =  TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[4, 5] =  TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[4, 6] =  TIME_DELTA
-        processNoiseCovarianceMatrix[4, 7] =  TIME_DELTA
-        processNoiseCovarianceMatrix[4, 8] =  TIME_DELTA
-        processNoiseCovarianceMatrix[5, 0] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[5, 1] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[5, 2] =  0.5 * TIME_DELTA.pow(3)
-        processNoiseCovarianceMatrix[5, 3] =  TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[5, 4] =  TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[5, 5] =  TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[5, 6] =  TIME_DELTA
-        processNoiseCovarianceMatrix[5, 7] =  TIME_DELTA
-        processNoiseCovarianceMatrix[5, 8] =  TIME_DELTA
-        processNoiseCovarianceMatrix[6, 0] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[6, 1] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[6, 2] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[6, 3] =  TIME_DELTA
-        processNoiseCovarianceMatrix[6, 4] =  TIME_DELTA
-        processNoiseCovarianceMatrix[6, 5] =  TIME_DELTA
-        processNoiseCovarianceMatrix[6, 6] =  1.0
-        processNoiseCovarianceMatrix[6, 7] =  1.0
-        processNoiseCovarianceMatrix[6, 8] =  1.0
-        processNoiseCovarianceMatrix[7, 0] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[7, 1] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[7, 2] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[7, 3] =  TIME_DELTA
-        processNoiseCovarianceMatrix[7, 4] =  TIME_DELTA
-        processNoiseCovarianceMatrix[7, 5] =  TIME_DELTA
-        processNoiseCovarianceMatrix[7, 6] =  1.0
-        processNoiseCovarianceMatrix[7, 7] =  1.0
-        processNoiseCovarianceMatrix[7, 8] =  1.0
-        processNoiseCovarianceMatrix[8, 0] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[8, 1] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[8, 2] =  0.5 * TIME_DELTA.pow(2)
-        processNoiseCovarianceMatrix[8, 3] =  TIME_DELTA
-        processNoiseCovarianceMatrix[8, 4] =  TIME_DELTA
-        processNoiseCovarianceMatrix[8, 5] =  TIME_DELTA
-        processNoiseCovarianceMatrix[8, 6] =  1.0
-        processNoiseCovarianceMatrix[8, 7] =  1.0
-        processNoiseCovarianceMatrix[8, 8] =  1.0*/
-        /*for (i in processNoiseCovarianceMatrix.data.indices){
-            processNoiseCovarianceMatrix[i] *= MAX_ACCELERATION_VARIANCE
-        }*/
-
         // Simple Experimental Q
         processNoiseCovarianceMatrix[0, 0] =  0.02
         processNoiseCovarianceMatrix[0, 1] =  0.0
@@ -379,7 +302,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[1, 8] =  0.0
         processNoiseCovarianceMatrix[2, 0] =  0.0
         processNoiseCovarianceMatrix[2, 1] =  0.0
-        processNoiseCovarianceMatrix[2, 2] =  0.005
+        processNoiseCovarianceMatrix[2, 2] =  0.000001
         processNoiseCovarianceMatrix[2, 3] =  0.0
         processNoiseCovarianceMatrix[2, 4] =  0.0
         processNoiseCovarianceMatrix[2, 5] =  0.0
@@ -409,7 +332,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[5, 2] =  0.0
         processNoiseCovarianceMatrix[5, 3] =  0.0
         processNoiseCovarianceMatrix[5, 4] =  0.0
-        processNoiseCovarianceMatrix[5, 5] =  0.002
+        processNoiseCovarianceMatrix[5, 5] =  0.000001
         processNoiseCovarianceMatrix[5, 6] =  0.0
         processNoiseCovarianceMatrix[5, 7] =  0.0
         processNoiseCovarianceMatrix[5, 8] =  0.0
@@ -439,7 +362,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[8, 5] =  0.0
         processNoiseCovarianceMatrix[8, 6] =  0.0
         processNoiseCovarianceMatrix[8, 7] =  0.0
-        processNoiseCovarianceMatrix[8, 8] =  0.005
+        processNoiseCovarianceMatrix[8, 8] =  0.000001
     }
 
     private fun setMeasurementTransitionMatrix() {
@@ -501,46 +424,8 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     }
 
     private fun setMeasurementCovarianceMatrix() {
-        // Complete Covariance R
-        /*measurementNoiseCovarianceMatrix[0, 0] =  0.005
-        measurementNoiseCovarianceMatrix[0, 1] =  0.0023
-        measurementNoiseCovarianceMatrix[0, 2] =  0.0018
-        measurementNoiseCovarianceMatrix[0, 3] =  0.0
-        measurementNoiseCovarianceMatrix[0, 4] =  0.0
-        measurementNoiseCovarianceMatrix[0, 5] =  0.0
-        measurementNoiseCovarianceMatrix[1, 0] =  0.0023
-        measurementNoiseCovarianceMatrix[1, 1] =  0.0137
-        measurementNoiseCovarianceMatrix[1, 2] =  0.0036
-        measurementNoiseCovarianceMatrix[1, 3] =  0.0
-        measurementNoiseCovarianceMatrix[1, 4] =  0.0
-        measurementNoiseCovarianceMatrix[1, 5] =  0.0
-        measurementNoiseCovarianceMatrix[2, 0] =  0.0018
-        measurementNoiseCovarianceMatrix[2, 1] =  0.0036
-        measurementNoiseCovarianceMatrix[2, 2] =  0.029
-        measurementNoiseCovarianceMatrix[2, 3] =  0.0
-        measurementNoiseCovarianceMatrix[2, 4] =  0.0
-        measurementNoiseCovarianceMatrix[2, 5] =  0.0
-        measurementNoiseCovarianceMatrix[3, 0] =  0.0
-        measurementNoiseCovarianceMatrix[3, 1] =  0.0
-        measurementNoiseCovarianceMatrix[3, 2] =  0.0
-        measurementNoiseCovarianceMatrix[3, 3] =  0.000641
-        measurementNoiseCovarianceMatrix[3, 4] =  0.000050
-        measurementNoiseCovarianceMatrix[3, 5] =  -0.000045
-        measurementNoiseCovarianceMatrix[4, 0] =  0.0
-        measurementNoiseCovarianceMatrix[4, 1] =  0.0
-        measurementNoiseCovarianceMatrix[4, 2] =  0.0
-        measurementNoiseCovarianceMatrix[4, 3] =  0.000050
-        measurementNoiseCovarianceMatrix[4, 4] =  0.000276
-        measurementNoiseCovarianceMatrix[4, 5] =  0.000168
-        measurementNoiseCovarianceMatrix[5, 0] =  0.0
-        measurementNoiseCovarianceMatrix[5, 1] =  0.0
-        measurementNoiseCovarianceMatrix[5, 2] =  0.0
-        measurementNoiseCovarianceMatrix[5, 3] =  -0.000045
-        measurementNoiseCovarianceMatrix[5, 4] =  0.000168
-        measurementNoiseCovarianceMatrix[5, 5] =  0.009926*/
-
         // Simple R
-        measurementNoiseCovarianceMatrix[0, 0] =  5.0
+        measurementNoiseCovarianceMatrix[0, 0] =  0.04
         measurementNoiseCovarianceMatrix[0, 1] =  0.0
         measurementNoiseCovarianceMatrix[0, 2] =  0.0
         measurementNoiseCovarianceMatrix[0, 3] =  0.0
@@ -561,7 +446,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[3, 0] =  0.0
         measurementNoiseCovarianceMatrix[3, 1] =  0.0
         measurementNoiseCovarianceMatrix[3, 2] =  0.0
-        measurementNoiseCovarianceMatrix[3, 3] =  5.0
+        measurementNoiseCovarianceMatrix[3, 3] =  0.002
         measurementNoiseCovarianceMatrix[3, 4] =  0.0
         measurementNoiseCovarianceMatrix[3, 5] =  0.0
         measurementNoiseCovarianceMatrix[4, 0] =  0.0
@@ -575,11 +460,11 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[5, 2] =  0.0
         measurementNoiseCovarianceMatrix[5, 3] =  0.0
         measurementNoiseCovarianceMatrix[5, 4] =  0.0
-        measurementNoiseCovarianceMatrix[5, 5] =  10.0
+        measurementNoiseCovarianceMatrix[5, 5] =  MEASUREMENT_NOISE_RELIABLE_Z_ACCELERATION
     }
 
     private inner class KalmanFilterStrategies {
-        val predict: (locationData: LocationData?, accelerationData: AccelerationData?) -> Unit  = { _, accelerationData ->
+        val predict: (locationData: LocationData?, accelerationData: AccelerationData?, orientationData: OrientationData?) -> Unit  = { _, accelerationData, _ ->
             // With each prediction, update the process noise covariance matrix with the current overall acceleration to make the filter more adaptive
             val currentProcessNoiseCovarianceMatrix = applyCurrentOverallAccelerationToProcessNoiseCovarianceMatrix(accelerationData!!)
 
@@ -593,13 +478,14 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             addEquals(stateNoiseCovarianceMatrix, currentProcessNoiseCovarianceMatrix)
         }
 
-        val correct: (uwbLocationData: LocationData, accelerationData: AccelerationData) -> Unit = correct@ { uwbLocationData, accelerationData ->
+        val correct: (uwbLocationData: LocationData, accelerationData: AccelerationData, orientationData: OrientationData) -> Unit = correct@ { uwbLocationData, accelerationData, orientationData ->
             // y = z - H * x
             val measurementVector = DMatrixRMaj(doubleArrayOf(uwbLocationData.xPos, uwbLocationData.yPos, uwbLocationData.zPos, accelerationData.xAcc, accelerationData.yAcc, accelerationData.zAcc))
             mult(measurementTransitionMatrix, stateVector, y)
             subtract(measurementVector, y, y)
 
             // S = H * P * H' + R
+            adjustMeasurementNoise(orientationData)
             mult(measurementTransitionMatrix, stateNoiseCovarianceMatrix, c)
             multTransB(c, measurementTransitionMatrix, S)
             addEquals(S, measurementNoiseCovarianceMatrix)
@@ -627,7 +513,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             kalmanFilterOutputListener.onNewEstimate(uwbLocationData, LocationData(stateVector[0, 0], stateVector[1, 0], stateVector[2, 0]))
         }
 
-        val notConfigured: (p0: Any?, p1: Any?) -> Unit = {_, _ -> throw IllegalAccessError("You need to call KalmanFilterImpl().configure() before making use of it.")}
+        val notConfigured: (p0: Any?, p1: Any?, p2: Any?) -> Unit = {_, _, _ -> throw IllegalAccessError("You need to call KalmanFilterImpl().configure() before making use of it.")}
 
         private fun applyCurrentOverallAccelerationToProcessNoiseCovarianceMatrix(accelerationData: AccelerationData): DMatrixRMaj {
             val size = processNoiseCovarianceMatrix.numElements
@@ -636,7 +522,6 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             val q = DMatrixRMaj.wrap(processNoiseCovarianceMatrix.numRows, processNoiseCovarianceMatrix.numCols, data)
             val overallAcceleration = calculateOverallAcceleration(accelerationData)
             for (i in q.data.indices){
-                // TODO: Square or not square?
                 q[i] *= overallAcceleration.pow(2)
             }
             return q
@@ -644,6 +529,30 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
 
         private fun calculateOverallAcceleration(accelerationData: AccelerationData): Double {
             return sqrt(accelerationData.xAcc.pow(2) + accelerationData.yAcc.pow(2) + accelerationData.zAcc.pow(2))
+        }
+
+        // Because the accelerometer of this projects' phone is noisy when lying on its screen,
+        // we have to tell the filter whether the z acceleration is reliable or not.
+        private fun adjustMeasurementNoise(orientationData: OrientationData) {
+            if (isZAccelerationReliable(orientationData.roll)) {
+                measurementNoiseCovarianceMatrix[5, 5] = MEASUREMENT_NOISE_RELIABLE_Z_ACCELERATION
+            }
+            else {
+                measurementNoiseCovarianceMatrix[5, 5] = MEASUREMENT_NOISE_UNRELIABLE_Z_ACCELERATION
+            }
+        }
+
+        private fun isZAccelerationReliable(roll: Double): Boolean {
+            return if (kotlin.math.abs(roll) > ORIENTATION_ROLL_THRESHOLD){
+                println("RELIABLE")
+                // Reliable z acceleration
+                true
+            }
+            else {
+                println("UNRELIABLE")
+                // Unreliable z acceleration
+                false
+            }
         }
     }
 }
