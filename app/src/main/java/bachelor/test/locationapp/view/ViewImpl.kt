@@ -57,8 +57,6 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPos
                     "/Android/data/${BuildConfig.APPLICATION_ID}/files/Documents/")
             .setPositiveButton("YES"){_, _ ->
                 showRecordingDetailsDialog()
-                /*val recordingDetailDialog = RecordingDetailDialog()
-                recordingDetailDialog.show(supportFragmentManager, "View")*/
             }
             .setNegativeButton("NO"){_, _ ->
                 presenter.onRegularDataTransferStart()

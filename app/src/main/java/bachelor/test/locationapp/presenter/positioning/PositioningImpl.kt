@@ -47,7 +47,7 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
 
         val estimateStrategy: (uwbLocationData: LocationData, accelerationData: AccelerationData, orientationData: OrientationData) -> Unit = { uwbLocationData, accelerationData, orientationData ->
             kalmanFilterImpl.predict(accelerationData)
-            kalmanFilterImpl.correct(uwbLocationData, accelerationData, orientationData)
+            kalmanFilterImpl.update(uwbLocationData, accelerationData, orientationData)
         }
     }
 }

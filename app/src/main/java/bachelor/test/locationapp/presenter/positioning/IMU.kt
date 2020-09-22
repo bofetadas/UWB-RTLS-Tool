@@ -17,8 +17,8 @@ class IMU(context: Context): IMUInputListener {
 
     private val sensorEventListenerImpl = SensorEventListenerImpl(context, this)
     // Sensor values arrays
-    private var accelerationValues = FloatArray(3) {0f}
-    private var gravityValues = FloatArray(3) {0f}
+    private var accelerationValues = FloatArray(3)
+    private var gravityValues = FloatArray(3)
     private var magnetValues = FloatArray(3)
 
     fun start(){
@@ -41,7 +41,6 @@ class IMU(context: Context): IMUInputListener {
         magnetValues = values
     }
 
-    @Synchronized
     fun getIMUData(): IMUData {
         // Calculate rotation matrix from gravity and magnetic sensor data
         val rotationMatrix = FloatArray(9)
@@ -59,7 +58,7 @@ class IMU(context: Context): IMUInputListener {
         acceleration[0] = rotationMatrix[0] * accelerationValues[0] + rotationMatrix[1] * accelerationValues[1] + rotationMatrix[2] * accelerationValues[2]
         acceleration[1] = rotationMatrix[3] * accelerationValues[0] + rotationMatrix[4] * accelerationValues[1] + rotationMatrix[5] * accelerationValues[2]
         acceleration[2] = rotationMatrix[6] * accelerationValues[0] + rotationMatrix[7] * accelerationValues[1] + rotationMatrix[8] * accelerationValues[2]
-        return AccelerationData(-acceleration[0].toDouble(), -acceleration[1].toDouble(), -acceleration[2].toDouble() + GRAVITY)
+        return AccelerationData(acceleration[0].toDouble(), acceleration[1].toDouble(), acceleration[2].toDouble() - GRAVITY)
     }
 
     // Transform device orientation into world orientation
