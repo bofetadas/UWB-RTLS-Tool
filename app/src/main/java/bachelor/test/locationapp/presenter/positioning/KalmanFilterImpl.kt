@@ -314,8 +314,8 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     }
 
     private fun setProcessCovarianceMatrix() {
-        // Simple Experimental Q
-        processNoiseCovarianceMatrix[0, 0] =  0.02
+        // Simple Q
+        processNoiseCovarianceMatrix[0, 0] =  0.01
         processNoiseCovarianceMatrix[0, 1] =  0.0
         processNoiseCovarianceMatrix[0, 2] =  0.0
         processNoiseCovarianceMatrix[0, 3] =  0.0
@@ -325,7 +325,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[0, 7] =  0.0
         processNoiseCovarianceMatrix[0, 8] =  0.0
         processNoiseCovarianceMatrix[1, 0] =  0.0
-        processNoiseCovarianceMatrix[1, 1] =  0.02
+        processNoiseCovarianceMatrix[1, 1] =  0.01
         processNoiseCovarianceMatrix[1, 2] =  0.0
         processNoiseCovarianceMatrix[1, 3] =  0.0
         processNoiseCovarianceMatrix[1, 4] =  0.0
@@ -345,7 +345,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[3, 0] =  0.0
         processNoiseCovarianceMatrix[3, 1] =  0.0
         processNoiseCovarianceMatrix[3, 2] =  0.0
-        processNoiseCovarianceMatrix[3, 3] =  0.04
+        processNoiseCovarianceMatrix[3, 3] =  0.01
         processNoiseCovarianceMatrix[3, 4] =  0.0
         processNoiseCovarianceMatrix[3, 5] =  0.0
         processNoiseCovarianceMatrix[3, 6] =  0.0
@@ -355,7 +355,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[4, 1] =  0.0
         processNoiseCovarianceMatrix[4, 2] =  0.0
         processNoiseCovarianceMatrix[4, 3] =  0.0
-        processNoiseCovarianceMatrix[4, 4] =  0.04
+        processNoiseCovarianceMatrix[4, 4] =  0.01
         processNoiseCovarianceMatrix[4, 5] =  0.0
         processNoiseCovarianceMatrix[4, 6] =  0.0
         processNoiseCovarianceMatrix[4, 7] =  0.0
@@ -375,7 +375,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[6, 3] =  0.0
         processNoiseCovarianceMatrix[6, 4] =  0.0
         processNoiseCovarianceMatrix[6, 5] =  0.0
-        processNoiseCovarianceMatrix[6, 6] =  0.1
+        processNoiseCovarianceMatrix[6, 6] =  0.01
         processNoiseCovarianceMatrix[6, 7] =  0.0
         processNoiseCovarianceMatrix[6, 8] =  0.0
         processNoiseCovarianceMatrix[7, 0] =  0.0
@@ -385,7 +385,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[7, 4] =  0.0
         processNoiseCovarianceMatrix[7, 5] =  0.0
         processNoiseCovarianceMatrix[7, 6] =  0.0
-        processNoiseCovarianceMatrix[7, 7] =  0.1
+        processNoiseCovarianceMatrix[7, 7] =  0.01
         processNoiseCovarianceMatrix[7, 8] =  0.0
         processNoiseCovarianceMatrix[8, 0] =  0.0
         processNoiseCovarianceMatrix[8, 1] =  0.0
@@ -465,7 +465,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[0, 4] =  0.0
         measurementNoiseCovarianceMatrix[0, 5] =  0.0
         measurementNoiseCovarianceMatrix[1, 0] =  0.0
-        measurementNoiseCovarianceMatrix[1, 1] =  0.0137
+        measurementNoiseCovarianceMatrix[1, 1] =  0.025
         measurementNoiseCovarianceMatrix[1, 2] =  0.0
         measurementNoiseCovarianceMatrix[1, 3] =  0.0
         measurementNoiseCovarianceMatrix[1, 4] =  0.0
@@ -608,14 +608,9 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
 
         private fun startDynamicZEstimationCoroutine(){
             dynamicZEstimationCoroutine = CoroutineScope(Default).launch {
-                println("STARTING DYNAMIC Z COORDINATE ESTIMATION")
                 processNoiseCovarianceMatrix[2, 2] = PROCESS_NOISE_Z_COORDINATE_DYNAMIC
-                println("STARTING DELAY")
                 delay(DYNAMIC_Z_FILTER_TIME_PERIOD)
-                println("STOPPING DELAY")
                 processNoiseCovarianceMatrix[2, 2] = PROCESS_NOISE_Z_COORDINATE_REGULAR
-                println("ENDING DYNAMIC Z COORDINATE ESTIMATION")
-
             }
         }
     }

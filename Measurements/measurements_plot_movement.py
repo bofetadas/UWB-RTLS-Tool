@@ -101,13 +101,13 @@ def get_values(uwb_positions, filtered_positions, raw_accelerations, filtered_ac
     return uwb_x_coordinates, uwb_y_coordinates, uwb_z_coordinates, filtered_x_coordinates, filtered_y_coordinates, filtered_z_coordinates, raw_x_accelerations, raw_y_accelerations, raw_z_accelerations, filtered_x_accelerations, filtered_y_accelerations, filtered_z_accelerations
 
 def plot(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, sample_count):
-    #fig = plt.figure(figsize=(7, 13))
-    #ax0 = plt.subplot(211)
-    #ax1 = plt.subplot(212, projection='3d')
-    #plt.title("Raw UWB and filtered positions")
-    #plot_2D_cartesian(uwb_positions, filtered_positions, ax0)
+    fig = plt.figure(figsize=(7, 13))
+    ax0 = plt.subplot(211)
+    ax1 = plt.subplot(212, projection='3d')
+    plt.title("Raw UWB and filtered positions")
+    plot_2D_cartesian(uwb_positions, filtered_positions, ax0)
     #plot_3D(uwb_positions, filtered_positions, ax1)
-    #plt.show()
+    plt.show()
     plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, sample_count)
 
 def plot_2D_cartesian(uwb_positions, filtered_positions, axs):
