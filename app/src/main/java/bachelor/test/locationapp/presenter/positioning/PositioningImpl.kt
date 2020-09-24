@@ -34,9 +34,8 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
     }
 
     // Kalman Filter callback
-    override fun onNewEstimate(uwbLocationData: LocationData, filteredLocationData: LocationData) {
-        presenter.onLocationUpdate(uwbLocationData, filteredLocationData)
-        //UnityPlayer.UnitySendMessage("BluetoothLE", "onMessageReceived", filteredLocation.toString())
+    override fun onNewStateVectorEstimate(uwbLocationData: LocationData, filteredLocationData: LocationData, rawAccelerationData: AccelerationData, filteredAccelerationData: AccelerationData) {
+        presenter.onNewStateVectorEstimate(uwbLocationData, filteredLocationData, rawAccelerationData, filteredAccelerationData)
     }
 
     private inner class KalmanFilterImplStrategies {

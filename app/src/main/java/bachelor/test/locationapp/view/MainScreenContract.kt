@@ -32,9 +32,9 @@ interface MainScreenContract {
         fun onRecordingDataTransferStart(inputData: InputData?)
         fun onRecordStopClicked()
         fun onTimerDone()
-        // Contains raw UWB Positions as well as Filtered Positions for recording purposes.
-        // In regular, non-recording mode, uwb data won't be needed
-        fun onLocationUpdate(uwbLocationData: LocationData, filteredLocationData: LocationData)
+        // Contains raw and filtered positions as well as raw and filtered accelerations for recording purposes.
+        // In regular, non-recording mode, only 'filteredLocationData' is used.
+        fun onNewStateVectorEstimate(uwbLocationData: LocationData, filteredLocationData: LocationData, rawAccelerationData: AccelerationData, filteredAccelerationData: AccelerationData)
         fun onAccelerometerUpdate(accelerationData: AccelerationData)
         fun onOrientationUpdate(orientationData: OrientationData)
     }

@@ -95,11 +95,11 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     }
 
     // Positioning callback functions
-    override fun onLocationUpdate(uwbLocationData: LocationData, filteredLocationData: LocationData) {
+    override fun onNewStateVectorEstimate(uwbLocationData: LocationData, filteredLocationData: LocationData, rawAccelerationData: AccelerationData, filteredAccelerationData: AccelerationData) {
         view.showUWBPosition(uwbLocationData)
         view.showFilteredPosition(filteredLocationData)
         if (recording){
-            recordingImpl.writeToFile("${uwbLocationData}|${filteredLocationData}")
+            recordingImpl.writeToFile("$uwbLocationData | $filteredLocationData | $rawAccelerationData | $filteredAccelerationData")
         }
     }
 
