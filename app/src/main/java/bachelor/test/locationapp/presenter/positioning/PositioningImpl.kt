@@ -33,6 +33,10 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
         presenter.onOrientationUpdate(imuData.orientationData)
     }
 
+    override fun resetKalmanFilter() {
+        kalmanFilterImplStrategy = kalmanFilterImplStrategies.configureStrategy
+    }
+
     // Kalman Filter callback
     override fun onNewStateVectorEstimate(uwbLocationData: LocationData, filteredLocationData: LocationData, rawAccelerationData: AccelerationData, filteredAccelerationData: AccelerationData) {
         presenter.onNewStateVectorEstimate(uwbLocationData, filteredLocationData, rawAccelerationData, filteredAccelerationData)

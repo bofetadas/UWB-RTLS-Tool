@@ -52,10 +52,11 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     }
 
     override fun onStopClicked() {
+        recording = false
         model?.stopDataTransfer()
         positioningImpl.stopIMU()
+        positioningImpl.resetKalmanFilter()
         view.swapStartButton(true)
-        recording = false
     }
 
     override fun onRegularDataTransferStart() {
@@ -88,10 +89,8 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     }
 
     override fun onTimerDone() {
-        recording = false
-        model?.stopDataTransfer()
-        positioningImpl.stopIMU()
         view.dismissRecordStopScreen()
+        onStopClicked()
     }
 
     // Positioning callback functions

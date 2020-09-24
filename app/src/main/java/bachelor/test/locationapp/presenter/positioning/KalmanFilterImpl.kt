@@ -1,5 +1,10 @@
 package bachelor.test.locationapp.presenter.positioning
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.Default
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.ejml.data.DMatrixRMaj
 import org.ejml.dense.row.CommonOps_DDRM.*
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM
@@ -10,14 +15,31 @@ import kotlin.math.sqrt
 // UWB position calculation delivery frequency (via Bluetooth in seconds)
 private const val TIME_DELTA = 0.1
 
+// Absolute acceleration threshold above which the user is considered to intentionally change its height
+// e.g. sitting down, laying down, standing up, jumping etc.
+// Value was determined empirically.
+private const val ACCELERATION_HEIGHT_CHANGE_THRESHOLD = 2.0
+
 // Roll threshold to detect whether the device is lying on its back facing the sky
 private const val ORIENTATION_ROLL_THRESHOLD = 50f
 
+// Process Noise Covariance values for Z position at index [2, 2].
+// When the user walks around the room, the process noise shall be low because of highly noisy
+// Z position calculations (high GDOP).
+// But when the user intentionally wants to change its height, we increase the noise value to make
+// the filter more adaptive and thus dynamic.
+private const val PROCESS_NOISE_Z_COORDINATE_REGULAR = 0.0000001
+private const val PROCESS_NOISE_Z_COORDINATE_DYNAMIC = 100.0
+
 // Measurement Noise Covariance values for the Z acceleration at index [5, 5]
 // Since the device's accelerometer delivers highly noisy Z acceleration values when the device is lying
-// on its back with the screen facing the sky, we have to adjust the measurement noise for these situations
-private const val MEASUREMENT_NOISE_RELIABLE_Z_ACCELERATION = 10.0
-private const val MEASUREMENT_NOISE_UNRELIABLE_Z_ACCELERATION = 50.0
+// on its back with the screen facing the sky, we want the filter to estimate the current acceleration
+// in a very static way.
+private const val MEASUREMENT_NOISE_Z_ACCELERATION_REGULAR = 10000.0
+private const val MEASUREMENT_NOISE_Z_ACCELERATION_STATIC = 50000.0
+
+// Period of time in which the filter shall be highly dynamic in Z coordinate estimation
+private const val DYNAMIC_Z_FILTER_TIME_PERIOD = 2000L
 
 class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutputListener): KalmanFilter {
 
@@ -64,6 +86,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     private val kalmanFilterStrategies = KalmanFilterStrategies()
     private var predictStrategy: (locationData: LocationData?, accelerationData: AccelerationData?, orientationData: OrientationData?) -> Unit = kalmanFilterStrategies.notConfigured
     private var updateStrategy: (locationData: LocationData, accData: AccelerationData, orientationData: OrientationData) -> Unit = kalmanFilterStrategies.notConfigured
+    private var dynamicZEstimationCoroutine: Job? = null
 
     override fun configure(initialLocationData: LocationData){
         stateVector = DMatrixRMaj(9, 1)
@@ -312,7 +335,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         processNoiseCovarianceMatrix[1, 8] =  0.0
         processNoiseCovarianceMatrix[2, 0] =  0.0
         processNoiseCovarianceMatrix[2, 1] =  0.0
-        processNoiseCovarianceMatrix[2, 2] =  0.000001
+        processNoiseCovarianceMatrix[2, 2] =  PROCESS_NOISE_Z_COORDINATE_REGULAR
         processNoiseCovarianceMatrix[2, 3] =  0.0
         processNoiseCovarianceMatrix[2, 4] =  0.0
         processNoiseCovarianceMatrix[2, 5] =  0.0
@@ -449,7 +472,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[1, 5] =  0.0
         measurementNoiseCovarianceMatrix[2, 0] =  0.0
         measurementNoiseCovarianceMatrix[2, 1] =  0.0
-        measurementNoiseCovarianceMatrix[2, 2] =  10.0
+        measurementNoiseCovarianceMatrix[2, 2] =  5000.0
         measurementNoiseCovarianceMatrix[2, 3] =  0.0
         measurementNoiseCovarianceMatrix[2, 4] =  0.0
         measurementNoiseCovarianceMatrix[2, 5] =  0.0
@@ -470,7 +493,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         measurementNoiseCovarianceMatrix[5, 2] =  0.0
         measurementNoiseCovarianceMatrix[5, 3] =  0.0
         measurementNoiseCovarianceMatrix[5, 4] =  0.0
-        measurementNoiseCovarianceMatrix[5, 5] =  MEASUREMENT_NOISE_RELIABLE_Z_ACCELERATION
+        measurementNoiseCovarianceMatrix[5, 5] =  MEASUREMENT_NOISE_Z_ACCELERATION_REGULAR
     }
 
     private inner class KalmanFilterStrategies {
@@ -495,7 +518,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             subtract(measurementVector, innovationVector, innovationVector)
 
             // S = H * P * H' + R
-            adjustMeasurementNoise(orientationData)
+            adjustNoise(rawAccelerationData, orientationData)
             mult(measurementTransitionMatrix, stateNoiseCovarianceMatrix, c)
             multTransB(c, measurementTransitionMatrix, innovationCovarianceMatrix)
             addEquals(innovationCovarianceMatrix, measurementNoiseCovarianceMatrix)
@@ -541,27 +564,58 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             return sqrt(accelerationData.xAcc.pow(2) + accelerationData.yAcc.pow(2) + accelerationData.zAcc.pow(2))
         }
 
-        // Because the accelerometer of this projects' phone is noisy when lying on its back,
-        // we have to tell the filter whether the z acceleration is reliable or not.
-        private fun adjustMeasurementNoise(orientationData: OrientationData) {
+        private fun adjustNoise(accelerationData: AccelerationData, orientationData: OrientationData) {
+            // Because the filter behaves very static in terms of Z position estimation, there is a
+            // delay of several seconds when the user actually intentionally changed its height,
+            // e.g. by sitting down.
+            // To avoid this, see if the user's Z acceleration is above a threshold which indicates
+            // that the user intentionally wants to change its height. If this is the case, a coroutine
+            // starts which makes the filter more dynamic for a short period of time before returning
+            // to the static estimation way.
+            if (doesUserIntentionallyChangeHeight(accelerationData.zAcc)){
+                handleDynamicZCoordinateEstimation()
+            }
+
+            // Because the accelerometer of this projects' phone is noisy when lying on its back,
+            // we have to tell the filter whether the z acceleration is reliable or not.
             if (isZAccelerationReliable(orientationData.roll)) {
-                measurementNoiseCovarianceMatrix[5, 5] = MEASUREMENT_NOISE_RELIABLE_Z_ACCELERATION
+                measurementNoiseCovarianceMatrix[5, 5] = MEASUREMENT_NOISE_Z_ACCELERATION_REGULAR
             }
             else {
-                measurementNoiseCovarianceMatrix[5, 5] = MEASUREMENT_NOISE_UNRELIABLE_Z_ACCELERATION
+                measurementNoiseCovarianceMatrix[5, 5] = MEASUREMENT_NOISE_Z_ACCELERATION_STATIC
             }
         }
 
+        private fun doesUserIntentionallyChangeHeight(zAcceleration: Double): Boolean {
+            return kotlin.math.abs(zAcceleration) >= ACCELERATION_HEIGHT_CHANGE_THRESHOLD
+        }
+
         private fun isZAccelerationReliable(roll: Double): Boolean {
-            return if (kotlin.math.abs(roll) > ORIENTATION_ROLL_THRESHOLD){
-                println("RELIABLE")
-                // Reliable z acceleration
-                true
+            return kotlin.math.abs(roll) > ORIENTATION_ROLL_THRESHOLD
+        }
+
+        // Drop the Z position measurement noise to briefly make filter more dynamic on Z axis.
+        private fun handleDynamicZCoordinateEstimation() {
+            if (dynamicZEstimationCoroutine != null && dynamicZEstimationCoroutine!!.isActive){
+                dynamicZEstimationCoroutine?.cancel()
+                dynamicZEstimationCoroutine?.invokeOnCompletion {
+                    startDynamicZEstimationCoroutine()
+                }
+            } else {
+                startDynamicZEstimationCoroutine()
             }
-            else {
-                println("UNRELIABLE")
-                // Unreliable z acceleration
-                false
+        }
+
+        private fun startDynamicZEstimationCoroutine(){
+            dynamicZEstimationCoroutine = CoroutineScope(Default).launch {
+                println("STARTING DYNAMIC Z COORDINATE ESTIMATION")
+                processNoiseCovarianceMatrix[2, 2] = PROCESS_NOISE_Z_COORDINATE_DYNAMIC
+                println("STARTING DELAY")
+                delay(DYNAMIC_Z_FILTER_TIME_PERIOD)
+                println("STOPPING DELAY")
+                processNoiseCovarianceMatrix[2, 2] = PROCESS_NOISE_Z_COORDINATE_REGULAR
+                println("ENDING DYNAMIC Z COORDINATE ESTIMATION")
+
             }
         }
     }
