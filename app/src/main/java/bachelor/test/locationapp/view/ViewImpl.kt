@@ -138,6 +138,12 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPos
         }
     }
 
+    override fun showCompassDirection(direction: String) {
+        this.runOnUiThread {
+            compass_direction.text = "Direction: $direction"
+        }
+    }
+
     override fun enableConnectButton(enabled: Boolean) {
         this.runOnUiThread {
             if (enabled) {

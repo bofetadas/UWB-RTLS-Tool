@@ -1,6 +1,7 @@
 package bachelor.test.locationapp.presenter.positioning
 
 import android.content.Context
+import bachelor.test.locationapp.utils.CompassUtil
 import bachelor.test.locationapp.view.MainScreenContract
 
 private const val POSITION_BYTE_ARRAY_SIZE = 14
@@ -28,9 +29,11 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
         val imuData = imu.getIMUData()
         val imuAcceleration = imuData.accelerationData
         val imuOrientation = imuData.orientationData
+        val currentCompassDirection = CompassUtil.getCompassDirection(imuOrientation.yaw)
         kalmanFilterImplStrategy.invoke(uwbLocation, imuAcceleration, imuOrientation)
         presenter.onAccelerometerUpdate(imuData.accelerationData)
         presenter.onOrientationUpdate(imuData.orientationData)
+        presenter.onCompassDirectionUpdate(currentCompassDirection)
     }
 
     override fun resetKalmanFilter() {

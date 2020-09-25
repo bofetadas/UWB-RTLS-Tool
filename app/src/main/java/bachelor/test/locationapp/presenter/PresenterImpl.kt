@@ -8,6 +8,7 @@ import bachelor.test.locationapp.model.Model
 import bachelor.test.locationapp.model.ModelImpl
 import bachelor.test.locationapp.model.Observable
 import bachelor.test.locationapp.presenter.positioning.*
+import bachelor.test.locationapp.presenter.recording.Directions
 import bachelor.test.locationapp.presenter.recording.InputData
 import bachelor.test.locationapp.presenter.recording.Recording
 import bachelor.test.locationapp.presenter.recording.RecordingImpl
@@ -108,6 +109,15 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 
     override fun onOrientationUpdate(orientationData: OrientationData) {
         view.showOrientation(orientationData)
+    }
+
+    override fun onCompassDirectionUpdate(direction: Directions?) {
+        if (direction == null){
+            view.showCompassDirection("")
+        }
+        else {
+            view.showCompassDirection(direction.toString())
+        }
     }
 
     // Bluetooth callback functions
