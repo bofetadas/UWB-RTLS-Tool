@@ -150,7 +150,7 @@ def plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filter
     ax3 = fig.add_subplot(313)
     ax3.plot(range(sample_count), uwb_z_coordinates, label='UWB Z', c='b')
     ax3.plot(range(sample_count), filtered_z_coordinates, label='Filtered Z', c='r')
-    ax3.axhline(1.76, 0, 1, label='User Height', c='g')
+    ax3.axhline(1.67, 0, 1, label='User Height', c='g')
     ax3.legend()
 
     plt.show()

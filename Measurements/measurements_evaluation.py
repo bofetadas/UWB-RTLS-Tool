@@ -109,7 +109,7 @@ def evaluate_data(filename, reference_point):
             distances_to_ref_point_3D.append(distance_to_ref_point_3D)
 
     '''#############################################################
-    #################### ACCURACY DETERMINATION ####################
+    #################### ACCURACY EVALUATION ####################
     #############################################################'''
     # Get sample mean distance on each axis
     # Variant 1
@@ -139,7 +139,7 @@ def evaluate_data(filename, reference_point):
     std_3D_distances_to_ref_point = standard_deviation(distances_to_ref_point_3D, average_distance_to_ref_point_3D, sample_count)
     
     '''#############################################################
-    #################### PRECISION DETERMINATION ###################
+    #################### PRECISION EVALUATION ###################
     #############################################################'''
     # Get samples center coordinates
     sample_x_center /= sample_count
@@ -172,7 +172,7 @@ def evaluate_data(filename, reference_point):
 
     # Experimental
     '''###################################################################
-    #################### MOTION SICKNESS DETERMINATION ###################
+    #################### MOTION SICKNESS EVALUATION ###################
     ###################################################################'''
     # 2D Get mean, min and max distance differences from samples to their next ones
     delta_distances_2D = diff(distances_to_ref_point_2D)
