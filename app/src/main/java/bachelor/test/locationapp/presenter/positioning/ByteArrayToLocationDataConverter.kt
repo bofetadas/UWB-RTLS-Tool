@@ -2,7 +2,7 @@ package bachelor.test.locationapp.presenter.positioning
 
 class ByteArrayToLocationDataConverter {
 
-    fun getLocationFromByteArray(locationByteArray: ByteArray): LocationData {
+    fun getUWBLocationFromByteArray(locationByteArray: ByteArray): LocationData {
         // Since received byte arrays are encoded in little endian, reverse the order for each position
         val xByteArray = byteArrayOf(locationByteArray[4], locationByteArray[3], locationByteArray[2], locationByteArray[1])
         val xPosition = xByteArray.transformIntoSignedDouble()

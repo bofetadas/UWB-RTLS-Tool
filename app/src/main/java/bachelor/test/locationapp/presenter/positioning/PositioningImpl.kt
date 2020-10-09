@@ -25,7 +25,7 @@ class PositioningImpl(context: Context, private val presenter: MainScreenContrac
 
     override fun calculateLocation(byteArray: ByteArray) {
         if (byteArray.size != POSITION_BYTE_ARRAY_SIZE) return
-        val uwbLocation = converter.getLocationFromByteArray(byteArray)
+        val uwbLocation = converter.getUWBLocationFromByteArray(byteArray)
         val imuData = imu.getIMUData()
         val imuAcceleration = imuData.accelerationData
         val imuOrientation = imuData.orientationData
