@@ -32,9 +32,9 @@ def standard_deviation(samples, samples_mean, samples_count):
         l.append(squared)
         l1.append(s - samples_mean)
     standard_deviation = sqrt(sum(l) / samples_count)
-    print("Self std: {}".format(standard_deviation))
-    print("Numpy std: {}".format(std(samples)))
-    print("RMS: {}".format(root_mean_square_error(l1)))
+    #print("Self std: {}".format(standard_deviation))
+    #print("Numpy std: {}".format(std(samples)))
+    #print("RMS: {}".format(root_mean_square_error(l1)))
     #return std
     return std(samples)
 
@@ -306,7 +306,8 @@ def evaluate_and_plot_data(directory):
         filtered_mean_delta_distance_3D = sum(filtered_delta_distances_3D) / (sample_count - 1)
         filtered_mean_delta_distances_3D.append(filtered_mean_delta_distance_3D)
     
-    plot(reference_positions, uwb_positions, filtered_positions)
+    
+    plot(reference_positions, uwb_mean_positions, filtered_mean_positions)
     
 
 def get_data(filename):
@@ -394,7 +395,7 @@ def get_values(uwb_positions, filtered_positions, raw_accelerations, filtered_ac
 
     return uwb_x_coordinates, uwb_y_coordinates, uwb_z_coordinates, filtered_x_coordinates, filtered_y_coordinates, filtered_z_coordinates, raw_x_accelerations, raw_y_accelerations, raw_z_accelerations, filtered_x_accelerations, filtered_y_accelerations, filtered_z_accelerations
 
-def plot(reference_positions, uwb_positions, filtered_positions, sample_count):
+def plot(reference_positions, uwb_positions, filtered_positions):
     fig = plt.figure(figsize=(7, 13))
     ax0 = plt.subplot(211)
     plt.title("Positions accuracy visualization")
@@ -487,11 +488,13 @@ def legend(axs):
 
 if __name__ == "__main__":
     try:
-        filename = sys.argv[1]
+        directory = sys.argv[1]
     except IndexError:
         print_no_document_found_error()
         exit(1)
+
+    evaluate_and_plot_data(directory)
     
-    sample_count = get_sample_count(filename)
-    uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations = get_data(filename)
-    plot(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, sample_count)
+    #sample_count = get_sample_count(filename)
+    #uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations = get_data(filename)
+    #plot(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, sample_count)

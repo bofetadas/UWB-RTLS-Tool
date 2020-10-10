@@ -38,9 +38,6 @@ def standard_deviation(samples, samples_mean, samples_count):
         l.append(squared)
         l1.append(s - samples_mean)
     standard_deviation = sqrt(sum(l) / samples_count)
-    print("Self std: {}".format(standard_deviation))
-    print("Numpy std: {}".format(std(samples)))
-    print("RMS: {}".format(root_mean_square_error(l1)))
     #return std
     return std(samples)
 
@@ -180,13 +177,17 @@ def evaluate_data(filename, reference_point):
 
     # Calculate average, min and max distance of samples to reference point
     uwb_mean_distance_to_ref_point_2D = sum(uwb_distances_to_ref_point_2D) / sample_count
+    print("UWB TEST DISTANCE 2D 1: {}".format(uwb_mean_distance_to_ref_point_2D))
     uwb_mean_distance_to_ref_point_3D = sum(uwb_distances_to_ref_point_3D) / sample_count
+    print("UWB TEST DISTANCE 3D 1: {}".format(uwb_mean_distance_to_ref_point_3D))
     uwb_min_distance_to_ref_point_2D = min(uwb_distances_to_ref_point_2D)
     uwb_min_distance_to_ref_point_3D = min(uwb_distances_to_ref_point_3D)
     uwb_max_distance_to_ref_point_2D = max(uwb_distances_to_ref_point_2D)
     uwb_max_distance_to_ref_point_3D = max(uwb_distances_to_ref_point_3D)
     filtered_mean_distance_to_ref_point_2D = sum(filtered_distances_to_ref_point_2D) / sample_count
+    print("FILTERED TEST DISTANCE 2D 1: {}".format(filtered_mean_distance_to_ref_point_2D))
     filtered_mean_distance_to_ref_point_3D = sum(filtered_distances_to_ref_point_3D) / sample_count
+    print("FILTERED TEST DISTANCE 3D 1: {}".format(filtered_mean_distance_to_ref_point_3D))
     filtered_min_distance_to_ref_point_2D = min(filtered_distances_to_ref_point_2D)
     filtered_min_distance_to_ref_point_3D = min(filtered_distances_to_ref_point_3D)
     filtered_max_distance_to_ref_point_2D = max(filtered_distances_to_ref_point_2D)
@@ -250,9 +251,13 @@ def evaluate_data(filename, reference_point):
 
     # Calculate distances from samples center point to reference point
     uwb_distance_samples_center_point_to_ref_point_2D = distance_between_two_points2D(uwb_mean_point, reference_point)
+    print("UWB TEST DISTANCE 2D 2: {}".format(uwb_distance_samples_center_point_to_ref_point_2D))
     uwb_distance_samples_center_point_to_ref_point_3D = distance_between_two_points3D(uwb_mean_point, reference_point)
+    print("UWB TEST DISTANCE 3D 2: {}".format(uwb_distance_samples_center_point_to_ref_point_3D))
     filtered_distance_samples_center_point_to_ref_point_2D = distance_between_two_points2D(filtered_mean_point, reference_point)
+    print("FILTERED TEST DISTANCE 2D 2: {}".format(filtered_distance_samples_center_point_to_ref_point_2D))
     filtered_distance_samples_center_point_to_ref_point_3D = distance_between_two_points3D(filtered_mean_point, reference_point)
+    print("FILTERED TEST DISTANCE 3D 2: {}".format(filtered_distance_samples_center_point_to_ref_point_3D))
 
     # Experimental
     '''###################################################################
