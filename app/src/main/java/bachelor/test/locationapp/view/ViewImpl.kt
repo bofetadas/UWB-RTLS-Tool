@@ -22,7 +22,7 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPos
 
     private lateinit var presenter: MainScreenContract.Presenter
 
-    private var recordingDetailsData: InputData? = null
+    private lateinit var recordingDetailsData: InputData
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,8 +72,7 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPos
             .setPositiveButton("Movement"){_, _ ->
                 // By setting 'recordingDetailsData' to null, we signalize the presenter that a recording of a movement is about to start
                 // since for a movement no more necessary information is needed.
-                recordingDetailsData = null
-                prepareViewForRecording()
+                prepareViewForRecording(movementRecording = true)
             }
             .setNegativeButton("Fixed Position"){_, _ ->
                 val recordingFixedPositionDialog = RecordingFixedPositionDialog()
@@ -84,23 +83,25 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPos
     }
 
     override fun showRecordStopScreen() {
-        record_start_button.visibility = View.GONE
-        record_stop_button.visibility = View.VISIBLE
+        this.runOnUiThread {
+            record_movement_start_button.visibility = View.GONE
+            record_fixed_position_start_button.visibility = View.GONE
+            record_stop_button.visibility = View.VISIBLE
+        }
     }
 
     override fun dismissRecordStopScreen() {
-        record_stop_button.visibility = View.GONE
-        start_button.visibility = View.VISIBLE
-        disconnect_button.visibility = View.VISIBLE
+        this.runOnUiThread {
+            record_stop_button.visibility = View.GONE
+            start_button.visibility = View.VISIBLE
+            disconnect_button.visibility = View.VISIBLE
+        }
     }
 
     override fun onFileDataEntered(x: String, y: String, z: String, direction: String, timePeriod: Long) {
-        /*start_button.visibility = View.GONE
-        disconnect_button.visibility = View.GONE
-        record_start_button.visibility = View.VISIBLE*/
         // By setting 'recordingDetailsData' to actual recording details data, we signalize the presenter that a recording of a fixed position is about to start.
         recordingDetailsData = InputData(x, y, z, direction, timePeriod)
-        prepareViewForRecording()
+        prepareViewForRecording(movementRecording = false)
     }
 
     override fun showUWBPosition(uwbLocationData: LocationData) {
@@ -181,10 +182,15 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPos
         this.presenter = presenter
     }
 
-    private fun prepareViewForRecording(){
+    private fun prepareViewForRecording(movementRecording: Boolean){
         start_button.visibility = View.GONE
         disconnect_button.visibility = View.GONE
-        record_start_button.visibility = View.VISIBLE
+        if (movementRecording) {
+            record_movement_start_button.visibility = View.VISIBLE
+        }
+        else {
+            record_fixed_position_start_button.visibility = View.VISIBLE
+        }
     }
 
     private fun setOnClickListeners() {
@@ -204,8 +210,12 @@ class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPos
             presenter.onDisconnectClicked()
         }
 
-        record_start_button.setOnClickListener {
-            presenter.onRecordingDataTransferStart(recordingDetailsData)
+        record_fixed_position_start_button.setOnClickListener {
+            presenter.onFixedPositionRecordingDataTransferStart(recordingDetailsData)
+        }
+
+        record_movement_start_button.setOnClickListener {
+            presenter.onMovementRecordingDataTransferStart()
         }
 
         record_stop_button.setOnClickListener {

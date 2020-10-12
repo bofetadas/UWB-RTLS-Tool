@@ -109,6 +109,12 @@ class BluetoothService(private val model: ModelImpl) {
             }
         }
 
+        override fun onCharacteristicRead(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int) {
+            if (characteristic?.uuid == UUID.fromString(GET_LOCATION_CHARACTERISTIC)) {
+                model.onCharacteristicRead(characteristic!!.value)
+            }
+        }
+
         // Check if the position mode set in 'onServicesDiscovered' was successful
         // If yes subscribe to PROXY_POSITIONS in order to disable automatic disconnection from tag
         // If no inform UI about failed connection attempt
@@ -157,6 +163,13 @@ class BluetoothService(private val model: ModelImpl) {
             val descriptor = characteristic.getDescriptor(UUID.fromString(DESCRIPTOR))
             descriptor.value = BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
             tagConnection?.writeDescriptor(descriptor)
+        }
+    }
+
+    fun requestLocationData() {
+        if (tagIsConnected){
+            val characteristic = tagConnection!!.services[2].getCharacteristic(UUID.fromString(GET_LOCATION_CHARACTERISTIC))
+            tagConnection!!.readCharacteristic(characteristic)
         }
     }
 }

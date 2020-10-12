@@ -12,6 +12,7 @@ import bachelor.test.locationapp.presenter.recording.Directions
 import bachelor.test.locationapp.presenter.recording.InputData
 import bachelor.test.locationapp.presenter.recording.Recording
 import bachelor.test.locationapp.presenter.recording.RecordingImpl
+import bachelor.test.locationapp.utils.ByteArrayUtil
 import bachelor.test.locationapp.view.MainScreenContract
 
 class PresenterImpl(private val context: Context, private val view: MainScreenContract.View): MainScreenContract.Presenter, Observer {
@@ -55,32 +56,41 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     override fun onStopClicked() {
         recording = false
         model?.stopDataTransfer()
-        positioningImpl.stopIMU()
-        positioningImpl.resetKalmanFilter()
+        positioningImpl.stop()
         view.swapStartButton(true)
     }
 
     override fun onRegularDataTransferStart() {
-        model?.startDataTransfer()
-        positioningImpl.startIMU()
-        view.swapStartButton(false)
+        // Request the current position to initialize the kalman filter with.
+        // Callback is handled in 'onBluetoothCharacteristicRead'.
+        model?.requestLocation()
     }
 
-    override fun onRecordingDataTransferStart(inputData: InputData?) {
-        val success = if (inputData == null){
-            recordingImpl.createRecordingMovementFile()
-        } else {
-            recordingImpl.createRecordingFixedPositionFile(inputData.xInput, inputData.yInput, inputData.zInput, inputData.direction)
-        }
+    override fun onMovementRecordingDataTransferStart() {
+        val success = recordingImpl.createRecordingMovementFile()
         if (success) {
             recording = true
-            model?.startDataTransfer()
-            recordingImpl.startTimer(inputData?.timePeriod)
+            // Request the current position to initialize the kalman filter with.
+            // Callback is handled in 'onBluetoothCharacteristicRead'.
+            model?.requestLocation()
+        }
+        else {
+            view.showMessage("File already exists. Please look into data directory to resolve the issue")
+        }
+    }
+
+    override fun onFixedPositionRecordingDataTransferStart(inputData: InputData) {
+        val success = recordingImpl.createRecordingFixedPositionFile(inputData.x, inputData.y, inputData.z, inputData.direction)
+        if (success){
+            recording = true
+            recordingImpl.startTimer(inputData.timePeriod)
             recordingImpl.vibrateOnRecordStart()
-            positioningImpl.startIMU()
+            positioningImpl.initialize(LocationData(inputData.x.toDouble(), inputData.y.toDouble(), inputData.z.toDouble()))
+            model?.subscribeToUWBLocationUpdates()
             view.showMessage("Data recording successfully initialized")
             view.showRecordStopScreen()
-        } else {
+        }
+        else {
             view.showMessage("File already exists. Please look into data directory to resolve the issue")
         }
     }
@@ -145,16 +155,31 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     override fun onBluetoothDisconnectionSuccess(observable: Observable, success: Boolean) {
         view.enableConnectButton(true)
         view.showMessage("Tag disconnected")
-        positioningImpl.stopIMU()
+        positioningImpl.stop()
         recording = false
     }
 
-    override fun onBluetoothCharacteristicChange(observable: Observable, args: Any) {
-        try{
-            args as ByteArray
-            positioningImpl.calculateLocation(args)
-        } catch(e: TypeCastException){
-            throw e
+    override fun onBluetoothCharacteristicChange(observable: Observable, bytes: ByteArray) {
+        positioningImpl.calculateLocation(bytes)
+    }
+
+    override fun onBluetoothCharacteristicRead(observable: Observable, bytes: ByteArray) {
+        if (bytes.size == POSITION_BYTE_ARRAY_SIZE) {
+            if (recording){
+                recordingImpl.vibrateOnRecordStart()
+                view.showMessage("Data recording successfully initialized")
+                view.showRecordStopScreen()
+            }
+            else {
+                view.swapStartButton(false)
+            }
+            val location = ByteArrayUtil.getUWBLocationFromByteArray(bytes)
+            positioningImpl.initialize(location)
+            model?.subscribeToUWBLocationUpdates()
+        }
+        else {
+            model?.requestLocation()
+            view.showMessage("Too small packet size. Are all sensors running?")
         }
     }
 }

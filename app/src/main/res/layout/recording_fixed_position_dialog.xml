@@ -58,7 +58,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:inputType="numberDecimal|numberSigned"
-            android:hint="0.0"
+            android:text="1.75"
             android:layout_marginRight="15dp" />
 
     </LinearLayout>
@@ -103,7 +103,7 @@
             android:id="@+id/time_period_edittext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="30"
+            android:text="15"
             android:inputType="numberSigned" />
 
         <TextView

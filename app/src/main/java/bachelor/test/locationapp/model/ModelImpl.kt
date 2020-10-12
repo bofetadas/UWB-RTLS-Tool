@@ -18,7 +18,11 @@ class ModelImpl(val context: Context): Model {
         return bluetoothService?.terminate()
     }
 
-    override fun startDataTransfer() {
+    override fun requestLocation() {
+        bluetoothService?.requestLocationData()
+    }
+
+    override fun subscribeToUWBLocationUpdates() {
         bluetoothService?.enableCharacteristicNotifications(GET_LOCATION_CHARACTERISTIC)
     }
 
@@ -38,9 +42,15 @@ class ModelImpl(val context: Context): Model {
         }
     }
 
-    override fun onCharacteristicChange(args: Any) {
+    override fun onCharacteristicRead(bytes: ByteArray) {
         observerList.forEach {observer ->
-            observer.onBluetoothCharacteristicChange(this, args)
+            observer.onBluetoothCharacteristicRead(this, bytes)
+        }
+    }
+
+    override fun onCharacteristicChange(bytes: ByteArray) {
+        observerList.forEach {observer ->
+            observer.onBluetoothCharacteristicChange(this, bytes)
         }
     }
 

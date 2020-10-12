@@ -39,9 +39,9 @@ class RecordingFixedPositionDialog : DialogFragment(){
                     "(Enter negative number for manual stop of recording)")
             .setNegativeButton("CANCEL"){_, _ ->}
             .setPositiveButton("RECORD"){_, _ ->
-                val xInput = xEditText.text.toString().replace('.', ',')
-                val yInput = yEdiText.text.toString().replace('.', ',')
-                val zInput = zEditText.text.toString().replace('.', ',')
+                val xInput = xEditText.text.toString()
+                val yInput = yEdiText.text.toString()
+                val zInput = zEditText.text.toString()
                 val directionInput = directionSpinner.selectedItem.toString()
                 val timePeriodInput = timePeriodEditText.text.toString().toLong()
                 if (isValid(xInput, yInput, zInput, directionInput, timePeriodInput)) {

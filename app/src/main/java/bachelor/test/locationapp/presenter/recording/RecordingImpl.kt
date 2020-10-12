@@ -21,7 +21,7 @@ class RecordingImpl(context: Context, private val presenter: MainScreenContract.
         fileController.writeToFile(line)
     }
 
-    override fun startTimer(timePeriod: Long?) {
+    override fun startTimer(timePeriod: Long) {
         timer.startTimer(timePeriod)
     }
 

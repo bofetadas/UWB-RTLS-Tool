@@ -21,6 +21,9 @@ class FileController(private val context: Context) {
     fun createRecordingFixedPositionFile(x: String, y: String, z: String, direction: String): Boolean{
         val sdf = SimpleDateFormat("dd-MM-yyyy-HH-mm-ss", Locale.GERMANY)
         val date = Date()
+        val x = x.replace('.', ',')
+        val y = y.replace('.', ',')
+        val z = z.replace('.', ',')
 
         file = File(context.getExternalFilesDir(DIRECTORY_DOCUMENTS), "$direction(${x}_${y}_${z})_${sdf.format(date)}.txt")
         return file.createNewFile()

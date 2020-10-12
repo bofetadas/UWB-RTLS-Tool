@@ -41,6 +41,35 @@ private const val MEASUREMENT_NOISE_Z_ACCELERATION_STATIC = 50000.0
 // Period of time in which the filter shall be highly dynamic in Z coordinate estimation
 private const val DYNAMIC_Z_FILTER_TIME_PERIOD = 2000L
 
+/*
+    Amount of states to be estimated
+    Includes in this order:
+     * X Position
+     * Y Position
+     * Z Position
+
+     * X Velocity
+     * Y Velocity
+     * Z Velocity
+
+     * X Acceleration
+     * Y Acceleration
+     * Z Acceleration
+ */
+private const val STATE_VECTOR_LENGTH = 9
+/*
+    Amount of measurements to be used in each iteration
+    Includes in this order:
+     * X Position
+     * Y Position
+     * Z Position
+
+     * X Acceleration
+     * Y Acceleration
+     * Z Acceleration
+ */
+private const val MEASUREMENT_VECTOR_LENGTH = 6
+
 class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutputListener): KalmanFilter {
 
     // State estimate matrices
@@ -89,24 +118,22 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     private var dynamicZEstimationCoroutine: Job? = null
 
     override fun configure(initialLocationData: LocationData){
-        stateVector = DMatrixRMaj(9, 1)
-        stateTransitionMatrix = DMatrixRMaj(9, 9)
-        processNoiseCovarianceMatrix = DMatrixRMaj(9, 9)
-        stateNoiseCovarianceMatrix = DMatrixRMaj(9, 9)
-        measurementTransitionMatrix = DMatrixRMaj(6, 9)
-        measurementNoiseCovarianceMatrix = DMatrixRMaj(6, 6)
+        stateVector                         = DMatrixRMaj(STATE_VECTOR_LENGTH, 1)
+        stateTransitionMatrix               = DMatrixRMaj(STATE_VECTOR_LENGTH, STATE_VECTOR_LENGTH)
+        processNoiseCovarianceMatrix        = DMatrixRMaj(STATE_VECTOR_LENGTH, STATE_VECTOR_LENGTH)
+        stateNoiseCovarianceMatrix          = DMatrixRMaj(STATE_VECTOR_LENGTH, STATE_VECTOR_LENGTH)
+        measurementTransitionMatrix         = DMatrixRMaj(MEASUREMENT_VECTOR_LENGTH, STATE_VECTOR_LENGTH)
+        measurementNoiseCovarianceMatrix    = DMatrixRMaj(MEASUREMENT_VECTOR_LENGTH, MEASUREMENT_VECTOR_LENGTH)
 
-        val dimenX = stateTransitionMatrix.numCols
-        val dimenZ = measurementTransitionMatrix.numRows
+        innovationVector                    = DMatrixRMaj(MEASUREMENT_VECTOR_LENGTH, 1)
+        innovationCovarianceMatrix          = DMatrixRMaj(MEASUREMENT_VECTOR_LENGTH, MEASUREMENT_VECTOR_LENGTH)
+        innovationCovarianceMatrixInverted  = DMatrixRMaj(MEASUREMENT_VECTOR_LENGTH, MEASUREMENT_VECTOR_LENGTH)
+        kalmanGainMatrix                    = DMatrixRMaj(STATE_VECTOR_LENGTH, MEASUREMENT_VECTOR_LENGTH)
 
-        innovationVector = DMatrixRMaj(dimenZ, 1)
-        innovationCovarianceMatrix = DMatrixRMaj(dimenZ, dimenZ)
-        innovationCovarianceMatrixInverted = DMatrixRMaj(dimenZ, dimenZ)
-        kalmanGainMatrix = DMatrixRMaj(dimenX, dimenZ)
-        a = DMatrixRMaj(dimenX, 1)
-        b = DMatrixRMaj(dimenX, dimenX)
-        c = DMatrixRMaj(dimenZ, dimenX)
-        d = DMatrixRMaj(dimenX, dimenZ)
+        a                                   = DMatrixRMaj(STATE_VECTOR_LENGTH, 1)
+        b                                   = DMatrixRMaj(STATE_VECTOR_LENGTH, STATE_VECTOR_LENGTH)
+        c                                   = DMatrixRMaj(MEASUREMENT_VECTOR_LENGTH, STATE_VECTOR_LENGTH)
+        d                                   = DMatrixRMaj(STATE_VECTOR_LENGTH, MEASUREMENT_VECTOR_LENGTH)
 
         setStateVector(initialLocationData)
         setStateCovarianceMatrix()
@@ -115,7 +142,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         setMeasurementTransitionMatrix()
         setMeasurementCovarianceMatrix()
 
-        solver = LinearSolverFactory_DDRM.symmPosDef(dimenX)
+        solver = LinearSolverFactory_DDRM.symmPosDef(STATE_VECTOR_LENGTH)
 
         // Set appropriate strategies since the filter is now configured
         predictStrategy = kalmanFilterStrategies.predict

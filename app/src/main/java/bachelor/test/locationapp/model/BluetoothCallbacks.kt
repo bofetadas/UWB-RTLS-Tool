@@ -4,5 +4,6 @@ interface BluetoothCallbacks {
     fun onBluetoothNotEnabled()
     fun onConnectionSuccess(success: Boolean)
     fun onDisconnectionSuccess(success: Boolean)
-    fun onCharacteristicChange(args: Any)
+    fun onCharacteristicRead(bytes: ByteArray)
+    fun onCharacteristicChange(bytes: ByteArray)
 }

@@ -51,11 +51,23 @@
         android:visibility="gone" />
 
     <Button
-        android:id="@+id/record_start_button"
+        android:id="@+id/record_movement_start_button"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/record_button_background"
-        android:text="Record"
+        android:text="Record Movement"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/record_fixed_position_start_button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/record_button_background"
+        android:text="Record Fixed Position"
         android:textColor="#FFFFFF"
         android:textSize="30sp"
         android:visibility="gone"

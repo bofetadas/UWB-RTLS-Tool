@@ -31,7 +31,8 @@ interface MainScreenContract {
         fun onStartClicked()
         fun onStopClicked()
         fun onRegularDataTransferStart()
-        fun onRecordingDataTransferStart(inputData: InputData?)
+        fun onMovementRecordingDataTransferStart()
+        fun onFixedPositionRecordingDataTransferStart(inputData: InputData)
         fun onRecordStopClicked()
         fun onTimerDone()
         // Contains raw and filtered positions as well as raw and filtered accelerations for recording purposes.

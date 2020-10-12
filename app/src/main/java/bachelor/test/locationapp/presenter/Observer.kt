@@ -7,5 +7,6 @@ interface Observer {
     fun onBluetoothEnabled()
     fun onBluetoothConnectionSuccess(observable: Observable, success: Boolean)
     fun onBluetoothDisconnectionSuccess(observable: Observable, success: Boolean)
-    fun onBluetoothCharacteristicChange(observable: Observable, args: Any)
+    fun onBluetoothCharacteristicChange(observable: Observable, bytes: ByteArray)
+    fun onBluetoothCharacteristicRead(observable: Observable, bytes: ByteArray)
 }
