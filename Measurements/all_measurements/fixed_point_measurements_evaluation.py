@@ -38,6 +38,10 @@ def standard_deviation(samples, samples_mean, samples_count):
         l.append(squared)
         l1.append(s - samples_mean)
     standard_deviation = sqrt(sum(l) / samples_count)
+    print("Standard deviation {}".format(standard_deviation))
+    print("Numpy std {}".format(std(l1)))
+    print("RMS {}".format(root_mean_square_error(l1)))
+    print('\n')
     #return std
     return std(samples)
 
