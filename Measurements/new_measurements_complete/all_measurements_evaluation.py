@@ -11,32 +11,32 @@ def print_no_document_found_error():
     print("Exiting")
     print("\n")
 
-# Returns the amount of samples recorded
-def get_sample_count(filename):
+# Returns the amount of measurements recorded
+def get_measurement_count(filename):
     with open(filename) as f:
         for i, l in enumerate(f):
             pass
     return i + 1
 
-def distance_between_two_points2D(sample_point, reference_point):
-    return sqrt(pow(sample_point[0] - reference_point[0], 2) + pow(sample_point[1] - reference_point[1], 2))
+def distance_between_two_points2D(measurement_point, reference_point):
+    return sqrt(pow(measurement_point[0] - reference_point[0], 2) + pow(measurement_point[1] - reference_point[1], 2))
 
-def distance_between_two_points3D(sample_point, reference_point):
-    return sqrt(pow(sample_point[0] - reference_point[0], 2) + pow(sample_point[1] - reference_point[1], 2) + pow(sample_point[2] - reference_point[2], 2))
+def distance_between_two_points3D(measurement_point, reference_point):
+    return sqrt(pow(measurement_point[0] - reference_point[0], 2) + pow(measurement_point[1] - reference_point[1], 2) + pow(measurement_point[2] - reference_point[2], 2))
 
-def standard_deviation(samples, samples_mean, samples_count):
+def standard_deviation(measurements, measurements_mean, measurement_count):
     l = []
     l1 = []
-    for s in samples:
-        squared = pow(s - samples_mean, 2)
+    for m in measurements:
+        squared = pow(m - measurements_mean, 2)
         l.append(squared)
-        l1.append(s - samples_mean)
-    standard_deviation = sqrt(sum(l) / samples_count)
+        l1.append(m - measurements_mean)
+    standard_deviation = sqrt(sum(l) / measurement_count)
     #print("Self std: {}".format(standard_deviation))
-    #print("Numpy std: {}".format(std(samples)))
+    #print("Numpy std: {}".format(std(measurement)))
     #print("RMS: {}".format(root_mean_square_error(l1)))
     #return std
-    return std(samples)
+    return std(measurements)
 
 def root_mean_square_error(data):
     return sqrt(mean(square(data)))
@@ -46,6 +46,12 @@ def evaluate_and_plot_data(directory):
     reference_positions = []
     uwb_mean_positions = []
     filtered_mean_positions = []
+    uwb_distances_x = []
+    uwb_distances_y = []
+    uwb_distances_z = []
+    filtered_distances_x = []
+    filtered_distances_y = []
+    filtered_distances_z = []
     uwb_positions_dictionary = {}
     filtered_positions_dictionary = {}
 
@@ -60,14 +66,14 @@ def evaluate_and_plot_data(directory):
     filtered_mean_distances_to_reference_point_stds_3D = []
 
     # Precision
-    uwb_mean_distances_to_measurement_mean_point_2D = []
-    filtered_mean_distances_to_measurement_mean_point_2D = []
-    uwb_mean_distances_to_measurement_mean_point_3D = []
-    filtered_mean_distances_to_measurement_mean_point_3D = []
-    uwb_mean_distances_to_measurement_mean_point_stds_2D = []
-    filtered_mean_distances_to_measurement_mean_point_stds_2D = []
-    uwb_mean_distances_to_measurement_mean_point_stds_3D = []
-    filtered_mean_distances_to_measurement_mean_point_stds_3D = []
+    uwb_mean_distances_to_measurement_centroid_2D = []
+    filtered_mean_distances_to_measurement_centroid_2D = []
+    uwb_mean_distances_to_measurement_centroid_3D = []
+    filtered_mean_distances_to_measurement_centroid_3D = []
+    uwb_mean_distances_to_measurement_centroid_stds_2D = []
+    filtered_mean_distances_to_measurement_centroid_stds_2D = []
+    uwb_mean_distances_to_measurement_centroid_stds_3D = []
+    filtered_mean_distances_to_measurement_centroid_stds_3D = []
 
     # Motion Sickness
     uwb_mean_delta_distances_2D = []
@@ -91,37 +97,21 @@ def evaluate_and_plot_data(directory):
         filtered_y_mean = 0.0
         filtered_z_mean = 0.0
 
-        # Lists holding all coordinates on axis
-        uwb_x_coords = []
-        uwb_y_coords = []
-        uwb_z_coords = []
-        filtered_x_coords = []
-        filtered_y_coords = []
-        filtered_z_coords = []
+        # List holding all measurement points
+        uwb_measurement_points = []
+        filtered_measurement_points = []
 
-        # List holding all sample points
-        uwb_points = []
-        filtered_points = []
-
-        # Lists holding distances on each axis of a sample to reference point
-        uwb_distances_x = []
-        uwb_distances_y = []
-        uwb_distances_z = []
-        filtered_distances_x = []
-        filtered_distances_y = []
-        filtered_distances_z = []
-
-        # Lists holding all distances from sample points to reference point
+        # Lists holding all distances from measurement points to reference point
         uwb_distances_to_ref_point_2D = []
         uwb_distances_to_ref_point_3D = []
         filtered_distances_to_ref_point_2D = []
         filtered_distances_to_ref_point_3D = []
 
-        # Lists holding all distances from sample points to mean point
-        uwb_distances_to_samples_center_point_2D = []
-        uwb_distances_to_samples_center_point_3D = []
-        filtered_distances_to_samples_center_point_2D = []
-        filtered_distances_to_samples_center_point_3D = []
+        # Lists holding all distances from measurement points to measurement centroids
+        uwb_distances_to_measurement_centroid_2D = []
+        uwb_distances_to_measurement_centroid_3D = []
+        filtered_distances_to_measurement_centroid_2D = []
+        filtered_distances_to_measurement_centroid_3D = []
         
         # Experimental
         # Lists holding all distance differences from positions to their next one
@@ -131,8 +121,8 @@ def evaluate_and_plot_data(directory):
         filtered_delta_distances_3D = []
 
         ''' Go! '''
-        # Get amount of samples collected
-        sample_count = get_sample_count(filename)
+        # Get amount of measurements collected
+        measurement_count = get_measurement_count(filename)
         with open(filename) as f:
             for line in f:
                 uwb_position = line.split('|')[0]
@@ -154,167 +144,143 @@ def evaluate_and_plot_data(directory):
                 filtered_y_mean += filtered_y
                 filtered_z_mean += filtered_z
 
-                # Add individual coordinates to coord's lists (necessary for later standard deviation calculation)
-                uwb_x_coords.append(uwb_x)
-                uwb_y_coords.append(uwb_y)
-                uwb_z_coords.append(uwb_z)
-                filtered_x_coords.append(filtered_x)
-                filtered_y_coords.append(filtered_y)
-                filtered_z_coords.append(filtered_z)
+                # Make up coordinate and add to list
+                uwb_measurement_point = [uwb_x, uwb_y, uwb_z]
+                uwb_measurement_points.append(uwb_measurement_point)
+                filtered_measurement_point = [filtered_x, filtered_y, filtered_z]
+                filtered_measurement_points.append(filtered_measurement_point)
 
                 # Calculate distances on each axis
-                uwb_axis_distance_x = uwb_x - reference_position[0]
-                uwb_axis_distance_y = uwb_y - reference_position[1]
-                uwb_axis_distance_z = uwb_z - reference_position[2]
-                uwb_distances_x.append(uwb_axis_distance_x)
-                uwb_distances_y.append(uwb_axis_distance_y)
-                uwb_distances_z.append(uwb_axis_distance_z)
-                filtered_axis_distance_x = filtered_x - reference_position[0]
-                filtered_axis_distance_y = filtered_y - reference_position[1]
-                filtered_axis_distance_z = filtered_z - reference_position[2]
-                filtered_distances_x.append(filtered_axis_distance_x)
-                filtered_distances_y.append(filtered_axis_distance_y)
-                filtered_distances_z.append(filtered_axis_distance_z)
+                uwb_distance_x = uwb_x - reference_position[0]
+                uwb_distances_x.append(uwb_distance_x)
+                uwb_distance_y = uwb_y - reference_position[1]
+                uwb_distances_y.append(uwb_distance_y)
+                uwb_distance_z = uwb_z - reference_position[2]
+                uwb_distances_z.append(uwb_distance_z)
+                filtered_distance_x = filtered_x - reference_position[0]
+                filtered_distances_x.append(filtered_distance_x)
+                filtered_distance_y = filtered_y - reference_position[1]
+                filtered_distances_y.append(filtered_distance_y)
+                filtered_distance_z = filtered_z - reference_position[2]
+                filtered_distances_z.append(filtered_distance_z)
 
-                # Make up coordinate and add to list
-                uwb_sample_point = [uwb_x, uwb_y, uwb_z]
-                uwb_points.append(uwb_sample_point)
-                filtered_sample_point = [filtered_x, filtered_y, filtered_z]
-                filtered_points.append(filtered_sample_point)
-
-                # Calculate distance of sample point to reference point in 2D and 3D and add to distances lists
-                uwb_distance_to_ref_point_2D = distance_between_two_points2D(uwb_sample_point, reference_position)
+                # Calculate distance of measurement point to reference point in 2D and 3D and add to distances lists
+                uwb_distance_to_ref_point_2D = distance_between_two_points2D(uwb_measurement_point, reference_position)
                 uwb_distances_to_ref_point_2D.append(uwb_distance_to_ref_point_2D)
-                uwb_distance_to_ref_point_3D = distance_between_two_points3D(uwb_sample_point, reference_position)
+                uwb_distance_to_ref_point_3D = distance_between_two_points3D(uwb_measurement_point, reference_position)
                 uwb_distances_to_ref_point_3D.append(uwb_distance_to_ref_point_3D)
-                filtered_distance_to_ref_point_2D = distance_between_two_points2D(filtered_sample_point, reference_position)
+                filtered_distance_to_ref_point_2D = distance_between_two_points2D(filtered_measurement_point, reference_position)
                 filtered_distances_to_ref_point_2D.append(filtered_distance_to_ref_point_2D)
-                filtered_distance_to_ref_point_3D = distance_between_two_points3D(filtered_sample_point, reference_position)
+                filtered_distance_to_ref_point_3D = distance_between_two_points3D(filtered_measurement_point, reference_position)
                 filtered_distances_to_ref_point_3D.append(filtered_distance_to_ref_point_3D)
         
         '''#############################################################
         #################### ACCURACY EVALUATION ####################
         #############################################################'''
-        # Get sample mean distance on each axis
-        # Variant 1
-        # sample_x_mean_distance1 = sample_x_mean - reference_point[0]
-        # sample_y_mean_distance1 = sample_y_mean - reference_point[1]
-        # sample_z_mean_distance1 = sample_z_mean - reference_point[2]
-        # Variant 2
-        # sample_x_mean_distance2 = sum(distances_x) / sample_count
-        # sample_y_mean_distance2 = sum(distances_y) / sample_count
-        # sample_z_mean_distance2 = sum(distances_z) / sample_count
 
-        # Calculate mean distance of samples to reference point
-        uwb_mean_distance_to_ref_point_2D = sum(uwb_distances_to_ref_point_2D) / sample_count
+        # Calculate mean distance of measurements to reference point
+        uwb_mean_distance_to_ref_point_2D = sum(uwb_distances_to_ref_point_2D) / measurement_count
         uwb_mean_distances_to_reference_point_2D.append(uwb_mean_distance_to_ref_point_2D)
-        uwb_mean_distance_to_ref_point_3D = sum(uwb_distances_to_ref_point_3D) / sample_count
+        uwb_mean_distance_to_ref_point_3D = sum(uwb_distances_to_ref_point_3D) / measurement_count
         uwb_mean_distances_to_reference_point_3D.append(uwb_mean_distance_to_ref_point_3D)
-        filtered_mean_distance_to_ref_point_2D = sum(filtered_distances_to_ref_point_2D) / sample_count
+        filtered_mean_distance_to_ref_point_2D = sum(filtered_distances_to_ref_point_2D) / measurement_count
         filtered_mean_distances_to_reference_point_2D.append(filtered_mean_distance_to_ref_point_2D)
-        filtered_mean_distance_to_ref_point_3D = sum(filtered_distances_to_ref_point_3D) / sample_count
+        filtered_mean_distance_to_ref_point_3D = sum(filtered_distances_to_ref_point_3D) / measurement_count
         filtered_mean_distances_to_reference_point_3D.append(filtered_mean_distance_to_ref_point_3D)
 
-        # Get standard deviation of samples on each axis x, y and z
-        # sample_x_std = standard_deviation(sample_x_coords, sample_x_mean, sample_count)
-        # sample_y_std = standard_deviation(sample_y_coords, sample_y_mean, sample_count)
-        # sample_z_std = standard_deviation(sample_z_coords, sample_z_mean, sample_count)
-
         # Get distance standard deviations of distance to reference point
-        uwb_std_2D_distances_to_ref_point = standard_deviation(uwb_distances_to_ref_point_2D, uwb_mean_distance_to_ref_point_2D, sample_count)
+        uwb_std_2D_distances_to_ref_point = standard_deviation(uwb_distances_to_ref_point_2D, uwb_mean_distance_to_ref_point_2D, measurement_count)
         uwb_mean_distances_to_reference_point_stds_2D.append(uwb_std_2D_distances_to_ref_point)
-        uwb_std_3D_distances_to_ref_point = standard_deviation(uwb_distances_to_ref_point_3D, uwb_mean_distance_to_ref_point_3D, sample_count)
+        uwb_std_3D_distances_to_ref_point = standard_deviation(uwb_distances_to_ref_point_3D, uwb_mean_distance_to_ref_point_3D, measurement_count)
         uwb_mean_distances_to_reference_point_stds_3D.append(uwb_std_3D_distances_to_ref_point)
-        filtered_std_2D_distances_to_ref_point = standard_deviation(filtered_distances_to_ref_point_2D, filtered_mean_distance_to_ref_point_2D, sample_count)
+        filtered_std_2D_distances_to_ref_point = standard_deviation(filtered_distances_to_ref_point_2D, filtered_mean_distance_to_ref_point_2D, measurement_count)
         filtered_mean_distances_to_reference_point_stds_2D.append(filtered_std_2D_distances_to_ref_point)
-        filtered_std_3D_distances_to_ref_point = standard_deviation(filtered_distances_to_ref_point_3D, filtered_mean_distance_to_ref_point_3D, sample_count)
+        filtered_std_3D_distances_to_ref_point = standard_deviation(filtered_distances_to_ref_point_3D, filtered_mean_distance_to_ref_point_3D, measurement_count)
         filtered_mean_distances_to_reference_point_stds_3D.append(filtered_std_3D_distances_to_ref_point)
 
         '''#############################################################
         #################### PRECISION EVALUATION ###################
         #############################################################'''
-        # Get samples center coordinates and add to dictionary
-        uwb_x_mean /= sample_count
-        uwb_y_mean /= sample_count
-        uwb_z_mean /= sample_count
-        uwb_mean_point = [uwb_x_mean, uwb_y_mean, uwb_z_mean]
+        # Get measurements' centroid and add to dictionary
+        uwb_x_mean /= measurement_count
+        uwb_y_mean /= measurement_count
+        uwb_z_mean /= measurement_count
+        uwb_measurements_centroid = [uwb_x_mean, uwb_y_mean, uwb_z_mean]
         uwb_reference_position_string = [str(coordinate) for coordinate in reference_position]
         uwb_reference_position_string = ','.join(uwb_reference_position_string)
-        #uwb_reference_position_string += ',uwb'
         uwb_positions_dictionary.setdefault(uwb_reference_position_string, [])
-        uwb_positions_dictionary[uwb_reference_position_string].append(uwb_mean_point)
+        uwb_positions_dictionary[uwb_reference_position_string].append(uwb_measurements_centroid)
 
-        filtered_x_mean /= sample_count
-        filtered_y_mean /= sample_count
-        filtered_z_mean /= sample_count
-        filtered_mean_point = [filtered_x_mean, filtered_y_mean, filtered_z_mean]
+        filtered_x_mean /= measurement_count
+        filtered_y_mean /= measurement_count
+        filtered_z_mean /= measurement_count
+        filtered_measurements_centroid = [filtered_x_mean, filtered_y_mean, filtered_z_mean]
         filtered_reference_position_string = [str(coordinate) for coordinate in reference_position]
         filtered_reference_position_string = ','.join(filtered_reference_position_string)
-        #filtered_reference_position_string += ',filtered'
         filtered_positions_dictionary.setdefault(filtered_reference_position_string, [])
-        filtered_positions_dictionary[filtered_reference_position_string].append(filtered_mean_point)
+        filtered_positions_dictionary[filtered_reference_position_string].append(filtered_measurements_centroid)
 
-        # Calculate distance of each sample point to samples center point
-        for uwb_sample_point in uwb_points:
-            uwb_distance_to_sample_center_point_2D = distance_between_two_points2D(uwb_sample_point, uwb_mean_point)
-            uwb_distances_to_samples_center_point_2D.append(uwb_distance_to_sample_center_point_2D)
-            uwb_distance_to_sample_center_point_3D = distance_between_two_points3D(uwb_sample_point, uwb_mean_point)
-            uwb_distances_to_samples_center_point_3D.append(uwb_distance_to_sample_center_point_3D)
-        for filtered_sample_point in filtered_points:
-            filtered_distance_to_sample_center_point_2D = distance_between_two_points2D(filtered_sample_point, filtered_mean_point)
-            filtered_distances_to_samples_center_point_2D.append(filtered_distance_to_sample_center_point_2D)
-            filtered_distance_to_sample_center_point_3D = distance_between_two_points3D(filtered_sample_point, filtered_mean_point)
-            filtered_distances_to_samples_center_point_3D.append(filtered_distance_to_sample_center_point_3D)
+        # Calculate distance of each measurement point to measurements centroid
+        for uwb_measurement_point in uwb_measurement_points:
+            uwb_distance_to_measurement_centroid_2D = distance_between_two_points2D(uwb_measurement_point, uwb_measurements_centroid)
+            uwb_distances_to_measurement_centroid_2D.append(uwb_distance_to_measurement_centroid_2D)
+            uwb_distance_to_measurement_centroid_3D = distance_between_two_points3D(uwb_measurement_point, uwb_measurements_centroid)
+            uwb_distances_to_measurement_centroid_3D.append(uwb_distance_to_measurement_centroid_3D)
+        for filtered_measurement_point in filtered_measurement_points:
+            filtered_distance_to_measurement_centroid_2D = distance_between_two_points2D(filtered_measurement_point, filtered_measurements_centroid)
+            filtered_distances_to_measurement_centroid_2D.append(filtered_distance_to_measurement_centroid_2D)
+            filtered_distance_to_measurement_centroid_3D = distance_between_two_points3D(filtered_measurement_point, filtered_measurements_centroid)
+            filtered_distances_to_measurement_centroid_3D.append(filtered_distance_to_measurement_centroid_3D)
 
-        # Calculate mean distance of samples to samples center point
-        uwb_mean_distance_to_samples_center_point_2D = sum(uwb_distances_to_samples_center_point_2D) / sample_count
-        uwb_mean_distances_to_measurement_mean_point_2D.append(uwb_mean_distance_to_samples_center_point_2D)
-        uwb_mean_distance_to_samples_center_point_3D = sum(uwb_distances_to_samples_center_point_3D) / sample_count
-        uwb_mean_distances_to_measurement_mean_point_3D.append(uwb_mean_distance_to_samples_center_point_3D)
-        filtered_mean_distance_to_samples_center_point_2D = sum(filtered_distances_to_samples_center_point_2D) / sample_count
-        filtered_mean_distances_to_measurement_mean_point_2D.append(filtered_mean_distance_to_samples_center_point_2D)
-        filtered_mean_distance_to_samples_center_point_3D = sum(filtered_distances_to_samples_center_point_3D) / sample_count
-        filtered_mean_distances_to_measurement_mean_point_3D.append(filtered_mean_distance_to_samples_center_point_3D)
+        # Calculate mean distance of measurements to measurement centroid
+        uwb_mean_distance_to_measurement_centroid_2D = sum(uwb_distances_to_measurement_centroid_2D) / measurement_count
+        uwb_mean_distances_to_measurement_centroid_2D.append(uwb_mean_distance_to_measurement_centroid_2D)
+        uwb_mean_distance_to_measurement_centroid_3D = sum(uwb_distances_to_measurement_centroid_3D) / measurement_count
+        uwb_mean_distances_to_measurement_centroid_3D.append(uwb_mean_distance_to_measurement_centroid_3D)
+        filtered_mean_distance_to_measurement_centroid_2D = sum(filtered_distances_to_measurement_centroid_2D) / measurement_count
+        filtered_mean_distances_to_measurement_centroid_2D.append(filtered_mean_distance_to_measurement_centroid_2D)
+        filtered_mean_distance_to_measurement_centroid_3D = sum(filtered_distances_to_measurement_centroid_3D) / measurement_count
+        filtered_mean_distances_to_measurement_centroid_3D.append(filtered_mean_distance_to_measurement_centroid_3D)
 
-        # Calculate distance standard deviations of distance to samples center point
-        uwb_std_2D_distances_to_samples_center_point = standard_deviation(uwb_distances_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_2D, sample_count)
-        uwb_mean_distances_to_measurement_mean_point_stds_2D.append(uwb_std_2D_distances_to_samples_center_point)
-        uwb_std_3D_distances_to_samples_center_point = standard_deviation(uwb_distances_to_samples_center_point_3D, uwb_mean_distance_to_samples_center_point_3D, sample_count)
-        uwb_mean_distances_to_measurement_mean_point_stds_3D.append(uwb_std_3D_distances_to_samples_center_point)
-        filtered_std_2D_distances_to_samples_center_point = standard_deviation(filtered_distances_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_2D, sample_count)
-        filtered_mean_distances_to_measurement_mean_point_stds_2D.append(filtered_std_2D_distances_to_samples_center_point)
-        filtered_std_3D_distances_to_samples_center_point = standard_deviation(filtered_distances_to_samples_center_point_3D, filtered_mean_distance_to_samples_center_point_3D, sample_count)
-        filtered_mean_distances_to_measurement_mean_point_stds_3D.append(filtered_std_3D_distances_to_samples_center_point)
+        # Calculate distance standard deviations of distance to measurement centroid
+        uwb_std_2D_distances_to_measurement_centroid = standard_deviation(uwb_distances_to_measurement_centroid_2D, uwb_mean_distance_to_measurement_centroid_2D, measurement_count)
+        uwb_mean_distances_to_measurement_centroid_stds_2D.append(uwb_std_2D_distances_to_measurement_centroid)
+        uwb_std_3D_distances_to_measurement_centroid = standard_deviation(uwb_distances_to_measurement_centroid_3D, uwb_mean_distance_to_measurement_centroid_3D, measurement_count)
+        uwb_mean_distances_to_measurement_centroid_stds_3D.append(uwb_std_3D_distances_to_measurement_centroid)
+        filtered_std_2D_distances_to_measurement_centroid = standard_deviation(filtered_distances_to_measurement_centroid_2D, filtered_mean_distance_to_measurement_centroid_2D, measurement_count)
+        filtered_mean_distances_to_measurement_centroid_stds_2D.append(filtered_std_2D_distances_to_measurement_centroid)
+        filtered_std_3D_distances_to_measurement_centroid = standard_deviation(filtered_distances_to_measurement_centroid_3D, filtered_mean_distance_to_measurement_centroid_3D, measurement_count)
+        filtered_mean_distances_to_measurement_centroid_stds_3D.append(filtered_std_3D_distances_to_measurement_centroid)
 
         ''' TODO: Take mean distance or distance from centroid to reference point? '''
-        # Calculate distances from samples center point to reference point
-        uwb_distance_samples_center_point_to_ref_point_2D = distance_between_two_points2D(uwb_mean_point, reference_position)
-        uwb_distance_samples_center_point_to_ref_point_3D = distance_between_two_points3D(uwb_mean_point, reference_position)
-        filtered_distance_samples_center_point_to_ref_point_2D = distance_between_two_points2D(filtered_mean_point, reference_position)
-        filtered_distance_samples_center_point_to_ref_point_3D = distance_between_two_points3D(filtered_mean_point, reference_position)
+        # Calculate distances from measurement centroid to reference point
+        uwb_distance_measurement_centroid_to_ref_point_2D = distance_between_two_points2D(uwb_measurements_centroid, reference_position)
+        uwb_distance_measurement_centroid_to_ref_point_3D = distance_between_two_points3D(uwb_measurements_centroid, reference_position)
+        filtered_distance_measurement_centroid_to_ref_point_2D = distance_between_two_points2D(filtered_measurements_centroid, reference_position)
+        filtered_distance_measurement_centroid_to_ref_point_3D = distance_between_two_points3D(filtered_measurements_centroid, reference_position)
 
         # Experimental
         '''###################################################################
         #################### MOTION SICKNESS EVALUATION ###################
         ###################################################################'''
-        # 2D Get mean, min and max distance differences from samples to their next ones
+        # 2D Get mean, min and max distance differences from measurements to their next ones
         uwb_delta_distances_2D = diff(uwb_distances_to_ref_point_2D)
         uwb_delta_distances_2D =  [abs(n) for n in uwb_delta_distances_2D]
-        uwb_mean_delta_distance_2D = sum(uwb_delta_distances_2D) / (sample_count - 1)
+        uwb_mean_delta_distance_2D = sum(uwb_delta_distances_2D) / (measurement_count - 1)
         uwb_mean_delta_distances_2D.append(uwb_mean_delta_distance_2D)
         filtered_delta_distances_2D = diff(filtered_distances_to_ref_point_2D)
         filtered_delta_distances_2D =  [abs(n) for n in filtered_delta_distances_2D]
-        filtered_mean_delta_distance_2D = sum(filtered_delta_distances_2D) / (sample_count - 1)
+        filtered_mean_delta_distance_2D = sum(filtered_delta_distances_2D) / (measurement_count - 1)
         filtered_mean_delta_distances_2D.append(filtered_mean_delta_distance_2D)
 
-        # 3D Get mean, min and max distance differences from samples to their next ones
+        # 3D Get mean, min and max distance differences from measurements to their next ones
         uwb_delta_distances_3D = diff(uwb_distances_to_ref_point_3D)
         uwb_delta_distances_3D = [abs(n) for n in uwb_delta_distances_3D]
-        uwb_mean_delta_distance_3D = sum(uwb_delta_distances_3D) / (sample_count - 1)
+        uwb_mean_delta_distance_3D = sum(uwb_delta_distances_3D) / (measurement_count - 1)
         uwb_mean_delta_distances_3D.append(uwb_mean_delta_distance_3D)
         filtered_delta_distances_3D = diff(filtered_distances_to_ref_point_3D)
         filtered_delta_distances_3D = [abs(n) for n in filtered_delta_distances_3D]
-        filtered_mean_delta_distance_3D = sum(filtered_delta_distances_3D) / (sample_count - 1)
+        filtered_mean_delta_distance_3D = sum(filtered_delta_distances_3D) / (measurement_count - 1)
         filtered_mean_delta_distances_3D.append(filtered_mean_delta_distance_3D)
 
     for k, v in uwb_positions_dictionary.items():
@@ -351,16 +317,23 @@ def evaluate_and_plot_data(directory):
     filtered_mean_std_distances_to_ref_point_2D = mean(filtered_mean_distances_to_reference_point_stds_2D)
     uwb_mean_std_distances_to_ref_point_3D = mean(uwb_mean_distances_to_reference_point_stds_3D)
     filtered_mean_std_distances_to_ref_point_3D = mean(filtered_mean_distances_to_reference_point_stds_3D)
+    uwb_mean_distance_x_axis = mean(uwb_distances_x)
+    uwb_distances_x_axis_std = standard_deviation(uwb_distances_x)
+    uwb_mean_distance_y_axis = mean(uwb_distances_y)
+    uwb_mean_distance_z_axis = mean(uwb_distances_z)
+    filtered_mean_distance_x_axis = mean(filtered_distances_x)
+    filtered_mean_distance_y_axis = mean(filtered_distances_y)
+    filtered_mean_distance_z_axis = mean(filtered_distances_z)
 
     # Final precision evaluation
-    uwb_mean_distance_to_measurment_mean_point_2D = mean(uwb_mean_distances_to_measurement_mean_point_2D)
-    filtered_mean_distance_to_measurment_mean_point_2D = mean(filtered_mean_distances_to_measurement_mean_point_2D)
-    uwb_mean_distance_to_measurment_mean_point_3D = mean(uwb_mean_distances_to_measurement_mean_point_3D)
-    filtered_mean_distance_to_measurment_mean_point_3D = mean(filtered_mean_distances_to_measurement_mean_point_3D)
-    uwb_mean_std_distances_to_measurement_mean_point_2D = mean(uwb_mean_distances_to_measurement_mean_point_stds_2D)
-    filtered_mean_std_distances_to_measurement_mean_point_2D = mean(filtered_mean_distances_to_measurement_mean_point_stds_2D)
-    uwb_mean_std_distances_to_measurement_mean_point_3D = mean(uwb_mean_distances_to_measurement_mean_point_stds_3D)
-    filtered_mean_std_distances_to_measurement_mean_point_3D = mean(filtered_mean_distances_to_measurement_mean_point_stds_3D)
+    uwb_mean_distance_to_measurment_mean_point_2D = mean(uwb_mean_distances_to_measurement_centroid_2D)
+    filtered_mean_distance_to_measurment_mean_point_2D = mean(filtered_mean_distances_to_measurement_centroid_2D)
+    uwb_mean_distance_to_measurment_mean_point_3D = mean(uwb_mean_distances_to_measurement_centroid_3D)
+    filtered_mean_distance_to_measurment_mean_point_3D = mean(filtered_mean_distances_to_measurement_centroid_3D)
+    uwb_mean_std_distances_to_measurement_mean_point_2D = mean(uwb_mean_distances_to_measurement_centroid_stds_2D)
+    filtered_mean_std_distances_to_measurement_mean_point_2D = mean(filtered_mean_distances_to_measurement_centroid_stds_2D)
+    uwb_mean_std_distances_to_measurement_mean_point_3D = mean(uwb_mean_distances_to_measurement_centroid_stds_3D)
+    filtered_mean_std_distances_to_measurement_mean_point_3D = mean(filtered_mean_distances_to_measurement_centroid_stds_3D)
 
     # Final motion sickness evaluation
     uwb_mean_delta_distance_2D = mean(uwb_mean_delta_distances_2D)
@@ -404,7 +377,7 @@ def plot(reference_positions, uwb_positions, filtered_positions):
     plot_2d_cartesian(reference_positions, uwb_positions, filtered_positions, ax0)
     #plot_3D(uwb_positions, filtered_positions, ax1)
     plt.show()
-    #plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, sample_count)
+    #plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, measurement_count)
 
 def plot_2d_cartesian(reference_positions, uwb_positions, filtered_positions, axs):
     plt.xlabel = "X Axis"
@@ -433,51 +406,6 @@ def plot_3D(uwb_positions, filtered_positions, axs):
     for x, y, z in filtered_positions:
         axs.scatter(x, y, z, c='r', marker='x')
 
-'''def plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, sample_count):
-    fig = plt.figure()
-    uwb_x_coordinates, uwb_y_coordinates, uwb_z_coordinates, filtered_x_coordinates, filtered_y_coordinates, filtered_z_coordinates, raw_x_accelerations, raw_y_accelerations, raw_z_accelerations, filtered_x_accelerations, filtered_y_accelerations, filtered_z_accelerations = get_values(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations)
-    plt.title("Raw UWB and filtered positions")
-    # Plot coordinates
-    ax1 = fig.add_subplot(311)
-    ax1.plot(range(sample_count), uwb_x_coordinates, label='UWB X', c='b')
-    ax1.plot(range(sample_count), filtered_x_coordinates, label='Filtered X', c='r')
-    ax1.legend()
-
-    ax2 = fig.add_subplot(312)
-    ax2.plot(range(sample_count), uwb_y_coordinates, label='UWB Y', c='b')
-    ax2.plot(range(sample_count), filtered_y_coordinates, label='Filtered Y', c='r')
-    ax2.legend()
-
-    ax3 = fig.add_subplot(313)
-    ax3.plot(range(sample_count), uwb_z_coordinates, label='UWB Z', c='b')
-    ax3.plot(range(sample_count), filtered_z_coordinates, label='Filtered Z', c='r')
-    ax3.axhline(1.67, 0, 1, label='User Height', c='g')
-    ax3.legend()
-
-    plt.show()
-
-    # Plot accelerations
-    fig = plt.figure()
-    plt.title("Raw and filtered accelerations")
-    ax1 = fig.add_subplot(311)
-    ax1.plot(range(sample_count), raw_x_accelerations, label='Raw X', c='b')
-    ax1.plot(range(sample_count), filtered_x_accelerations, label='Filtered X', c='r')
-    ax1.legend()
-
-    ax2 = fig.add_subplot(312)
-    ax2.plot(range(sample_count), raw_y_accelerations, label='Raw Y', c='b')
-    ax2.plot(range(sample_count), filtered_y_accelerations, label='Filtered Y', c='r')
-    ax2.legend()
-
-    ax3 = fig.add_subplot(313)
-    ax3.plot(range(sample_count), raw_z_accelerations, label='Raw Z', c='b')
-    ax3.plot(range(sample_count), filtered_z_accelerations, label='Filtered Z', c='r')
-    ax3.axhline(2.0, 0, 1, label='Z Acc Threshold', c='g')
-    ax3.axhline(-2.0, 0, 1, c='g')
-    ax3.legend()
-
-    plt.show()'''
-
 # Plot a legend and remove duplicate legend elements
 def legend(axs):
     handles, labels = axs.get_legend_handles_labels()
@@ -496,7 +424,3 @@ if __name__ == "__main__":
         exit(1)
 
     evaluate_and_plot_data(directory)
-    
-    #sample_count = get_sample_count(filename)
-    #uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations = get_data(filename)
-    #plot(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, sample_count)
