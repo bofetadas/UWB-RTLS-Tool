@@ -46,12 +46,12 @@ def evaluate_and_plot_data(directory):
     reference_positions = []
     uwb_mean_positions = []
     filtered_mean_positions = []
-    uwb_distances_x = []
-    uwb_distances_y = []
-    uwb_distances_z = []
-    filtered_distances_x = []
-    filtered_distances_y = []
-    filtered_distances_z = []
+    uwb_x_to_reference_x_distances = []
+    uwb_y_to_reference_y_distances = []
+    uwb_z_to_reference_z_distances = []
+    filtered_x_to_reference_x_distances = []
+    filtered_y_to_reference_y_distances = []
+    filtered_z_to_reference_z_distances = []
     uwb_positions_dictionary = {}
     filtered_positions_dictionary = {}
 
@@ -152,17 +152,17 @@ def evaluate_and_plot_data(directory):
 
                 # Calculate distances on each axis
                 uwb_distance_x = uwb_x - reference_position[0]
-                uwb_distances_x.append(uwb_distance_x)
+                uwb_x_to_reference_x_distances.append(uwb_distance_x)
                 uwb_distance_y = uwb_y - reference_position[1]
-                uwb_distances_y.append(uwb_distance_y)
+                uwb_y_to_reference_y_distances.append(uwb_distance_y)
                 uwb_distance_z = uwb_z - reference_position[2]
-                uwb_distances_z.append(uwb_distance_z)
+                uwb_z_to_reference_z_distances.append(uwb_distance_z)
                 filtered_distance_x = filtered_x - reference_position[0]
-                filtered_distances_x.append(filtered_distance_x)
+                filtered_x_to_reference_x_distances.append(filtered_distance_x)
                 filtered_distance_y = filtered_y - reference_position[1]
-                filtered_distances_y.append(filtered_distance_y)
+                filtered_y_to_reference_y_distances.append(filtered_distance_y)
                 filtered_distance_z = filtered_z - reference_position[2]
-                filtered_distances_z.append(filtered_distance_z)
+                filtered_z_to_reference_z_distances.append(filtered_distance_z)
 
                 # Calculate distance of measurement point to reference point in 2D and 3D and add to distances lists
                 uwb_distance_to_ref_point_2D = distance_between_two_points2D(uwb_measurement_point, reference_position)
@@ -317,13 +317,13 @@ def evaluate_and_plot_data(directory):
     filtered_mean_std_distances_to_ref_point_2D = mean(filtered_mean_distances_to_reference_point_stds_2D)
     uwb_mean_std_distances_to_ref_point_3D = mean(uwb_mean_distances_to_reference_point_stds_3D)
     filtered_mean_std_distances_to_ref_point_3D = mean(filtered_mean_distances_to_reference_point_stds_3D)
-    uwb_mean_distance_x_axis = mean(uwb_distances_x)
-    uwb_distances_x_axis_std = standard_deviation(uwb_distances_x)
-    uwb_mean_distance_y_axis = mean(uwb_distances_y)
-    uwb_mean_distance_z_axis = mean(uwb_distances_z)
-    filtered_mean_distance_x_axis = mean(filtered_distances_x)
-    filtered_mean_distance_y_axis = mean(filtered_distances_y)
-    filtered_mean_distance_z_axis = mean(filtered_distances_z)
+    uwb_mean_distance_x_axis = mean(uwb_x_to_reference_x_distances)
+    uwb_distances_x_axis_std = standard_deviation(uwb_x_to_reference_x_distances)
+    uwb_mean_distance_y_axis = mean(uwb_y_to_reference_y_distances)
+    uwb_mean_distance_z_axis = mean(uwb_z_to_reference_z_distances)
+    filtered_mean_distance_x_axis = mean(filtered_x_to_reference_x_distances)
+    filtered_mean_distance_y_axis = mean(filtered_y_to_reference_y_distances)
+    filtered_mean_distance_z_axis = mean(filtered_z_to_reference_z_distances)
 
     # Final precision evaluation
     uwb_mean_distance_to_measurment_mean_point_2D = mean(uwb_mean_distances_to_measurement_centroid_2D)
