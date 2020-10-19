@@ -41,19 +41,19 @@ def evaluate_and_plot_data(directory):
     uwb_mean_positions = []
     filtered_mean_positions = []
 
-    uwb_x_to_reference_x_distances = []
-    uwb_y_to_reference_y_distances = []
-    uwb_z_to_reference_z_distances = []
-    filtered_x_to_reference_x_distances = []
-    filtered_y_to_reference_y_distances = []
-    filtered_z_to_reference_z_distances = []
+    uwb_distances_on_x_axis_to_reference_x = []
+    uwb_distances_on_y_axis_to_reference_y = []
+    uwb_distances_on_z_axis_to_reference_z = []
+    filtered_distances_on_x_axis_to_reference_x = []
+    filtered_distances_on_y_axis_to_reference_y = []
+    filtered_distances_on_z_axis_to_reference_z = []
 
-    uwb_x_to_x_axis_mean_distances = []
-    uwb_y_to_y_axis_mean_distances = []
-    uwb_z_to_z_axis_mean_distances = []
-    filtered_x_to_x_axis_mean_distances = []
-    filtered_y_to_y_axis_mean_distances = []
-    filtered_z_to_z_axis_mean_distances = []
+    uwb_distances_on_x_axis_to_measurement_centroid_x = []
+    uwb_distances_on_y_axis_to_measurement_centroid_y = []
+    uwb_distances_on_z_axis_to_measurement_centroid_z = []
+    filtered_distances_on_x_axis_to_measurement_centroid_x = []
+    filtered_distances_on_y_axis_to_measurement_centroid_y = []
+    filtered_distances_on_z_axis_to_measurement_centroid_z = []
 
     uwb_positions_dictionary = {}
     filtered_positions_dictionary = {}
@@ -167,21 +167,7 @@ def evaluate_and_plot_data(directory):
                 filtered_measurement_point = [filtered_x, filtered_y, filtered_z]
                 filtered_measurement_points.append(filtered_measurement_point)
 
-                # Calculate distances on each axis
-                uwb_distance_x = uwb_x - reference_position[0]
-                uwb_x_to_reference_x_distances.append(uwb_distance_x)
-                uwb_distance_y = uwb_y - reference_position[1]
-                uwb_y_to_reference_y_distances.append(uwb_distance_y)
-                uwb_distance_z = uwb_z - reference_position[2]
-                uwb_z_to_reference_z_distances.append(uwb_distance_z)
-                filtered_distance_x = filtered_x - reference_position[0]
-                filtered_x_to_reference_x_distances.append(filtered_distance_x)
-                filtered_distance_y = filtered_y - reference_position[1]
-                filtered_y_to_reference_y_distances.append(filtered_distance_y)
-                filtered_distance_z = filtered_z - reference_position[2]
-                filtered_z_to_reference_z_distances.append(filtered_distance_z)
-
-                # Calculate distance of measurement point to reference point in 2D and 3D and add to distances lists
+                # Calculate distance of measurement point to reference position in 2D and 3D
                 uwb_distance_to_ref_point_2D = distance_between_two_points2D(uwb_measurement_point, reference_position)
                 uwb_distances_to_ref_point_2D.append(uwb_distance_to_ref_point_2D)
                 uwb_distance_to_ref_point_3D = distance_between_two_points3D(uwb_measurement_point, reference_position)
@@ -190,19 +176,33 @@ def evaluate_and_plot_data(directory):
                 filtered_distances_to_ref_point_2D.append(filtered_distance_to_ref_point_2D)
                 filtered_distance_to_ref_point_3D = distance_between_two_points3D(filtered_measurement_point, reference_position)
                 filtered_distances_to_ref_point_3D.append(filtered_distance_to_ref_point_3D)
+
+                # Calculate distances on each axis to reference position
+                uwb_distance_x = uwb_x - reference_position[0]
+                uwb_distances_on_x_axis_to_reference_x.append(uwb_distance_x)
+                uwb_distance_y = uwb_y - reference_position[1]
+                uwb_distances_on_y_axis_to_reference_y.append(uwb_distance_y)
+                uwb_distance_z = uwb_z - reference_position[2]
+                uwb_distances_on_z_axis_to_reference_z.append(uwb_distance_z)
+                filtered_distance_x = filtered_x - reference_position[0]
+                filtered_distances_on_x_axis_to_reference_x.append(filtered_distance_x)
+                filtered_distance_y = filtered_y - reference_position[1]
+                filtered_distances_on_y_axis_to_reference_y.append(filtered_distance_y)
+                filtered_distance_z = filtered_z - reference_position[2]
+                filtered_distances_on_z_axis_to_reference_z.append(filtered_distance_z)
         
         '''#############################################################
         #################### ACCURACY EVALUATION ####################
         #############################################################'''
 
         # Calculate mean distance of measurements to reference point
-        uwb_mean_distance_to_ref_point_2D = sum(uwb_distances_to_ref_point_2D) / measurement_count
+        uwb_mean_distance_to_ref_point_2D = mean(uwb_distances_to_ref_point_2D)
         uwb_mean_distances_to_reference_point_2D.append(uwb_mean_distance_to_ref_point_2D)
-        uwb_mean_distance_to_ref_point_3D = sum(uwb_distances_to_ref_point_3D) / measurement_count
+        uwb_mean_distance_to_ref_point_3D = mean(uwb_distances_to_ref_point_3D)
         uwb_mean_distances_to_reference_point_3D.append(uwb_mean_distance_to_ref_point_3D)
-        filtered_mean_distance_to_ref_point_2D = sum(filtered_distances_to_ref_point_2D) / measurement_count
+        filtered_mean_distance_to_ref_point_2D = mean(filtered_distances_to_ref_point_2D)
         filtered_mean_distances_to_reference_point_2D.append(filtered_mean_distance_to_ref_point_2D)
-        filtered_mean_distance_to_ref_point_3D = sum(filtered_distances_to_ref_point_3D) / measurement_count
+        filtered_mean_distance_to_ref_point_3D = mean(filtered_distances_to_ref_point_3D)
         filtered_mean_distances_to_reference_point_3D.append(filtered_mean_distance_to_ref_point_3D)
 
         # Get distance standard deviations of distance to reference point
@@ -252,32 +252,32 @@ def evaluate_and_plot_data(directory):
         # Calculate distance for each measured axis value to mean axis value
         for uwb_x in uwb_x_values:
             uwb_x_to_x_axis_mean_distance = distance_on_axis(uwb_x, uwb_x_mean)
-            uwb_x_to_x_axis_mean_distances.append(uwb_x_to_x_axis_mean_distance)
+            uwb_distances_on_x_axis_to_measurement_centroid_x.append(uwb_x_to_x_axis_mean_distance)
         for uwb_y in uwb_y_values:
             uwb_y_to_y_axis_mean_distance = distance_on_axis(uwb_y, uwb_y_mean)
-            uwb_y_to_y_axis_mean_distances.append(uwb_y_to_y_axis_mean_distance)
+            uwb_distances_on_y_axis_to_measurement_centroid_y.append(uwb_y_to_y_axis_mean_distance)
         for uwb_z in uwb_z_values:
             uwb_z_to_z_axis_mean_distance = distance_on_axis(uwb_z, uwb_z_mean)
-            uwb_z_to_z_axis_mean_distances.append(uwb_z_to_z_axis_mean_distance)
+            uwb_distances_on_z_axis_to_measurement_centroid_z.append(uwb_z_to_z_axis_mean_distance)
 
         for filtered_x in filtered_x_values:
             filtered_x_to_x_axis_mean_distance = distance_on_axis(filtered_x, filtered_x_mean)
-            filtered_x_to_x_axis_mean_distances.append(filtered_x_to_x_axis_mean_distance)
+            filtered_distances_on_x_axis_to_measurement_centroid_x.append(filtered_x_to_x_axis_mean_distance)
         for filtered_y in filtered_y_values:
             filtered_y_to_y_axis_mean_distance = distance_on_axis(filtered_y, filtered_y_mean)
-            filtered_y_to_y_axis_mean_distances.append(filtered_y_to_y_axis_mean_distance)
+            filtered_distances_on_y_axis_to_measurement_centroid_y.append(filtered_y_to_y_axis_mean_distance)
         for filtered_z in filtered_z_values:
             filtered_z_to_z_axis_mean_distance = distance_on_axis(filtered_z, filtered_z_mean)
-            filtered_z_to_z_axis_mean_distances.append(filtered_z_to_z_axis_mean_distance)
+            filtered_distances_on_z_axis_to_measurement_centroid_z.append(filtered_z_to_z_axis_mean_distance)
 
         # Calculate mean distance of measurements to measurement centroid
-        uwb_mean_distance_to_measurement_centroid_2D = sum(uwb_distances_to_measurement_centroid_2D) / measurement_count
+        uwb_mean_distance_to_measurement_centroid_2D = mean(uwb_distances_to_measurement_centroid_2D)
         uwb_mean_distances_to_measurement_centroid_2D.append(uwb_mean_distance_to_measurement_centroid_2D)
-        uwb_mean_distance_to_measurement_centroid_3D = sum(uwb_distances_to_measurement_centroid_3D) / measurement_count
+        uwb_mean_distance_to_measurement_centroid_3D = mean(uwb_distances_to_measurement_centroid_3D)
         uwb_mean_distances_to_measurement_centroid_3D.append(uwb_mean_distance_to_measurement_centroid_3D)
-        filtered_mean_distance_to_measurement_centroid_2D = sum(filtered_distances_to_measurement_centroid_2D) / measurement_count
+        filtered_mean_distance_to_measurement_centroid_2D = mean(filtered_distances_to_measurement_centroid_2D)
         filtered_mean_distances_to_measurement_centroid_2D.append(filtered_mean_distance_to_measurement_centroid_2D)
-        filtered_mean_distance_to_measurement_centroid_3D = sum(filtered_distances_to_measurement_centroid_3D) / measurement_count
+        filtered_mean_distance_to_measurement_centroid_3D = mean(filtered_distances_to_measurement_centroid_3D)
         filtered_mean_distances_to_measurement_centroid_3D.append(filtered_mean_distance_to_measurement_centroid_3D)
 
         # Calculate distance standard deviations of distance to measurement centroid
@@ -304,21 +304,21 @@ def evaluate_and_plot_data(directory):
         # 2D Get mean, min and max distance differences from measurements to their next ones
         uwb_delta_distances_2D = diff(uwb_distances_to_ref_point_2D)
         uwb_delta_distances_2D =  [abs(n) for n in uwb_delta_distances_2D]
-        uwb_mean_delta_distance_2D = sum(uwb_delta_distances_2D) / (measurement_count - 1)
+        uwb_mean_delta_distance_2D = mean(uwb_delta_distances_2D)
         uwb_mean_delta_distances_2D.append(uwb_mean_delta_distance_2D)
         filtered_delta_distances_2D = diff(filtered_distances_to_ref_point_2D)
         filtered_delta_distances_2D =  [abs(n) for n in filtered_delta_distances_2D]
-        filtered_mean_delta_distance_2D = sum(filtered_delta_distances_2D) / (measurement_count - 1)
+        filtered_mean_delta_distance_2D = mean(filtered_delta_distances_2D)
         filtered_mean_delta_distances_2D.append(filtered_mean_delta_distance_2D)
 
         # 3D Get mean, min and max distance differences from measurements to their next ones
         uwb_delta_distances_3D = diff(uwb_distances_to_ref_point_3D)
         uwb_delta_distances_3D = [abs(n) for n in uwb_delta_distances_3D]
-        uwb_mean_delta_distance_3D = sum(uwb_delta_distances_3D) / (measurement_count - 1)
+        uwb_mean_delta_distance_3D = mean(uwb_delta_distances_3D)
         uwb_mean_delta_distances_3D.append(uwb_mean_delta_distance_3D)
         filtered_delta_distances_3D = diff(filtered_distances_to_ref_point_3D)
         filtered_delta_distances_3D = [abs(n) for n in filtered_delta_distances_3D]
-        filtered_mean_delta_distance_3D = sum(filtered_delta_distances_3D) / (measurement_count - 1)
+        filtered_mean_delta_distance_3D = mean(filtered_delta_distances_3D)
         filtered_mean_delta_distances_3D.append(filtered_mean_delta_distance_3D)
 
     for k, v in uwb_positions_dictionary.items():
@@ -348,114 +348,185 @@ def evaluate_and_plot_data(directory):
     
     # Final accuracy evaluation
     # 2D and 3D position accuracy evaluation
+    # UWB
     uwb_mean_distance_to_reference_point_2D = mean(uwb_mean_distances_to_reference_point_2D)
+    uwb_median_distance_to_reference_point_2D = median(uwb_mean_distances_to_reference_point_2D)
+    uwb_mean_std_of_distances_to_reference_point_2D = mean(uwb_mean_distances_to_reference_point_stds_2D)
     uwb_mean_distance_to_reference_point_3D = mean(uwb_mean_distances_to_reference_point_3D)
-    uwb_mean_std_distances_to_ref_point_2D = mean(uwb_mean_distances_to_reference_point_stds_2D)
-    uwb_mean_std_distances_to_ref_point_3D = mean(uwb_mean_distances_to_reference_point_stds_3D)
+    uwb_median_distance_to_reference_point_3D = median(uwb_mean_distances_to_reference_point_3D)
+    uwb_mean_std_of_distances_to_reference_point_3D = mean(uwb_mean_distances_to_reference_point_stds_3D)
+    
+    # Filtered
     filtered_mean_distance_to_reference_point_2D = mean(filtered_mean_distances_to_reference_point_2D)
+    filtered_median_distance_to_reference_point_2D = median(filtered_mean_distances_to_reference_point_2D)
+    filtered_mean_std_of_distances_to_reference_point_2D = mean(filtered_mean_distances_to_reference_point_stds_2D)
     filtered_mean_distance_to_reference_point_3D = mean(filtered_mean_distances_to_reference_point_3D)
-    filtered_mean_std_distances_to_ref_point_2D = mean(filtered_mean_distances_to_reference_point_stds_2D)
-    filtered_mean_std_distances_to_ref_point_3D = mean(filtered_mean_distances_to_reference_point_stds_3D)
+    filtered_median_distance_to_reference_point_3D = median(filtered_mean_distances_to_reference_point_3D)
+    filtered_mean_std_of_distances_to_reference_point_3D = mean(filtered_mean_distances_to_reference_point_stds_3D)
 
     # Axis accuracy evaluation
-    uwb_mean_distance_x_axis_to_reference_x = mean(uwb_x_to_reference_x_distances)
-    uwb_distances_x_axis_to_reference_x_std = standard_deviation(uwb_x_to_reference_x_distances)
-    uwb_mean_distance_y_axis_to_reference_y = mean(uwb_y_to_reference_y_distances)
-    uwb_distances_y_axis_to_reference_y_std = standard_deviation(uwb_y_to_reference_y_distances)
-    uwb_mean_distance_z_axis_to_reference_z = mean(uwb_z_to_reference_z_distances)
-    uwb_distances_z_axis_to_reference_z_std = standard_deviation(uwb_z_to_reference_z_distances)
-    filtered_mean_distance_x_axis_to_reference_x = mean(filtered_x_to_reference_x_distances)
-    filtered_distances_x_axis_to_reference_x_std = standard_deviation(filtered_x_to_reference_x_distances)
-    filtered_mean_distance_y_axis_to_reference_y = mean(filtered_y_to_reference_y_distances)
-    filtered_distances_y_axis_to_reference_y_std = standard_deviation(filtered_y_to_reference_y_distances)
-    filtered_mean_distance_z_axis_to_reference_z = mean(filtered_z_to_reference_z_distances)
-    filtered_distances_z_axis_to_reference_z_std = standard_deviation(filtered_z_to_reference_z_distances)
+    # UWB
+    uwb_mean_distance_on_x_axis_to_reference_x = mean(uwb_distances_on_x_axis_to_reference_x)
+    uwb_median_distance_on_x_axis_to_reference_x = median(uwb_distances_on_x_axis_to_reference_x)
+    uwb_std_of_distances_on_x_axis_to_reference_x = standard_deviation(uwb_distances_on_x_axis_to_reference_x)
+    uwb_mean_distance_on_y_axis_to_reference_y = mean(uwb_distances_on_y_axis_to_reference_y)
+    uwb_median_distance_on_y_axis_to_reference_y = median(uwb_distances_on_y_axis_to_reference_y)
+    uwb_std_of_distances_on_y_axis_to_reference_y = standard_deviation(uwb_distances_on_y_axis_to_reference_y)
+    uwb_mean_distance_on_z_axis_to_reference_z = mean(uwb_distances_on_z_axis_to_reference_z)
+    uwb_median_distance_on_z_axis_to_reference_z = median(uwb_distances_on_z_axis_to_reference_z)
+    uwb_std_of_distances_on_z_axis_to_reference_z = standard_deviation(uwb_distances_on_z_axis_to_reference_z)
+    
+    # Filtered
+    filtered_mean_distance_on_x_axis_to_reference_x = mean(filtered_distances_on_x_axis_to_reference_x)
+    filtered_median_distance_on_x_axis_to_reference_x = median(filtered_distances_on_x_axis_to_reference_x)
+    filtered_std_of_distances_on_x_axis_to_reference_x = standard_deviation(filtered_distances_on_x_axis_to_reference_x)
+    filtered_mean_distance_on_y_axis_to_reference_y = mean(filtered_distances_on_y_axis_to_reference_y)
+    filtered_median_distance_on_y_axis_to_reference_y = median(filtered_distances_on_y_axis_to_reference_y)
+    filtered_std_of_distances_on_y_axis_to_reference_y = standard_deviation(filtered_distances_on_y_axis_to_reference_y)
+    filtered_mean_distance_on_z_axis_to_reference_z = mean(filtered_distances_on_z_axis_to_reference_z)
+    filtered_median_distance_on_z_axis_to_reference_z = median(filtered_distances_on_z_axis_to_reference_z)
+    filtered_std_of_distances_on_z_axis_to_reference_z = standard_deviation(filtered_distances_on_z_axis_to_reference_z)
 
     # Final precision evaluation
     # 2D and 3D position precision evaluation
-    uwb_mean_distance_to_measurment_mean_point_2D = mean(uwb_mean_distances_to_measurement_centroid_2D)
-    uwb_mean_distance_to_measurment_mean_point_3D = mean(uwb_mean_distances_to_measurement_centroid_3D)
-    uwb_mean_std_distances_to_measurement_mean_point_2D = mean(uwb_mean_distances_to_measurement_centroid_stds_2D)
-    uwb_mean_std_distances_to_measurement_mean_point_3D = mean(uwb_mean_distances_to_measurement_centroid_stds_3D)
-    filtered_mean_distance_to_measurment_mean_point_2D = mean(filtered_mean_distances_to_measurement_centroid_2D)
-    filtered_mean_distance_to_measurment_mean_point_3D = mean(filtered_mean_distances_to_measurement_centroid_3D)
-    filtered_mean_std_distances_to_measurement_mean_point_2D = mean(filtered_mean_distances_to_measurement_centroid_stds_2D)
-    filtered_mean_std_distances_to_measurement_mean_point_3D = mean(filtered_mean_distances_to_measurement_centroid_stds_3D)
+    # UWB
+    uwb_mean_distance_to_measurement_centroid_2D = mean(uwb_mean_distances_to_measurement_centroid_2D)
+    uwb_median_distance_to_measurement_centroid_2D = median(uwb_mean_distances_to_measurement_centroid_2D)
+    uwb_mean_std_of_distances_to_measurement_centroid_2D = mean(uwb_mean_distances_to_measurement_centroid_stds_2D)
+    uwb_mean_distance_to_measurment_centroid_3D = mean(uwb_mean_distances_to_measurement_centroid_3D)
+    uwb_median_distance_to_measurement_centroid_3D = median(uwb_mean_distances_to_measurement_centroid_3D)
+    uwb_mean_std_of_distances_to_measurement_centroid_3D = mean(uwb_mean_distances_to_measurement_centroid_stds_3D)
+    
+    # Filtered
+    filtered_mean_distance_to_measurment_centroid_2D = mean(filtered_mean_distances_to_measurement_centroid_2D)
+    filtered_median_distance_to_measurement_centroid_2D = median(filtered_mean_distances_to_measurement_centroid_2D)
+    filtered_mean_std_of_distances_to_measurement_centroid_2D = mean(filtered_mean_distances_to_measurement_centroid_stds_2D)
+    filtered_mean_distance_to_measurment_centroid_3D = mean(filtered_mean_distances_to_measurement_centroid_3D)
+    filtered_median_distance_to_measurement_centroid_3D = median(filtered_mean_distances_to_measurement_centroid_3D)
+    filtered_mean_std_of_distances_to_measurement_centroid_3D = mean(filtered_mean_distances_to_measurement_centroid_stds_3D)
 
     # Axis precision evaluation
-    uwb_mean_distance_x_axis_to_mean_x = mean(uwb_x_to_x_axis_mean_distances)
-    uwb_mean_std_x_axis_to_mean_x = standard_deviation(uwb_x_to_x_axis_mean_distances)
-    uwb_mean_distance_y_axis_to_mean_y = mean(uwb_y_to_y_axis_mean_distances)
-    uwb_mean_std_y_axis_to_mean_y = standard_deviation(uwb_y_to_y_axis_mean_distances)
-    uwb_mean_distance_z_axis_to_mean_z = mean(uwb_z_to_z_axis_mean_distances)
-    uwb_mean_std_z_axis_to_mean_z = standard_deviation(uwb_z_to_z_axis_mean_distances)
-    filtered_mean_distance_x_axis_to_mean_x = mean(filtered_x_to_x_axis_mean_distances)
-    filtered_mean_std_x_axis_to_mean_x = standard_deviation(filtered_x_to_x_axis_mean_distances)
-    filtered_mean_distance_y_axis_to_mean_y = mean(filtered_y_to_y_axis_mean_distances)
-    filtered_mean_std_y_axis_to_mean_y = standard_deviation(filtered_y_to_y_axis_mean_distances)
-    filtered_mean_distance_z_axis_to_mean_z = mean(filtered_z_to_z_axis_mean_distances)
-    filtered_mean_std_z_axis_to_mean_z = standard_deviation(filtered_z_to_z_axis_mean_distances)
+    # UWB
+    uwb_mean_distance_on_x_axis_to_measurement_centroid_x = mean(uwb_distances_on_x_axis_to_measurement_centroid_x)
+    uwb_median_distance_on_x_axis_to_measurement_centroid_x = median(uwb_distances_on_x_axis_to_measurement_centroid_x)
+    uwb_std_of_distances_on_x_axis_to_measurement_centroid_x = standard_deviation(uwb_distances_on_x_axis_to_measurement_centroid_x)
+    uwb_mean_distance_on_y_axis_to_measurement_centroid_y = mean(uwb_distances_on_y_axis_to_measurement_centroid_y)
+    uwb_median_distance_on_y_axis_to_measurement_centroid_y = median(uwb_distances_on_y_axis_to_measurement_centroid_y)
+    uwb_std_of_distances_on_y_axis_to_measurement_centroid_y = standard_deviation(uwb_distances_on_y_axis_to_measurement_centroid_y)
+    uwb_mean_distance_on_z_axis_to_measurement_centroid_z = mean(uwb_distances_on_z_axis_to_measurement_centroid_z)
+    uwb_median_distance_on_z_axis_to_measurement_centroid_z = median(uwb_distances_on_z_axis_to_measurement_centroid_z)
+    uwb_std_of_distances_on_z_axis_to_measurement_centroid_z = standard_deviation(uwb_distances_on_z_axis_to_measurement_centroid_z)
+    
+    # Filtered
+    filtered_mean_distance_on_x_axis_to_measurement_centroid_x = mean(filtered_distances_on_x_axis_to_measurement_centroid_x)
+    filtered_median_distance_on_x_axis_to_measurement_centroid_x = median(filtered_distances_on_x_axis_to_measurement_centroid_x)
+    filtered_std_of_distances_on_x_axis_to_measurement_centroid_x = standard_deviation(filtered_distances_on_x_axis_to_measurement_centroid_x)
+    filtered_mean_distance_on_y_axis_to_measurement_centroid_y = mean(filtered_distances_on_y_axis_to_measurement_centroid_y)
+    filtered_median_distance_on_y_axis_to_measurement_centroid_y = median(filtered_distances_on_y_axis_to_measurement_centroid_y)
+    filtered_std_of_distances_on_y_axis_to_measurement_centroid_y = standard_deviation(filtered_distances_on_y_axis_to_measurement_centroid_y)
+    filtered_mean_distance_on_z_axis_to_measurement_centroid_z = mean(filtered_distances_on_z_axis_to_measurement_centroid_z)
+    filtered_median_distance_on_z_axis_to_measurement_centroid_z = median(filtered_distances_on_z_axis_to_measurement_centroid_z)
+    filtered_std_of_distances_on_z_axis_to_measurement_centroid_z = standard_deviation(filtered_distances_on_z_axis_to_measurement_centroid_z)
 
     # Final motion sickness evaluation
+    # Since motion sickness is an effect of all 3 axises combined it is unnecessary to evaluate the motion sickness values for each single axis
+    # UWB
     uwb_mean_delta_distance_2D = mean(uwb_mean_delta_distances_2D)
-    filtered_mean_delta_distance_2D = mean(filtered_mean_delta_distances_2D)
+    uwb_median_delta_distance_2D = median(uwb_mean_delta_distances_2D)
+    uwb_std_of_delta_distances_2D = standard_deviation(uwb_mean_delta_distances_2D)
     uwb_mean_delta_distance_3D = mean(uwb_mean_delta_distances_3D)
+    uwb_median_delta_distance_3D = median(uwb_mean_delta_distances_3D)
+    uwb_std_of_delta_distances_3D = standard_deviation(uwb_mean_delta_distances_3D)
+    
+    # Filtered
+    filtered_mean_delta_distance_2D = mean(filtered_mean_delta_distances_2D)
+    filtered_median_delta_distance_2D = median(filtered_mean_delta_distances_2D)
+    filtered_std_of_delta_distances_2D = standard_deviation(filtered_mean_delta_distances_2D)
     filtered_mean_delta_distance_3D = mean(filtered_mean_delta_distances_3D)
+    filtered_median_delta_distance_3D = median(filtered_mean_delta_distances_3D)
+    filtered_std_of_delta_distances_3D = standard_deviation(filtered_mean_delta_distances_3D)
 
-    print('\n')
+    print('')
     print("ACCURACY RESULTS")
-    print("Average uwb distance to reference point 2D: {:.3f}m".format(uwb_mean_distance_to_reference_point_2D))
+    print("Mean | Median | Std uwb distances to reference position 2D: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_to_reference_point_2D, uwb_median_distance_to_reference_point_2D, uwb_mean_std_of_distances_to_reference_point_2D))
+    print("Mean | Median | Std uwb distances to reference position 3D: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_to_reference_point_3D, uwb_median_distance_to_reference_point_3D, uwb_mean_std_of_distances_to_reference_point_3D))
+    print("Mean | Median | Std uwb distances on X axis to reference X: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_on_x_axis_to_reference_x, uwb_median_distance_on_x_axis_to_reference_x, uwb_std_of_distances_on_x_axis_to_reference_x))
+    print("Mean | Median | Std uwb distances on Y axis to reference Y: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_on_y_axis_to_reference_y, uwb_median_distance_on_y_axis_to_reference_y, uwb_std_of_distances_on_y_axis_to_reference_y))
+    print("Mean | Median | Std uwb distances on Z axis to reference Z: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_on_z_axis_to_reference_z, uwb_median_distance_on_z_axis_to_reference_z, uwb_std_of_distances_on_z_axis_to_reference_z))
+    print("Mean | Median | Std filtered distances to reference position 2D: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_to_reference_point_2D, filtered_median_distance_to_reference_point_2D, filtered_mean_std_of_distances_to_reference_point_2D))
+    print("Mean | Median | Std filtered distances to reference position 3D: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_to_reference_point_3D, filtered_median_distance_to_reference_point_3D, filtered_mean_std_of_distances_to_reference_point_3D))
+    print("Mean | Median | Std filtered distances on X axis to reference position X: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_x_axis_to_reference_x, filtered_median_distance_on_x_axis_to_reference_x, filtered_std_of_distances_on_x_axis_to_reference_x))
+    print("Mean | Median | Std filtered distances on Y axis to reference position Y: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_y_axis_to_reference_y, filtered_median_distance_on_y_axis_to_reference_y, filtered_std_of_distances_on_y_axis_to_reference_y))
+    print("Mean | Median | Std filtered distances on Z axis to reference position Z: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_z_axis_to_reference_z, filtered_median_distance_on_z_axis_to_reference_z, filtered_std_of_distances_on_z_axis_to_reference_z))
+    '''print("Average uwb distance to reference point 2D: {:.3f}m".format(uwb_mean_distance_to_reference_point_2D))
     print("Average filtered distance to reference point 2D: {:.3f}m".format(filtered_mean_distance_to_reference_point_2D))
     print("Average uwb distance to reference point 3D: {:.3f}m".format(uwb_mean_distance_to_reference_point_3D))
     print("Average filtered distance to reference point 3D: {:.3f}m".format(filtered_mean_distance_to_reference_point_3D))
-    print("Average uwb distance to reference on X axis: {:.3f}m".format(uwb_mean_distance_x_axis_to_reference_x))
-    print("Average filtered distance to reference on X axis: {:.3f}m".format(filtered_mean_distance_x_axis_to_reference_x))
-    print("Average uwb distance to reference on Y axis: {:.3f}m".format(uwb_mean_distance_y_axis_to_reference_y))
-    print("Average filtered distance to reference on Y axis: {:.3f}m".format(filtered_mean_distance_y_axis_to_reference_y))
-    print("Average uwb distance to reference on Z axis: {:.3f}m".format(uwb_mean_distance_z_axis_to_reference_z))
-    print("Average filtered distance to reference on Z axis: {:.3f}m".format(filtered_mean_distance_z_axis_to_reference_z))
-    print('\n')
-    print("Average uwb distances to reference point standard deviation 2D: {:.3f}m".format(uwb_mean_std_distances_to_ref_point_2D))
-    print("Average filtered distances to reference point standard deviation 2D: {:.3f}m".format(filtered_mean_std_distances_to_ref_point_2D))
-    print("Average uwb distances to reference point standard deviation 3D: {:.3f}m".format(uwb_mean_std_distances_to_ref_point_3D))
-    print("Average filtered distances to reference point standard deviation 3D: {:.3f}m".format(filtered_mean_std_distances_to_ref_point_3D))
-    print("Standard deviation of uwb distances on X axis to reference X: {:.3f}m".format(uwb_distances_x_axis_to_reference_x_std))
-    print("Standard deviation of filtered distances on X axis to reference X: {:.3f}m".format(filtered_distances_x_axis_to_reference_x_std))
-    print("Standard deviation of uwb distances on Y axis to reference X: {:.3f}m".format(uwb_distances_y_axis_to_reference_y_std))
-    print("Standard deviation of filtered distances on Y axis to reference X: {:.3f}m".format(filtered_distances_y_axis_to_reference_y_std))
-    print("Standard deviation of uwb distances on Z axis to reference X: {:.3f}m".format(uwb_distances_z_axis_to_reference_z_std))
-    print("Standard deviation of filtered distances on Z axis to reference X: {:.3f}m".format(filtered_distances_z_axis_to_reference_z_std))
+    print("Average uwb distance to reference on X axis: {:.3f}m".format(uwb_mean_distance_on_x_axis_to_reference_x))
+    print("Average filtered distance to reference on X axis: {:.3f}m".format(filtered_mean_distance_on_x_axis_to_reference_x))
+    print("Average uwb distance to reference on Y axis: {:.3f}m".format(uwb_mean_distance_on_y_axis_to_reference_y))
+    print("Average filtered distance to reference on Y axis: {:.3f}m".format(filtered_mean_distance_on_y_axis_to_reference_y))
+    print("Average uwb distance to reference on Z axis: {:.3f}m".format(uwb_mean_distance_on_z_axis_to_reference_z))
+    print("Average filtered distance to reference on Z axis: {:.3f}m".format(filtered_mean_distance_on_z_axis_to_reference_z))
+    print('')
+    print("Average uwb distances to reference point standard deviation 2D: {:.3f}m".format(uwb_mean_std_of_distances_to_reference_point_2D))
+    print("Average filtered distances to reference point standard deviation 2D: {:.3f}m".format(filtered_mean_std_of_distances_to_reference_point_2D))
+    print("Average uwb distances to reference point standard deviation 3D: {:.3f}m".format(uwb_mean_std_of_distances_to_reference_point_3D))
+    print("Average filtered distances to reference point standard deviation 3D: {:.3f}m".format(filtered_mean_std_of_distances_to_reference_point_3D))
+    print("Standard deviation of uwb distances on X axis to reference X: {:.3f}m".format(uwb_std_of_distances_on_x_axis_to_reference_x))
+    print("Standard deviation of filtered distances on X axis to reference X: {:.3f}m".format(filtered_std_of_distances_on_x_axis_to_reference_x))
+    print("Standard deviation of uwb distances on Y axis to reference X: {:.3f}m".format(uwb_std_of_distances_on_y_axis_to_reference_y))
+    print("Standard deviation of filtered distances on Y axis to reference X: {:.3f}m".format(filtered_std_of_distances_on_y_axis_to_reference_y))
+    print("Standard deviation of uwb distances on Z axis to reference X: {:.3f}m".format(uwb_std_of_distances_on_z_axis_to_reference_z))
+    print("Standard deviation of filtered distances on Z axis to reference X: {:.3f}m".format(filtered_std_of_distances_on_z_axis_to_reference_z))'''
     print('\n')
     print("PRECISION RESULTS")
-    print("Average uwb distance to measurement centroid 2D: {:.3f}m".format(uwb_mean_distance_to_measurment_mean_point_2D))
-    print("Average filtered distance to measurement centroid 2D: {:.3f}m".format(filtered_mean_distance_to_measurment_mean_point_2D))
-    print("Average uwb distance to measurement centroid 3D: {:.3f}m".format(uwb_mean_distance_to_measurment_mean_point_3D))
-    print("Average filtered distance to measurement centroid 3D: {:.3f}m".format(filtered_mean_distance_to_measurment_mean_point_3D))
-    print("Average uwb distance to measurement mean X: {:.3f}m".format(uwb_mean_distance_x_axis_to_mean_x))
-    print("Average filtered distance to measurement mean X: {:.3f}m".format(filtered_mean_distance_x_axis_to_mean_x))
-    print("Average uwb distance to measurement mean Y: {:.3f}m".format(uwb_mean_distance_y_axis_to_mean_y))
-    print("Average filtered distance to measurement mean Y: {:.3f}m".format(filtered_mean_distance_y_axis_to_mean_y))
-    print("Average uwb distance to measurement mean Z: {:.3f}m".format(uwb_mean_distance_z_axis_to_mean_z))
-    print("Average filtered distance to measurement mean Z: {:.3f}m".format(filtered_mean_distance_z_axis_to_mean_z))
-    print('\n')
-    print("Average uwb distances to measurement centroid standard deviation 2D: {:.3f}m".format(uwb_mean_std_distances_to_measurement_mean_point_2D))
-    print("Average filtered distances to measurement centroid standard deviation 2D: {:.3f}m".format(filtered_mean_std_distances_to_measurement_mean_point_2D))
-    print("Average uwb distances to measurement centroid standard deviation 3D: {:.3f}m".format(uwb_mean_std_distances_to_measurement_mean_point_3D))
-    print("Average filtered distances to measurement centroid standard deviation 3D: {:.3f}m".format(filtered_mean_std_distances_to_measurement_mean_point_3D))
-    print("Standard deviation of uwb distances on X axis to mean X: {:.3f}m".format(uwb_mean_std_x_axis_to_mean_x))
-    print("Standard deviation of filtered distances on X axis to mean X: {:.3f}m".format(filtered_mean_std_x_axis_to_mean_x))
-    print("Standard deviation of uwb distances on Y axis to mean Y: {:.3f}m".format(uwb_mean_std_y_axis_to_mean_y))
-    print("Standard deviation of filtered distances on Y axis to mean Y: {:.3f}m".format(filtered_mean_std_y_axis_to_mean_y))
-    print("Standard deviation of uwb distances on Z axis to mean Z: {:.3f}m".format(uwb_mean_std_z_axis_to_mean_z))
-    print("Standard deviation of filtered distances on Z axis to mean Z: {:.3f}m".format(filtered_mean_std_z_axis_to_mean_z))
+    print("Mean | Median | Std uwb distances to measurement centroid 2D: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_to_measurement_centroid_2D, uwb_median_distance_to_measurement_centroid_2D, uwb_mean_std_of_distances_to_measurement_centroid_2D))
+    print("Mean | Median | Std uwb distances to measurement centroid 3D: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_to_measurement_centroid_3D, uwb_median_distance_to_measurement_centroid_3D, uwb_mean_std_of_distances_to_measurement_centroid_3D))
+    print("Mean | Median | Std uwb distances on X axis to measurement centroid X: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_on_x_axis_to_measurement_centroid_x, uwb_median_distance_on_x_axis_to_measurement_centroid_x, uwb_std_of_distances_on_x_axis_to_measurement_centroid_x))
+    print("Mean | Median | Std uwb distances on Y axis to measurement centroid Y: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_on_y_axis_to_measurement_centroid_y, uwb_median_distance_on_y_axis_to_measurement_centroid_y, uwb_std_of_distances_on_y_axis_to_measurement_centroid_y))
+    print("Mean | Median | Std uwb distances on Z axis to measurement centroid Z: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_on_z_axis_to_measurement_centroid_z, uwb_median_distance_on_z_axis_to_measurement_centroid_z, uwb_std_of_distances_on_z_axis_to_measurement_centroid_z))
+    print("Mean | Median | Std filtered distances to measurement centroid 2D: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_to_measurement_centroid_2D, filtered_median_distance_to_measurement_centroid_2D, filtered_mean_std_of_distances_to_measurement_centroid_2D))
+    print("Mean | Median | Std filtered distances to measurement centroid 3D: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_to_measurement_centroid_3D, filtered_median_distance_to_measurement_centroid_3D, filtered_mean_std_of_distances_to_measurement_centroid_3D))
+    print("Mean | Median | Std filtered distances on X axis to measurement centroid X: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_x_axis_to_measurement_centroid_x, filtered_median_distance_on_x_axis_to_measurement_centroid_x, filtered_std_of_distances_on_x_axis_to_measurement_centroid_x))
+    print("Mean | Median | Std filtered distances on Y axis to measurement centroid Y: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_y_axis_to_measurement_centroid_y, filtered_median_distance_on_y_axis_to_measurement_centroid_y, filtered_std_of_distances_on_y_axis_to_measurement_centroid_y))
+    print("Mean | Median | Std filtered distances on Z axis to measurement centroid Z: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_z_axis_to_measurement_centroid_z, filtered_median_distance_on_z_axis_to_measurement_centroid_z, filtered_std_of_distances_on_z_axis_to_measurement_centroid_z))
+    '''print("Average uwb distance to measurement centroid 2D: {:.3f}m".format(uwb_mean_distance_to_measurement_centroid_2D))
+    print("Average filtered distance to measurement centroid 2D: {:.3f}m".format(filtered_mean_distance_to_measurment_centroid_2D))
+    print("Average uwb distance to measurement centroid 3D: {:.3f}m".format(uwb_mean_distance_to_measurment_centroid_3D))
+    print("Average filtered distance to measurement centroid 3D: {:.3f}m".format(filtered_mean_distance_to_measurment_centroid_3D))
+    print("Average uwb distance to measurement mean X: {:.3f}m".format(uwb_mean_distance_on_x_axis_to_measurement_centroid_x))
+    print("Average filtered distance to measurement mean X: {:.3f}m".format(filtered_mean_distance_on_x_axis_to_measurement_centroid_x))
+    print("Average uwb distance to measurement mean Y: {:.3f}m".format(uwb_mean_distance_on_y_axis_to_measurement_centroid_y))
+    print("Average filtered distance to measurement mean Y: {:.3f}m".format(filtered_mean_distance_on_y_axis_to_measurement_centroid_y))
+    print("Average uwb distance to measurement mean Z: {:.3f}m".format(uwb_mean_distance_on_z_axis_to_measurement_centroid_z))
+    print("Average filtered distance to measurement mean Z: {:.3f}m".format(filtered_mean_distance_on_z_axis_to_measurement_centroid_z))
+    print('')
+    print("Average uwb distances to measurement centroid standard deviation 2D: {:.3f}m".format(uwb_mean_std_of_distances_to_measurement_centroid_2D))
+    print("Average filtered distances to measurement centroid standard deviation 2D: {:.3f}m".format(filtered_mean_std_of_distances_to_measurement_centroid_2D))
+    print("Average uwb distances to measurement centroid standard deviation 3D: {:.3f}m".format(uwb_mean_std_of_distances_to_measurement_centroid_3D))
+    print("Average filtered distances to measurement centroid standard deviation 3D: {:.3f}m".format(filtered_mean_std_of_distances_to_measurement_centroid_3D))
+    print("Standard deviation of uwb distances on X axis to mean X: {:.3f}m".format(uwb_std_of_distances_on_x_axis_to_measurement_centroid_x))
+    print("Standard deviation of filtered distances on X axis to mean X: {:.3f}m".format(filtered_std_of_distances_on_x_axis_to_measurement_centroid_x))
+    print("Standard deviation of uwb distances on Y axis to mean Y: {:.3f}m".format(uwb_std_of_distances_on_y_axis_to_measurement_centroid_y))
+    print("Standard deviation of filtered distances on Y axis to mean Y: {:.3f}m".format(filtered_std_of_distances_on_y_axis_to_measurement_centroid_y))
+    print("Standard deviation of uwb distances on Z axis to mean Z: {:.3f}m".format(uwb_std_of_distances_on_z_axis_to_measurement_centroid_z))
+    print("Standard deviation of filtered distances on Z axis to mean Z: {:.3f}m".format(filtered_std_of_distances_on_z_axis_to_measurement_centroid_z))'''
     print('\n')
     print("MOTION SICKNESS RESULTS")
-    print("Average uwb delta distance 2D: {:.3f}m".format(uwb_mean_delta_distance_2D))
+    print("Mean | Median | Std uwb delta distances 2D: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_delta_distance_2D, uwb_median_delta_distance_2D, uwb_std_of_delta_distances_2D))
+    print("Mean | Median | Std uwb delta distances 3D: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_delta_distance_3D, uwb_median_delta_distance_3D, uwb_std_of_delta_distances_3D))
+    print("Mean | Median | Std filtered delta distances 2D: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_delta_distance_2D, filtered_median_delta_distance_2D, filtered_std_of_delta_distances_2D))
+    print("Mean | Median | Std filtered delta distances 3D: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_delta_distance_3D, filtered_median_delta_distance_3D, filtered_std_of_delta_distances_3D))
+    print('')
+    print("All values in meter units")
+    print('')
+    '''print("Average uwb delta distance 2D: {:.3f}m".format(uwb_mean_delta_distance_2D))
     print("Average filtered delta distance 2D: {:.3f}m".format(filtered_mean_delta_distance_2D))
     print("Average uwb delta distance 3D: {:.3f}m".format(uwb_mean_delta_distance_3D))
-    print("Average filtered delta distance 3D: {:.3f}m".format(filtered_mean_delta_distance_3D))
+    print("Average filtered delta distance 3D: {:.3f}m".format(filtered_mean_delta_distance_3D))'''
 
-    plot(reference_positions, uwb_mean_positions, filtered_mean_positions)
+    #plot(reference_positions, uwb_mean_positions, filtered_mean_positions)
 
 def plot(reference_positions, uwb_positions, filtered_positions):
     fig = plt.figure(figsize=(7, 13))
