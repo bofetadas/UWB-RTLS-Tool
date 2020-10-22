@@ -1,8 +1,9 @@
 import fnmatch
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import os
 import sys
-from numpy import diff, mean, std, sqrt, square
+from numpy import arange, array, diff, lexsort, mean, meshgrid, nan, ndarray, random, reshape, std, sqrt, square
 from statistics import median
 
 def print_no_document_found_error():
@@ -249,7 +250,7 @@ def evaluate_and_plot_data(directory):
             filtered_distance_to_measurement_centroid_3D = distance_between_two_points3D(filtered_measurement_point, filtered_measurements_centroid)
             filtered_distances_to_measurement_centroid_3D.append(filtered_distance_to_measurement_centroid_3D)
         
-        # Calculate distance for each measured axis value to mean axis value
+        # Calculate distance for each measured axis value to measurement centroid axis value
         for uwb_x in uwb_x_values:
             uwb_x_to_x_axis_mean_distance = distance_on_axis(uwb_x, uwb_x_mean)
             uwb_distances_on_x_axis_to_measurement_centroid_x.append(uwb_x_to_x_axis_mean_distance)
@@ -321,6 +322,7 @@ def evaluate_and_plot_data(directory):
         filtered_mean_delta_distance_3D = mean(filtered_delta_distances_3D)
         filtered_mean_delta_distances_3D.append(filtered_mean_delta_distance_3D)
 
+    # Calculate the measurement centroid of all measurement centroids of each reference position
     for k, v in uwb_positions_dictionary.items():
         uwb_x_mean = 0
         uwb_y_mean = 0
@@ -458,27 +460,7 @@ def evaluate_and_plot_data(directory):
     print("Mean | Median | Std filtered distances on X axis to reference position X: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_x_axis_to_reference_x, filtered_median_distance_on_x_axis_to_reference_x, filtered_std_of_distances_on_x_axis_to_reference_x))
     print("Mean | Median | Std filtered distances on Y axis to reference position Y: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_y_axis_to_reference_y, filtered_median_distance_on_y_axis_to_reference_y, filtered_std_of_distances_on_y_axis_to_reference_y))
     print("Mean | Median | Std filtered distances on Z axis to reference position Z: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_z_axis_to_reference_z, filtered_median_distance_on_z_axis_to_reference_z, filtered_std_of_distances_on_z_axis_to_reference_z))
-    '''print("Average uwb distance to reference point 2D: {:.3f}m".format(uwb_mean_distance_to_reference_point_2D))
-    print("Average filtered distance to reference point 2D: {:.3f}m".format(filtered_mean_distance_to_reference_point_2D))
-    print("Average uwb distance to reference point 3D: {:.3f}m".format(uwb_mean_distance_to_reference_point_3D))
-    print("Average filtered distance to reference point 3D: {:.3f}m".format(filtered_mean_distance_to_reference_point_3D))
-    print("Average uwb distance to reference on X axis: {:.3f}m".format(uwb_mean_distance_on_x_axis_to_reference_x))
-    print("Average filtered distance to reference on X axis: {:.3f}m".format(filtered_mean_distance_on_x_axis_to_reference_x))
-    print("Average uwb distance to reference on Y axis: {:.3f}m".format(uwb_mean_distance_on_y_axis_to_reference_y))
-    print("Average filtered distance to reference on Y axis: {:.3f}m".format(filtered_mean_distance_on_y_axis_to_reference_y))
-    print("Average uwb distance to reference on Z axis: {:.3f}m".format(uwb_mean_distance_on_z_axis_to_reference_z))
-    print("Average filtered distance to reference on Z axis: {:.3f}m".format(filtered_mean_distance_on_z_axis_to_reference_z))
-    print('')
-    print("Average uwb distances to reference point standard deviation 2D: {:.3f}m".format(uwb_mean_std_of_distances_to_reference_point_2D))
-    print("Average filtered distances to reference point standard deviation 2D: {:.3f}m".format(filtered_mean_std_of_distances_to_reference_point_2D))
-    print("Average uwb distances to reference point standard deviation 3D: {:.3f}m".format(uwb_mean_std_of_distances_to_reference_point_3D))
-    print("Average filtered distances to reference point standard deviation 3D: {:.3f}m".format(filtered_mean_std_of_distances_to_reference_point_3D))
-    print("Standard deviation of uwb distances on X axis to reference X: {:.3f}m".format(uwb_std_of_distances_on_x_axis_to_reference_x))
-    print("Standard deviation of filtered distances on X axis to reference X: {:.3f}m".format(filtered_std_of_distances_on_x_axis_to_reference_x))
-    print("Standard deviation of uwb distances on Y axis to reference X: {:.3f}m".format(uwb_std_of_distances_on_y_axis_to_reference_y))
-    print("Standard deviation of filtered distances on Y axis to reference X: {:.3f}m".format(filtered_std_of_distances_on_y_axis_to_reference_y))
-    print("Standard deviation of uwb distances on Z axis to reference X: {:.3f}m".format(uwb_std_of_distances_on_z_axis_to_reference_z))
-    print("Standard deviation of filtered distances on Z axis to reference X: {:.3f}m".format(filtered_std_of_distances_on_z_axis_to_reference_z))'''
+
     print('\n')
     print("PRECISION RESULTS")
     print("Mean | Median | Std uwb distances to measurement centroid 2D: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_to_measurement_centroid_2D, uwb_median_distance_to_measurement_centroid_2D, uwb_mean_std_of_distances_to_measurement_centroid_2D))
@@ -491,27 +473,7 @@ def evaluate_and_plot_data(directory):
     print("Mean | Median | Std filtered distances on X axis to measurement centroid X: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_x_axis_to_measurement_centroid_x, filtered_median_distance_on_x_axis_to_measurement_centroid_x, filtered_std_of_distances_on_x_axis_to_measurement_centroid_x))
     print("Mean | Median | Std filtered distances on Y axis to measurement centroid Y: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_y_axis_to_measurement_centroid_y, filtered_median_distance_on_y_axis_to_measurement_centroid_y, filtered_std_of_distances_on_y_axis_to_measurement_centroid_y))
     print("Mean | Median | Std filtered distances on Z axis to measurement centroid Z: {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_on_z_axis_to_measurement_centroid_z, filtered_median_distance_on_z_axis_to_measurement_centroid_z, filtered_std_of_distances_on_z_axis_to_measurement_centroid_z))
-    '''print("Average uwb distance to measurement centroid 2D: {:.3f}m".format(uwb_mean_distance_to_measurement_centroid_2D))
-    print("Average filtered distance to measurement centroid 2D: {:.3f}m".format(filtered_mean_distance_to_measurment_centroid_2D))
-    print("Average uwb distance to measurement centroid 3D: {:.3f}m".format(uwb_mean_distance_to_measurment_centroid_3D))
-    print("Average filtered distance to measurement centroid 3D: {:.3f}m".format(filtered_mean_distance_to_measurment_centroid_3D))
-    print("Average uwb distance to measurement mean X: {:.3f}m".format(uwb_mean_distance_on_x_axis_to_measurement_centroid_x))
-    print("Average filtered distance to measurement mean X: {:.3f}m".format(filtered_mean_distance_on_x_axis_to_measurement_centroid_x))
-    print("Average uwb distance to measurement mean Y: {:.3f}m".format(uwb_mean_distance_on_y_axis_to_measurement_centroid_y))
-    print("Average filtered distance to measurement mean Y: {:.3f}m".format(filtered_mean_distance_on_y_axis_to_measurement_centroid_y))
-    print("Average uwb distance to measurement mean Z: {:.3f}m".format(uwb_mean_distance_on_z_axis_to_measurement_centroid_z))
-    print("Average filtered distance to measurement mean Z: {:.3f}m".format(filtered_mean_distance_on_z_axis_to_measurement_centroid_z))
-    print('')
-    print("Average uwb distances to measurement centroid standard deviation 2D: {:.3f}m".format(uwb_mean_std_of_distances_to_measurement_centroid_2D))
-    print("Average filtered distances to measurement centroid standard deviation 2D: {:.3f}m".format(filtered_mean_std_of_distances_to_measurement_centroid_2D))
-    print("Average uwb distances to measurement centroid standard deviation 3D: {:.3f}m".format(uwb_mean_std_of_distances_to_measurement_centroid_3D))
-    print("Average filtered distances to measurement centroid standard deviation 3D: {:.3f}m".format(filtered_mean_std_of_distances_to_measurement_centroid_3D))
-    print("Standard deviation of uwb distances on X axis to mean X: {:.3f}m".format(uwb_std_of_distances_on_x_axis_to_measurement_centroid_x))
-    print("Standard deviation of filtered distances on X axis to mean X: {:.3f}m".format(filtered_std_of_distances_on_x_axis_to_measurement_centroid_x))
-    print("Standard deviation of uwb distances on Y axis to mean Y: {:.3f}m".format(uwb_std_of_distances_on_y_axis_to_measurement_centroid_y))
-    print("Standard deviation of filtered distances on Y axis to mean Y: {:.3f}m".format(filtered_std_of_distances_on_y_axis_to_measurement_centroid_y))
-    print("Standard deviation of uwb distances on Z axis to mean Z: {:.3f}m".format(uwb_std_of_distances_on_z_axis_to_measurement_centroid_z))
-    print("Standard deviation of filtered distances on Z axis to mean Z: {:.3f}m".format(filtered_std_of_distances_on_z_axis_to_measurement_centroid_z))'''
+    
     print('\n')
     print("MOTION SICKNESS RESULTS")
     print("Mean | Median | Std uwb delta distances 2D: {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_delta_distance_2D, uwb_median_delta_distance_2D, uwb_std_of_delta_distances_2D))
@@ -521,48 +483,50 @@ def evaluate_and_plot_data(directory):
     print('')
     print("All values in meter units")
     print('')
-    '''print("Average uwb delta distance 2D: {:.3f}m".format(uwb_mean_delta_distance_2D))
-    print("Average filtered delta distance 2D: {:.3f}m".format(filtered_mean_delta_distance_2D))
-    print("Average uwb delta distance 3D: {:.3f}m".format(uwb_mean_delta_distance_3D))
-    print("Average filtered delta distance 3D: {:.3f}m".format(filtered_mean_delta_distance_3D))'''
+    
+    plot_coordinates(reference_positions, uwb_mean_positions, filtered_mean_positions)
+    plot_heat_maps(uwb_positions_dictionary, filtered_positions_dictionary)
 
-    #plot(reference_positions, uwb_mean_positions, filtered_mean_positions)
-
-def plot(reference_positions, uwb_positions, filtered_positions):
-    fig = plt.figure(figsize=(7, 13))
-    ax0 = plt.subplot(211)
+def plot_coordinates(reference_positions, uwb_positions, filtered_positions):
+    fig = plt.figure(figsize=(23, 9))
+    ax0 = plt.subplot(121)
+    ax1 = plt.subplot(122, projection='3d')
     plt.title("Positions accuracy visualization")
     plot_2d_cartesian(reference_positions, uwb_positions, filtered_positions, ax0)
-    #plot_3D(uwb_positions, filtered_positions, ax1)
+    plot_3d(reference_positions, uwb_positions, filtered_positions, ax1)
     plt.show()
-    #plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, measurement_count)
 
 def plot_2d_cartesian(reference_positions, uwb_positions, filtered_positions, axs):
-    plt.xlabel = "X Axis"
-    plt.ylabel = "Y Axis"
+    axs.set_title("2D Plot of reference positions, uwb positions and filtered positions")
+    axs.set_xlabel('X')
+    axs.set_ylabel('Y')
     # Plot 2D reference positions
     for x, y, z in reference_positions:
         axs.scatter(x, y, label='Reference positions', c='g', marker='o')
     # Plot 2D raw UWB positions
     for x, y, z in uwb_positions:
-        axs.scatter(x, y, label='UWB positions', c='b', marker='x')
+        axs.scatter(x, y, label='UWB positions', c='b', marker='^')
     # Plot 2D filtered positions
     for x, y, z in filtered_positions:
         axs.scatter(x, y, label='Filtered positions', c='r', marker='x')
     axs.grid(True)
     legend(axs)
 
-def plot_3D(uwb_positions, filtered_positions, axs):
-    axs.set_xlabel('X Axis')
-    axs.set_ylabel('Y Axis')
-    axs.set_zlabel('Z Axis')
-
+def plot_3d(reference_positions, uwb_positions, filtered_positions, axs):
+    axs.set_title("3D Plot of reference positions, uwb positions and filtered positions")
+    axs.set_xlabel('X')
+    axs.set_ylabel('Y')
+    axs.set_zlabel('Z')
+    # Plot 3D reference_positions
+    for x, y, z in reference_positions:
+        axs.scatter(x, y, z, label='Reference positions', c='g', marker='o')
     # Plot 3D raw uwb positions
     for x, y, z in uwb_positions:
-        axs.scatter(x, y, z, c='b', marker='^')
+        axs.scatter(x, y, z, label="UWB positions", c='b', marker='^')
     # Plot 3D filtered positions
     for x, y, z in filtered_positions:
-        axs.scatter(x, y, z, c='r', marker='x')
+        axs.scatter(x, y, z, label="Filtered positions", c='r', marker='x')
+    legend(axs)
 
 # Plot a legend and remove duplicate legend elements
 def legend(axs):
@@ -573,6 +537,72 @@ def legend(axs):
     # from collections import OrderedDict
     # by_label = OrderedDict(zip(labels, handles))
     axs.legend(by_label.values(), by_label.keys())
+
+def plot_heat_maps(uwb_positions_dictionary, filtered_positions_dictionary):
+    uwb_data = []
+    filtered_data = []
+    for key, value in uwb_positions_dictionary.items():
+        x = float(key.split(',')[0])
+        y = float(key.split(',')[1])
+        heights = []
+        for position in value:
+            heights.append(position[2])
+        z = mean(heights)
+        uwb_data.append([x, y, z])
+    for key, value in filtered_positions_dictionary.items():
+        x = float(key.split(',')[0])
+        y = float(key.split(',')[1])
+        heights = []
+        for position in value:
+            heights.append(position[2])
+        z = mean(heights)
+        filtered_data.append([x, y, z])
+
+    # Add missing data
+    # Remove if you do not have any "holes" in your measurements
+    uwb_data.append([2.0, 3.0, nan])
+    uwb_data.append([3.0, 3.0, nan])
+    filtered_data.append([2.0, 3.0, nan])
+    filtered_data.append([3.0, 3.0, nan])
+
+    uwb_data = array(uwb_data)
+    filtered_data = array(filtered_data)
+    uwb_data = uwb_data[lexsort((uwb_data[:, 0], uwb_data[:, 1]))]
+    filtered_data = filtered_data[lexsort((filtered_data[:, 0], filtered_data[:, 1]))]
+    
+    uwb_z_values = []
+    filtered_z_values = []
+
+    for i in range(len(uwb_data)):
+        uwb_z_values.append(uwb_data[i][2])
+    for i in range(len(filtered_data)):
+        filtered_z_values.append(filtered_data[i][2])
+
+    uwb_z_values = array(uwb_z_values)
+    filtered_z_values = array(filtered_z_values)
+    uwb_z_data = ndarray(buffer=uwb_z_values, shape=(4, 3))
+    filtered_z_data = ndarray(buffer=filtered_z_values, shape=(4, 3))
+
+    # Plot uwb z heat map
+    fig = plt.figure(figsize=(23, 9))
+    ax0 = plt.subplot(121)
+    ax0.set_title("UWB heat map")
+    ax0.set_xlabel('X')
+    ax0.set_ylabel('Y')
+    ax1 = plt.subplot(122)
+    ax1.set_title("Filtered heat map")
+    ax1.set_xlabel('X')
+    ax1.set_ylabel('Y')
+    # Interpolation values: None, quadric, bessel, sinc
+    a0 = ax0.imshow(uwb_z_data, interpolation='None', origin='lower', cmap='jet', extent=(uwb_data.min(axis=0)[0]-.5 , uwb_data.max(axis=0)[0]+.5, uwb_data.min(axis=0)[1]-.5, uwb_data.max(axis=0)[1]+.5))
+    a1 = ax1.imshow(filtered_z_data, interpolation='None', origin='lower', cmap='jet', extent=(filtered_data.min(axis=0)[0]-.5 , filtered_data.max(axis=0)[0]+.5, filtered_data.min(axis=0)[1]-.5, filtered_data.max(axis=0)[1]+.5))
+    a0_colorbar = fig.colorbar(a0, ax=ax0)
+    a0_colorbar.ax.set_title("Z", size=18)
+    a1_colorbar = fig.colorbar(a1, ax=ax1)
+    a1_colorbar.ax.set_title("Z", size=18)
+    current_cmap = cm.get_cmap()
+    current_cmap.set_bad(color='black')
+    plt.show()
 
 if __name__ == "__main__":
     try:
