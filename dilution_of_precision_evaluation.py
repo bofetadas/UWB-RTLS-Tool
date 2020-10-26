@@ -1,15 +1,14 @@
 import numpy as np
-import cmath as cm
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import sys
 
 DEFAULT_Z = 1.73
 
-def distance_between_two_points3D(measurement_point, reference_point):
-    return np.sqrt(pow(measurement_point[0] - reference_point[0], 2) + pow(measurement_point[1] - reference_point[1], 2) + pow(measurement_point[2] - reference_point[2], 2))
+def distance_between_two_points3D(reference_coordinate, anchor_coordinate):
+    return np.sqrt(pow(reference_coordinate[0] - anchor_coordinate[0], 2) + pow(reference_coordinate[1] - anchor_coordinate[1], 2) + pow(reference_coordinate[2] - anchor_coordinate[2], 2))
 
-def calculate_dop(z):
+def calculate_and_plot_dop(z):
     # Define anchor coordiantes here
     anchor_0_pos = [0.02, 0.20, 2.50]
     anchor_1_pos = [0.02, 3.41, 1.30]
@@ -85,11 +84,13 @@ def calculate_dop(z):
     VDOPs = np.ndarray(buffer=np.array(VDOPs), shape=(4, 3))
 
     # Plot DOPs
-    fig = plt.figure(figsize=(23, 9))
+    fig = plt.figure("Dilution of Precision Evaluation", figsize=(23, 9))
+    fig.suptitle("DOP values for every reference position at {}m altitude".format(z))
     ax0 = plt.subplot(141)
     ax1 = plt.subplot(142)
     ax2 = plt.subplot(143)
     ax3 = plt.subplot(144)
+
     ax0.set_title("GDOP")
     ax0.set_xlabel('X')
     ax0.set_ylabel('Y')
@@ -107,6 +108,7 @@ def calculate_dop(z):
     a1 = ax1.imshow(PDOPs, interpolation='None', origin='lower', cmap='jet', extent=(.5 , 3.5, -.5, 3.5))
     a2 = ax2.imshow(HDOPs, interpolation='None', origin='lower', cmap='jet', extent=(.5 , 3.5, -.5, 3.5))
     a3 = ax3.imshow(VDOPs, interpolation='None', origin='lower', cmap='jet', extent=(.5 , 3.5, -.5, 3.5))
+    
     a0_colorbar = fig.colorbar(a0, ax=ax0)
     a0_colorbar.ax.set_title("GDOP", size=18)
     a1_colorbar = fig.colorbar(a1, ax=ax1)
@@ -115,21 +117,25 @@ def calculate_dop(z):
     a2_colorbar.ax.set_title("HDOP", size=18)
     a3_colorbar = fig.colorbar(a3, ax=ax3)
     a3_colorbar.ax.set_title("VDOP", size=18)
+    
     current_cmap = cm.get_cmap()
     current_cmap.set_bad(color='black')
     plt.show()
 
 if __name__ == "__main__":
-    # See if any argument was given and save it as z value
+    # See if any argument was given and use it as z value
     print("")
     try:
-        z = sys.argv[1]
+        z = float(sys.argv[1])
         print("Using custom z value of {}m".format(z))
     except IndexError:
         print("Using default z value of {}m.".format(DEFAULT_Z))
-        print("Add custom z value as argument when calling this script.")
+        print("Note: You can add a custom z value as argument when calling this script.")
         print("Example: python3 dilution_of_precision_evaluation.py 1.55")
         z = DEFAULT_Z
+    except ValueError:
+        print("Error: Unable to cast user argument to float.")
+        sys.exit(-1)
     print("")
     
-    calculate_dop(z)
+    calculate_and_plot_dop(z)

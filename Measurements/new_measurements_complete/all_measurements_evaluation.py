@@ -488,7 +488,7 @@ def evaluate_and_plot_data(directory):
     plot_heat_maps(uwb_positions_dictionary, filtered_positions_dictionary)
 
 def plot_coordinates(reference_positions, uwb_positions, filtered_positions):
-    fig = plt.figure(figsize=(23, 9))
+    fig = plt.figure("2D and 3D visualization", figsize=(23, 9))
     ax0 = plt.subplot(121)
     ax1 = plt.subplot(122, projection='3d')
     plt.title("Positions accuracy visualization")
@@ -583,8 +583,8 @@ def plot_heat_maps(uwb_positions_dictionary, filtered_positions_dictionary):
     uwb_z_data = ndarray(buffer=uwb_z_values, shape=(4, 3))
     filtered_z_data = ndarray(buffer=filtered_z_values, shape=(4, 3))
 
-    # Plot uwb z heat map
-    fig = plt.figure(figsize=(23, 9))
+    # Plot uwb and filtered z heat map
+    fig = plt.figure("Heatmap", figsize=(23, 9))
     ax0 = plt.subplot(121)
     ax0.set_title("UWB heat map")
     ax0.set_xlabel('X')
@@ -593,7 +593,6 @@ def plot_heat_maps(uwb_positions_dictionary, filtered_positions_dictionary):
     ax1.set_title("Filtered heat map")
     ax1.set_xlabel('X')
     ax1.set_ylabel('Y')
-    # Interpolation values: None, quadric, bessel, sinc
     a0 = ax0.imshow(uwb_z_data, interpolation='None', origin='lower', cmap='jet', extent=(uwb_data.min(axis=0)[0]-.5 , uwb_data.max(axis=0)[0]+.5, uwb_data.min(axis=0)[1]-.5, uwb_data.max(axis=0)[1]+.5))
     a1 = ax1.imshow(filtered_z_data, interpolation='None', origin='lower', cmap='jet', extent=(filtered_data.min(axis=0)[0]-.5 , filtered_data.max(axis=0)[0]+.5, filtered_data.min(axis=0)[1]-.5, filtered_data.max(axis=0)[1]+.5))
     a0_colorbar = fig.colorbar(a0, ax=ax0)
