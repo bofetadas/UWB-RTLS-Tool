@@ -37,15 +37,6 @@ def calculate_dop(z):
     PDOPs = []
     HDOPs = []
     VDOPs = []
-
-    m = np.matrix('1 2; 3 4; 5 6')
-    m_t = m.T
-    #print(m)
-    #print("")
-    #print(m_t)
-    #print("")
-    #print(m * m_t)
-    #return
     
     for ref in ref_pos:
         A = []
