@@ -37,6 +37,15 @@ def calculate_dop(z):
     PDOPs = []
     HDOPs = []
     VDOPs = []
+
+    m = np.matrix('1 2; 3 4; 5 6')
+    m_t = m.T
+    #print(m)
+    #print("")
+    #print(m_t)
+    #print("")
+    #print(m * m_t)
+    #return
     
     for ref in ref_pos:
         A = []
@@ -48,7 +57,7 @@ def calculate_dop(z):
             A.append(-1.0)
         A = np.array(A)
         A = np.reshape(A, (4, len(anchor_pos)))
-        C = np.linalg.inv(A.T * A)
+        C = np.linalg.inv(A.T.dot(A))
 
         x_variance = C[0][0]
         y_variance = C[1][1]
@@ -124,10 +133,11 @@ if __name__ == "__main__":
     print("")
     try:
         z = sys.argv[1]
-        print("Using custom z value of {}".format(z))
+        print("Using custom z value of {}m".format(z))
     except IndexError:
-        print("Using default z value of 1.73m. Add custom z value as argument when calling this script.")
-        print("Example: python3 dilution_of_precision 1.55")
+        print("Using default z value of {}m.".format(DEFAULT_Z))
+        print("Add custom z value as argument when calling this script.")
+        print("Example: python3 dilution_of_precision_evaluation.py 1.55")
         z = DEFAULT_Z
     print("")
     
