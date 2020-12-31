@@ -7,7 +7,7 @@ import java.util.*
 class ModelImpl(val context: Context): Model {
 
     private val observerList = ArrayList<Observer>()
-    private var bluetoothService : BluetoothService? = null
+    private var bluetoothService: BluetoothService? = null
 
     override fun initializeBluetoothConnection() {
         bluetoothService = BluetoothService(this)

@@ -61,7 +61,7 @@ class IMU(context: Context): IMUInputListener {
         val xAcc = rotationMatrix[0] * accelerationValues[0] + rotationMatrix[1] * accelerationValues[1] + rotationMatrix[2] * accelerationValues[2]
         val yAcc = rotationMatrix[3] * accelerationValues[0] + rotationMatrix[4] * accelerationValues[1] + rotationMatrix[5] * accelerationValues[2]
         val zAcc = rotationMatrix[6] * accelerationValues[0] + rotationMatrix[7] * accelerationValues[1] + rotationMatrix[8] * accelerationValues[2]
-        return AccelerationData(xAcc.toDouble(), yAcc.toDouble() , zAcc.toDouble()  - GRAVITY)
+        return AccelerationData(xAcc.toDouble(), yAcc.toDouble(), zAcc.toDouble() - GRAVITY)
     }
 
     // Transform device orientation into world orientation

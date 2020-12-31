@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import sys
 from math import pow
-from numpy import arctan2, diff, linspace, mean, pi, std, sqrt, square
+from numpy import arctan2, linspace, mean, pi, std, sqrt, square
 
 """
 This script evaluates and prints the accuracy of given position estimations in a .txt document.
@@ -17,35 +17,31 @@ def print_no_document_found_error():
     print("Usage: python3 measurements_evaluation.py <your_doc.txt>")
     print("Exiting")
 
-# Returns the amount of samples collected - necessary for mean and standard deviation calculations
+# Returns the amount of samples collected
 def get_sample_count(filename):
     with open(filename) as f:
         for i, l in enumerate(f):
             pass
     return i + 1
 
-def distance_between_two_points2D(sample_point, reference_point):
-    return sqrt(pow(sample_point[0] - reference_point[0], 2) + pow(sample_point[1] - reference_point[1], 2))
+def distance_between_two_points2D(measurement_point, reference_point):
+    if reference_point == None:
+        return
+    return sqrt(pow(measurement_point[0] - reference_point[0], 2) + pow(measurement_point[1] - reference_point[1], 2))
 
-def distance_between_two_points3D(sample_point, reference_point):
-    return sqrt(pow(sample_point[0] - reference_point[0], 2) + pow(sample_point[1] - reference_point[1], 2) + pow(sample_point[2] - reference_point[2], 2))
+def distance_between_two_points3D(measurement_point, reference_point):
+    if reference_point == None:
+        return
+    return sqrt(pow(measurement_point[0] - reference_point[0], 2) + pow(measurement_point[1] - reference_point[1], 2) + pow(measurement_point[2] - reference_point[2], 2))
 
-def standard_deviation(samples, samples_mean, samples_count):
-    l = []
-    l1 = []
-    for s in samples:
-        squared = pow(s - samples_mean, 2)
-        l.append(squared)
-        l1.append(s - samples_mean)
-    standard_deviation = sqrt(sum(l) / samples_count)
-    print("Standard deviation {}".format(standard_deviation))
-    print("Numpy std {}".format(std(l1)))
-    print("RMS {}".format(root_mean_square_error(l1)))
-    print('\n')
-    #return std
+# Calculates the distance between consecutive positions in a list. The parameter fun must be either distance_between_two_points_2D or distance_between_two_points_3D. The parameter points must be a list that stores positions in a form of [x, y, z].
+def delta_distances(fun, points):
+    return list(map(fun, points, points[1:]))[:len(points)-1]
+
+def standard_deviation(samples):
     return std(samples)
 
-def root_mean_square_error(data):
+def root_mean_square(data):
     return sqrt(mean(square(data)))
 
 def cart2pol(x, y):
@@ -120,7 +116,7 @@ def evaluate_data(filename, reference_point):
             filtered_y = float(filtered_position.split(',')[1])
             filtered_z = float(filtered_position.split(',')[2])
             
-            # Add individual coordinates to coord's means (necessary for later standard deviation calculation)
+            # Add individual coordinates to coord's means
             uwb_x_mean += uwb_x
             uwb_y_mean += uwb_y
             uwb_z_mean += uwb_z
@@ -128,7 +124,7 @@ def evaluate_data(filename, reference_point):
             filtered_y_mean += filtered_y
             filtered_z_mean += filtered_z
 
-            # Add individual coordinates to coord's lists (necessary for later standard deviation calculation)
+            # Add individual coordinates to coord's lists
             uwb_x_coords.append(uwb_x)
             uwb_y_coords.append(uwb_y)
             uwb_z_coords.append(uwb_z)
@@ -169,49 +165,29 @@ def evaluate_data(filename, reference_point):
     '''#############################################################
     #################### ACCURACY EVALUATION ####################
     #############################################################'''
-    # Get sample mean distance on each axis
-    # Variant 1
-    # sample_x_mean_distance1 = sample_x_mean - reference_point[0]
-    # sample_y_mean_distance1 = sample_y_mean - reference_point[1]
-    # sample_z_mean_distance1 = sample_z_mean - reference_point[2]
-    # Variant 2
-    # sample_x_mean_distance2 = sum(distances_x) / sample_count
-    # sample_y_mean_distance2 = sum(distances_y) / sample_count
-    # sample_z_mean_distance2 = sum(distances_z) / sample_count
-
     # Calculate average, min and max distance of samples to reference point
-    uwb_mean_distance_to_ref_point_2D = sum(uwb_distances_to_ref_point_2D) / sample_count
-    print("UWB TEST DISTANCE 2D 1: {}".format(uwb_mean_distance_to_ref_point_2D))
-    uwb_mean_distance_to_ref_point_3D = sum(uwb_distances_to_ref_point_3D) / sample_count
-    print("UWB TEST DISTANCE 3D 1: {}".format(uwb_mean_distance_to_ref_point_3D))
-    uwb_min_distance_to_ref_point_2D = min(uwb_distances_to_ref_point_2D)
-    uwb_min_distance_to_ref_point_3D = min(uwb_distances_to_ref_point_3D)
+    uwb_mean_distance_to_ref_point_2D = mean(uwb_distances_to_ref_point_2D)
+    uwb_rms_distance_to_ref_point_2D = root_mean_square(uwb_distances_to_ref_point_2D)
     uwb_max_distance_to_ref_point_2D = max(uwb_distances_to_ref_point_2D)
+    uwb_std_2D_distances_to_ref_point = standard_deviation(uwb_distances_to_ref_point_2D)
+    uwb_mean_distance_to_ref_point_3D = mean(uwb_distances_to_ref_point_3D)
+    uwb_rms_distance_to_ref_point_3D = root_mean_square(uwb_distances_to_ref_point_3D)
     uwb_max_distance_to_ref_point_3D = max(uwb_distances_to_ref_point_3D)
-    filtered_mean_distance_to_ref_point_2D = sum(filtered_distances_to_ref_point_2D) / sample_count
-    print("FILTERED TEST DISTANCE 2D 1: {}".format(filtered_mean_distance_to_ref_point_2D))
-    filtered_mean_distance_to_ref_point_3D = sum(filtered_distances_to_ref_point_3D) / sample_count
-    print("FILTERED TEST DISTANCE 3D 1: {}".format(filtered_mean_distance_to_ref_point_3D))
-    filtered_min_distance_to_ref_point_2D = min(filtered_distances_to_ref_point_2D)
-    filtered_min_distance_to_ref_point_3D = min(filtered_distances_to_ref_point_3D)
+    uwb_std_3D_distances_to_ref_point = standard_deviation(uwb_distances_to_ref_point_3D)
+
+    filtered_mean_distance_to_ref_point_2D = mean(filtered_distances_to_ref_point_2D)
+    filtered_rms_distance_to_ref_point_2D = root_mean_square(filtered_distances_to_ref_point_2D)
     filtered_max_distance_to_ref_point_2D = max(filtered_distances_to_ref_point_2D)
+    filtered_std_2D_distances_to_ref_point = standard_deviation(filtered_distances_to_ref_point_2D)
+    filtered_mean_distance_to_ref_point_3D = mean(filtered_distances_to_ref_point_3D)
+    filtered_rms_distance_to_ref_point_3D = root_mean_square(filtered_distances_to_ref_point_3D)
     filtered_max_distance_to_ref_point_3D = max(filtered_distances_to_ref_point_3D)
-    
-    # Get standard deviation of samples on each axis x, y and z
-    # sample_x_std = standard_deviation(sample_x_coords, sample_x_mean, sample_count)
-    # sample_y_std = standard_deviation(sample_y_coords, sample_y_mean, sample_count)
-    # sample_z_std = standard_deviation(sample_z_coords, sample_z_mean, sample_count)
-    
-    # Get distance standard deviations of distance to reference point
-    uwb_std_2D_distances_to_ref_point = standard_deviation(uwb_distances_to_ref_point_2D, uwb_mean_distance_to_ref_point_2D, sample_count)
-    uwb_std_3D_distances_to_ref_point = standard_deviation(uwb_distances_to_ref_point_3D, uwb_mean_distance_to_ref_point_3D, sample_count)
-    filtered_std_2D_distances_to_ref_point = standard_deviation(filtered_distances_to_ref_point_2D, filtered_mean_distance_to_ref_point_2D, sample_count)
-    filtered_std_3D_distances_to_ref_point = standard_deviation(filtered_distances_to_ref_point_3D, filtered_mean_distance_to_ref_point_3D, sample_count)
+    filtered_std_3D_distances_to_ref_point = standard_deviation(filtered_distances_to_ref_point_3D)
     
     '''#############################################################
     #################### PRECISION EVALUATION ###################
     #############################################################'''
-    # Get samples center coordinates
+    # Get measurement centroid coordinates
     uwb_x_mean /= sample_count
     uwb_y_mean /= sample_count
     uwb_z_mean /= sample_count
@@ -221,7 +197,7 @@ def evaluate_data(filename, reference_point):
     filtered_z_mean /= sample_count
     filtered_mean_point = [filtered_x_mean, filtered_y_mean, filtered_z_mean]
 
-    # Calculate distance of each sample point to samples center point
+    # Calculate distance of each sample point to measurement centroid point
     for uwb_sample_point in uwb_points:
         uwb_distance_to_sample_center_point_2D = distance_between_two_points2D(uwb_sample_point, uwb_mean_point)
         uwb_distances_to_samples_center_point_2D.append(uwb_distance_to_sample_center_point_2D)
@@ -233,66 +209,49 @@ def evaluate_data(filename, reference_point):
         filtered_distance_to_sample_center_point_3D = distance_between_two_points3D(filtered_sample_point, filtered_mean_point)
         filtered_distances_to_samples_center_point_3D.append(filtered_distance_to_sample_center_point_3D)
     
-    # Calculate average, min and max distance of samples to samples center point
-    uwb_mean_distance_to_samples_center_point_2D = sum(uwb_distances_to_samples_center_point_2D) / sample_count
-    uwb_mean_distance_to_samples_center_point_3D = sum(uwb_distances_to_samples_center_point_3D) / sample_count
-    uwb_min_distance_to_samples_center_point_2D = min(uwb_distances_to_samples_center_point_2D)
-    uwb_min_distance_to_samples_center_point_3D = min(uwb_distances_to_samples_center_point_3D)
+    # Calculate mean, rms, max and std distance of samples to samples center point
+    uwb_mean_distance_to_samples_center_point_2D = mean(uwb_distances_to_samples_center_point_2D)
+    uwb_rms_distance_to_samples_center_point_2D = root_mean_square(uwb_distances_to_samples_center_point_2D)
     uwb_max_distance_to_samples_center_point_2D = max(uwb_distances_to_samples_center_point_2D)
+    uwb_std_2D_distances_to_samples_center_point = standard_deviation(uwb_distances_to_samples_center_point_2D)
+    uwb_mean_distance_to_samples_center_point_3D = mean(uwb_distances_to_samples_center_point_3D)
+    uwb_rms_distance_to_samples_center_point_3D = root_mean_square(uwb_distances_to_samples_center_point_3D)
     uwb_max_distance_to_samples_center_point_3D = max(uwb_distances_to_samples_center_point_3D)
-    filtered_mean_distance_to_samples_center_point_2D = sum(filtered_distances_to_samples_center_point_2D) / sample_count
-    filtered_mean_distance_to_samples_center_point_3D = sum(filtered_distances_to_samples_center_point_3D) / sample_count
-    filtered_min_distance_to_samples_center_point_2D = min(filtered_distances_to_samples_center_point_2D)
-    filtered_min_distance_to_samples_center_point_3D = min(filtered_distances_to_samples_center_point_3D)
+    uwb_std_3D_distances_to_samples_center_point = standard_deviation(uwb_distances_to_samples_center_point_3D)
+
+    filtered_mean_distance_to_samples_center_point_2D = mean(filtered_distances_to_samples_center_point_2D)
+    filtered_rms_distance_to_samples_center_point_2D = root_mean_square(filtered_distances_to_samples_center_point_2D)
     filtered_max_distance_to_samples_center_point_2D = max(filtered_distances_to_samples_center_point_2D)
+    filtered_std_2D_distances_to_samples_center_point = standard_deviation(filtered_distances_to_samples_center_point_2D)
+    filtered_mean_distance_to_samples_center_point_3D = mean(filtered_distances_to_samples_center_point_3D)
+    filtered_rms_distance_to_samples_center_point_3D = root_mean_square(filtered_distances_to_samples_center_point_3D)
     filtered_max_distance_to_samples_center_point_3D = max(filtered_distances_to_samples_center_point_3D)
+    filtered_std_3D_distances_to_samples_center_point = standard_deviation(filtered_distances_to_samples_center_point_3D)
 
-    # Calculate distance standard deviations of distance to samples center point
-    uwb_std_2D_distances_to_samples_center_point = standard_deviation(uwb_distances_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_2D, sample_count)
-    uwb_std_3D_distances_to_samples_center_point = standard_deviation(uwb_distances_to_samples_center_point_3D, uwb_mean_distance_to_samples_center_point_3D, sample_count)
-    filtered_std_2D_distances_to_samples_center_point = standard_deviation(filtered_distances_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_2D, sample_count)
-    filtered_std_3D_distances_to_samples_center_point = standard_deviation(filtered_distances_to_samples_center_point_3D, filtered_mean_distance_to_samples_center_point_3D, sample_count)
-
-    # Calculate distances from samples center point to reference point
-    uwb_distance_samples_center_point_to_ref_point_2D = distance_between_two_points2D(uwb_mean_point, reference_point)
-    print("UWB TEST DISTANCE 2D 2: {}".format(uwb_distance_samples_center_point_to_ref_point_2D))
-    uwb_distance_samples_center_point_to_ref_point_3D = distance_between_two_points3D(uwb_mean_point, reference_point)
-    print("UWB TEST DISTANCE 3D 2: {}".format(uwb_distance_samples_center_point_to_ref_point_3D))
-    filtered_distance_samples_center_point_to_ref_point_2D = distance_between_two_points2D(filtered_mean_point, reference_point)
-    print("FILTERED TEST DISTANCE 2D 2: {}".format(filtered_distance_samples_center_point_to_ref_point_2D))
-    filtered_distance_samples_center_point_to_ref_point_3D = distance_between_two_points3D(filtered_mean_point, reference_point)
-    print("FILTERED TEST DISTANCE 3D 2: {}".format(filtered_distance_samples_center_point_to_ref_point_3D))
-
-    # Experimental
     '''###################################################################
-    #################### MOTION SICKNESS EVALUATION ###################
+    #################### JITTER EVALUATION ###################
     ###################################################################'''
-    # 2D Get mean, min and max distance differences from samples to their next ones
-    uwb_delta_distances_2D = diff(uwb_distances_to_ref_point_2D)
-    uwb_delta_distances_2D =  [abs(n) for n in uwb_delta_distances_2D]
-    uwb_mean_delta_distance_2D = sum(uwb_delta_distances_2D) / (sample_count - 1)
-    uwb_min_delta_distance_2D = min(uwb_delta_distances_2D)
-    uwb_max_delta_distance_2D = max(uwb_delta_distances_2D)
-    filtered_delta_distances_2D = diff(filtered_distances_to_ref_point_2D)
-    filtered_delta_distances_2D =  [abs(n) for n in filtered_delta_distances_2D]
-    filtered_mean_delta_distance_2D = sum(filtered_delta_distances_2D) / (sample_count - 1)
-    filtered_min_delta_distance_2D = min(filtered_delta_distances_2D)
-    filtered_max_delta_distance_2D = max(filtered_delta_distances_2D)
+    # 2D Get mean, rms, max and std distance differences from measurements to their next ones
+    uwb_mean_delta_distance_2D = mean(delta_distances(distance_between_two_points2D, uwb_points))
+    uwb_rms_delta_distance_2D = root_mean_square(delta_distances(distance_between_two_points2D, uwb_points))
+    uwb_max_delta_distance_2D = max(delta_distances(distance_between_two_points2D, uwb_points))
+    uwb_std_delta_distance_2D = standard_deviation(delta_distances(distance_between_two_points2D, uwb_points))
+    filtered_mean_delta_distance_2D = mean(delta_distances(distance_between_two_points2D, filtered_points))
+    filtered_rms_delta_distance_2D = root_mean_square(delta_distances(distance_between_two_points2D, filtered_points))
+    filtered_max_delta_distance_2D = max(delta_distances(distance_between_two_points2D, filtered_points))
+    filtered_std_delta_distance_2D = standard_deviation(delta_distances(distance_between_two_points2D, filtered_points))
 
-    # 3D Get mean, min and max distance differences from samples to their next ones
-    uwb_delta_distances_3D = diff(uwb_distances_to_ref_point_3D)
-    uwb_delta_distances_3D = [abs(n) for n in uwb_delta_distances_3D]
-    uwb_mean_delta_distance_3D = sum(uwb_delta_distances_3D) / (sample_count - 1)
-    uwb_min_delta_distance_3D = min(uwb_delta_distances_3D)
-    uwb_max_delta_distance_3D = max(uwb_delta_distances_3D)
-    filtered_delta_distances_3D = diff(filtered_distances_to_ref_point_3D)
-    filtered_delta_distances_3D = [abs(n) for n in filtered_delta_distances_3D]
-    filtered_mean_delta_distance_3D = sum(filtered_delta_distances_3D) / (sample_count - 1)
-    filtered_min_delta_distance_3D = min(filtered_delta_distances_3D)
-    filtered_max_delta_distance_3D = max(filtered_delta_distances_3D)
+    # 3D Get mean, rms, max and std distance differences from measurements to their next ones
+    uwb_mean_delta_distance_3D = mean(delta_distances(distance_between_two_points3D, uwb_points))
+    uwb_rms_delta_distance_3D = root_mean_square(delta_distances(distance_between_two_points3D, uwb_points))
+    uwb_max_delta_distance_3D = max(delta_distances(distance_between_two_points3D, uwb_points))
+    uwb_std_delta_distance_3D = standard_deviation(delta_distances(distance_between_two_points3D, uwb_points))
+    filtered_mean_delta_distance_3D = mean(delta_distances(distance_between_two_points3D, filtered_points))
+    filtered_rms_delta_distance_3D = root_mean_square(delta_distances(distance_between_two_points3D, filtered_points))
+    filtered_max_delta_distance_3D = max(delta_distances(distance_between_two_points3D, filtered_points))
+    filtered_std_delta_distance_3D = standard_deviation(delta_distances(distance_between_two_points3D, filtered_points))
     
-    #return sample_count, sample_x_center, sample_y_center, sample_z_center, average_distance_to_ref_point_2D, average_distance_to_ref_point_3D, min_distance_to_ref_point_2D, min_distance_to_ref_point_3D, max_distance_to_ref_point_2D, max_distance_to_ref_point_3D, std_2D_distances_to_ref_point, std_3D_distances_to_ref_point, average_distance_to_samples_center_point_2D, average_distance_to_samples_center_point_3D, min_distance_to_samples_center_point_2D, min_distance_to_samples_center_point_3D, max_distance_to_samples_center_point_2D, max_distance_to_samples_center_point_3D, std_2D_distances_to_samples_center_point, std_3D_distances_to_samples_center_point, average_delta_distance_2D, average_delta_distance_3D, min_delta_distance_2D, min_delta_distance_3D, max_delta_distance_2D, max_delta_distance_3D
-    return sample_count, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, uwb_mean_distance_to_ref_point_2D, uwb_mean_distance_to_ref_point_3D, uwb_min_distance_to_ref_point_2D, uwb_min_distance_to_ref_point_3D, uwb_max_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_3D, filtered_mean_distance_to_ref_point_2D, filtered_mean_distance_to_ref_point_3D, filtered_min_distance_to_ref_point_2D, filtered_min_distance_to_ref_point_3D, filtered_max_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_3D, uwb_std_2D_distances_to_ref_point, uwb_std_3D_distances_to_ref_point, filtered_std_2D_distances_to_ref_point, filtered_std_3D_distances_to_ref_point, uwb_mean_distance_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_3D, uwb_min_distance_to_samples_center_point_2D, uwb_min_distance_to_samples_center_point_3D, uwb_max_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_3D, uwb_std_2D_distances_to_samples_center_point, uwb_std_3D_distances_to_samples_center_point, filtered_mean_distance_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_3D, filtered_min_distance_to_samples_center_point_2D, filtered_min_distance_to_samples_center_point_3D, filtered_max_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_3D, filtered_std_2D_distances_to_samples_center_point, filtered_std_3D_distances_to_samples_center_point, uwb_mean_delta_distance_2D, uwb_mean_delta_distance_3D, uwb_min_delta_distance_2D, uwb_min_delta_distance_3D, uwb_max_delta_distance_2D, uwb_max_delta_distance_3D, filtered_mean_delta_distance_2D, filtered_mean_delta_distance_3D, filtered_min_delta_distance_2D, filtered_min_delta_distance_3D, filtered_max_delta_distance_2D, filtered_max_delta_distance_3D, uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_points, filtered_points, uwb_x_mean, uwb_y_mean, uwb_z_mean, uwb_mean_point, filtered_x_mean, filtered_y_mean, filtered_z_mean, filtered_mean_point
+    return sample_count, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, uwb_mean_distance_to_ref_point_2D, uwb_mean_distance_to_ref_point_3D, uwb_rms_distance_to_ref_point_2D, uwb_rms_distance_to_ref_point_3D, uwb_max_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_3D, filtered_mean_distance_to_ref_point_2D, filtered_mean_distance_to_ref_point_3D, filtered_rms_distance_to_ref_point_2D, filtered_rms_distance_to_ref_point_3D, filtered_max_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_3D, uwb_std_2D_distances_to_ref_point, uwb_std_3D_distances_to_ref_point, filtered_std_2D_distances_to_ref_point, filtered_std_3D_distances_to_ref_point, uwb_mean_distance_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_3D, uwb_rms_distance_to_samples_center_point_2D, uwb_rms_distance_to_samples_center_point_3D, uwb_max_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_3D, uwb_std_2D_distances_to_samples_center_point, uwb_std_3D_distances_to_samples_center_point, filtered_mean_distance_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_3D, filtered_rms_distance_to_samples_center_point_2D, filtered_rms_distance_to_samples_center_point_3D, filtered_max_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_3D, filtered_std_2D_distances_to_samples_center_point, filtered_std_3D_distances_to_samples_center_point, uwb_mean_delta_distance_2D, uwb_mean_delta_distance_3D, uwb_rms_delta_distance_2D, uwb_rms_delta_distance_3D, uwb_max_delta_distance_2D, uwb_max_delta_distance_3D, uwb_std_delta_distance_2D, uwb_std_delta_distance_3D, filtered_mean_delta_distance_2D, filtered_mean_delta_distance_3D, filtered_rms_delta_distance_2D, filtered_rms_delta_distance_3D, filtered_max_delta_distance_2D, filtered_max_delta_distance_3D, filtered_std_delta_distance_2D, filtered_std_delta_distance_3D, uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_points, filtered_points, uwb_x_mean, uwb_y_mean, uwb_z_mean, uwb_mean_point, filtered_x_mean, filtered_y_mean, filtered_z_mean, filtered_mean_point
 
 # Values are plotted in a centered system
 # That is, the reference point is set to (0,0,0) and the samples are scattered around it accordingly
@@ -301,7 +260,7 @@ def plot_coordinates(direction, uwb_points, filtered_points, uwb_mean_point, fil
     fig = plt.figure(figsize=(7, 13))
     ax0 = plt.subplot(211)
     ax1 = plt.subplot(212, projection='polar')
-    plt.title("2D measurements around {}, {} in {} direction".format(reference_point[0], reference_point[1], direction))
+    plt.title("2D measurements at {}, {} in {} direction".format(reference_point[0], reference_point[1], direction))
     plot_2d_cartesian(uwb_points, filtered_points, uwb_mean_point, filtered_mean_point, reference_point, ax0)
     plot_2d_polar(uwb_points, filtered_points, uwb_mean_point, filtered_mean_point, reference_point, direction, ax1)
 
@@ -312,11 +271,11 @@ def plot_2d_cartesian(uwb_points, filtered_points, uwb_mean_point, filtered_mean
     plt.ylabel = "Y AXIS"
     # Plot samples
     for x, y, z in uwb_points:
-        axs.scatter(x, y, label='UWB Coordinates', c='b', marker='^')
+        axs.scatter(x, y, label='Raw Coordinates', c='b', marker='^')
     for x, y, z in filtered_points:
         axs.scatter(x, y, label='Filtered Coordinates', c='r', marker='x')
     # Plot reference point
-    axs.scatter(uwb_mean_point[0], uwb_mean_point[1], label='UWB Mean Coordinate', c='g', marker='^')
+    axs.scatter(uwb_mean_point[0], uwb_mean_point[1], label='Raw Mean Coordinate', c='g', marker='^')
     axs.scatter(filtered_mean_point[0], filtered_mean_point[1], label='Filtered Mean Coordinate', c='g', marker='x')
     axs.scatter(reference_point[0], reference_point[1], label='Reference Coordinate', c='g', marker='o')
     axs.grid(True)
@@ -329,13 +288,13 @@ def plot_2d_polar(uwb_points, filtered_points, uwb_mean_point, filtered_mean_poi
     # Plot samples
     for x, y, z in uwb_points:
         r, theta = cart2pol(x - reference_point[0], y - reference_point[1])
-        axs.scatter(theta, r, label='UWB Coordinates', c='b', marker='^')
+        axs.scatter(theta, r, label='Raw Coordinates', c='b', marker='^')
     for x, y, z in filtered_points:
         r, theta = cart2pol(x - reference_point[0], y - reference_point[1])
         axs.scatter(theta, r, label='Filtered Coordinates', c='r', marker='x')
     # Plot reference point
     r, theta = cart2pol(uwb_mean_point[0] - reference_point[0], uwb_mean_point[1] - reference_point[1])
-    axs.scatter(theta, r, label='UWB Mean Coordinate', c='g', marker='^')
+    axs.scatter(theta, r, label='Raw Mean Coordinate', c='g', marker='^')
     r, theta = cart2pol(filtered_mean_point[0] - reference_point[0], filtered_mean_point[1] - reference_point[1])
     axs.scatter(theta, r, label='Filtered Mean Coordinate', c='g', marker='x')
     r, theta = cart2pol(0, 0)
@@ -358,28 +317,41 @@ def plot_line_charts(uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords
     plt.title("Raw UWB and filtered positions")
     # Plot coordinates
     ax1 = plt.subplot(311)
-    ax1.plot(range(sample_count), uwb_x_coords, label='UWB X', c='b')
+    ax1.plot(range(sample_count), uwb_x_coords, label='Raw X', c='b')
     ax1.plot(range(sample_count), filtered_x_coords, label='Filtered X', c='r')
-    ax1.axhline(uwb_x_mean, 0, 1, label='UWB X Mean', c='b', linestyle='dashed')
+    ax1.axhline(uwb_x_mean, 0, 1, label='Raw X Mean', c='b', linestyle='dashed')
     ax1.axhline(filtered_x_mean, 0, 1, label='Filtered X Mean', c='r', linestyle='dashed')
     ax1.axhline(reference_point[0], 0, 1, label='User X', c='g')
     ax1.legend()
 
     ax2 = plt.subplot(312)
-    ax2.plot(range(sample_count), uwb_y_coords, label='UWB Y', c='b')
+    ax2.plot(range(sample_count), uwb_y_coords, label='Raw Y', c='b')
     ax2.plot(range(sample_count), filtered_y_coords, label='Filtered Y', c='r')
-    ax2.axhline(uwb_y_mean, 0, 1, label='UWB Y Mean', c='b', linestyle='dashed')
+    ax2.axhline(uwb_y_mean, 0, 1, label='Raw Y Mean', c='b', linestyle='dashed')
     ax2.axhline(filtered_y_mean, 0, 1, label='Filtered Y Mean', c='r', linestyle='dashed')
     ax2.axhline(reference_point[1], 0, 1, label='User Y', c='g')
     ax2.legend()
 
     ax3 = plt.subplot(313)
-    ax3.plot(range(sample_count), uwb_z_coords, label='UWB Z', c='b')
+    ax3.plot(range(sample_count), uwb_z_coords, label='Raw Z', c='b')
     ax3.plot(range(sample_count), filtered_z_coords, label='Filtered Z', c='r')
-    ax3.axhline(uwb_z_mean, 0, 1, label='UWB Z Mean', c='b', linestyle='dashed')
+    ax3.axhline(uwb_z_mean, 0, 1, label='Raw Z Mean', c='b', linestyle='dashed')
     ax3.axhline(filtered_z_mean, 0, 1, label='Filtered Z Mean', c='r', linestyle='dashed')
     ax3.axhline(reference_point[2], 0, 1, label='User Z', c='g')
     ax3.legend()
+
+    # Make sure that the y-axis scales are equal so that the viewer gets a better image of the jitter
+    x_axis_y_min, x_axis_y_max = ax1.get_ylim()
+    x_axis_y_range = x_axis_y_max - x_axis_y_min
+    y_axis_y_min, y_axis_y_max = ax2.get_ylim()
+    y_axis_y_range = y_axis_y_max - y_axis_y_min
+    z_axis_y_min, z_axis_y_max = ax3.get_ylim()
+    z_axis_y_range = z_axis_y_max - z_axis_y_min
+
+    highest_range = max([x_axis_y_range, y_axis_y_range, z_axis_y_range])
+    ax1.set_ylim(x_axis_y_min, x_axis_y_min + highest_range)
+    ax2.set_ylim(y_axis_y_min, y_axis_y_min + highest_range)
+    ax3.set_ylim(z_axis_y_min, z_axis_y_min + highest_range)
 
     plt.show()
         
@@ -396,49 +368,37 @@ if __name__ == "__main__":
     z_reference = float((filename.split('(')[1].split(')')[0].split('_')[2]).replace(',', '.'))
     reference_point = [x_reference, y_reference, z_reference]
     
-    #sample_count, sample_x_center, sample_y_center, sample_z_center, average_distance_to_ref_point_2D, average_distance_to_ref_point_3D, min_distance_to_ref_point_2D, min_distance_to_ref_point_3D, max_distance_to_ref_point_2D, max_distance_to_ref_point_3D, std_2D_distances_to_ref_point, std_3D_distances_to_ref_point, average_distance_to_samples_center_point_2D, average_distance_to_samples_center_point_3D, min_distance_to_samples_center_point_2D, min_distance_to_samples_center_point_3D, max_distance_to_samples_center_point_2D, max_distance_to_samples_center_point_3D, std_2D_distances_to_samples_center_point, std_3D_distances_to_samples_center_point, average_delta_distance_2D, average_delta_distance_3D, min_delta_distance_2D, min_delta_distance_3D, max_delta_distance_2D, max_delta_distance_3D = evaluate_data(filename, reference_point)
-    sample_count, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, uwb_mean_distance_to_ref_point_2D, uwb_mean_distance_to_ref_point_3D, uwb_min_distance_to_ref_point_2D, uwb_min_distance_to_ref_point_3D, uwb_max_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_3D, filtered_mean_distance_to_ref_point_2D, filtered_mean_distance_to_ref_point_3D, filtered_min_distance_to_ref_point_2D, filtered_min_distance_to_ref_point_3D, filtered_max_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_3D, uwb_std_2D_distances_to_ref_point, uwb_std_3D_distances_to_ref_point, filtered_std_2D_distances_to_ref_point, filtered_std_3D_distances_to_ref_point, uwb_mean_distance_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_3D, uwb_min_distance_to_samples_center_point_2D, uwb_min_distance_to_samples_center_point_3D, uwb_max_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_3D, uwb_std_2D_distances_to_samples_center_point, uwb_std_3D_distances_to_samples_center_point, filtered_mean_distance_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_3D, filtered_min_distance_to_samples_center_point_2D, filtered_min_distance_to_samples_center_point_3D, filtered_max_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_3D, filtered_std_2D_distances_to_samples_center_point, filtered_std_3D_distances_to_samples_center_point, uwb_mean_delta_distance_2D, uwb_mean_delta_distance_3D, uwb_min_delta_distance_2D, uwb_min_delta_distance_3D, uwb_max_delta_distance_2D, uwb_max_delta_distance_3D, filtered_mean_delta_distance_2D, filtered_mean_delta_distance_3D, filtered_min_delta_distance_2D, filtered_min_delta_distance_3D, filtered_max_delta_distance_2D, filtered_max_delta_distance_3D, uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_points, filtered_points, uwb_x_mean, uwb_y_mean, uwb_z_mean, uwb_mean_point, filtered_x_mean, filtered_y_mean, filtered_z_mean, filtered_mean_point = evaluate_data(filename, reference_point)
+    sample_count, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, uwb_mean_distance_to_ref_point_2D, uwb_mean_distance_to_ref_point_3D, uwb_rms_distance_to_ref_point_2D, uwb_rms_distance_to_ref_point_3D, uwb_max_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_3D, filtered_mean_distance_to_ref_point_2D, filtered_mean_distance_to_ref_point_3D, filtered_rms_distance_to_ref_point_2D, filtered_rms_distance_to_ref_point_3D, filtered_max_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_3D, uwb_std_2D_distances_to_ref_point, uwb_std_3D_distances_to_ref_point, filtered_std_2D_distances_to_ref_point, filtered_std_3D_distances_to_ref_point, uwb_mean_distance_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_3D, uwb_rms_distance_to_samples_center_point_2D, uwb_rms_distance_to_samples_center_point_3D, uwb_max_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_3D, uwb_std_2D_distances_to_samples_center_point, uwb_std_3D_distances_to_samples_center_point, filtered_mean_distance_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_3D, filtered_rms_distance_to_samples_center_point_2D, filtered_rms_distance_to_samples_center_point_3D, filtered_max_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_3D, filtered_std_2D_distances_to_samples_center_point, filtered_std_3D_distances_to_samples_center_point, uwb_mean_delta_distance_2D, uwb_mean_delta_distance_3D, uwb_rms_delta_distance_2D, uwb_rms_delta_distance_3D, uwb_max_delta_distance_2D, uwb_max_delta_distance_3D, uwb_std_delta_distance_2D, uwb_std_delta_distance_3D, filtered_mean_delta_distance_2D, filtered_mean_delta_distance_3D, filtered_rms_delta_distance_2D, filtered_rms_delta_distance_3D, filtered_max_delta_distance_2D, filtered_max_delta_distance_3D, filtered_std_delta_distance_2D, filtered_std_delta_distance_3D, uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_points, filtered_points, uwb_x_mean, uwb_y_mean, uwb_z_mean, uwb_mean_point, filtered_x_mean, filtered_y_mean, filtered_z_mean, filtered_mean_point = evaluate_data(filename, reference_point)
     print("\n")
     print("GENERAL INFORMATION")
-    print("Direction: {}, Sample Count: {}".format(direction, sample_count))
+    print("Direction: {}, Samples collected: {}".format(direction, sample_count))
     print("X Reference: {}, Y Reference: {}, Z Reference: {}".format(x_reference, y_reference, z_reference))
     print("UWB X Mean: {:.3f}, UWB Y Mean: {:.3f}, UWB Z Mean: {:.3f}".format(uwb_x_mean, uwb_y_mean, uwb_z_mean))
     print("Filtered X Mean: {:.3f}, Filtered Y Mean: {:.3f}, Filtered Z Mean: {:.3f}".format(filtered_x_mean, filtered_y_mean, filtered_z_mean))
     print("\n")
-    print("UWB ACCURACY RESULTS")
-    print("Average distance to reference point 2D/3D: {:.3f}m / {:.3f}m".format(uwb_mean_distance_to_ref_point_2D, uwb_mean_distance_to_ref_point_3D))
-    print("Min distance to reference point 2D/3D: {:.3f}m / {:.3f}m".format(uwb_min_distance_to_ref_point_2D, uwb_min_distance_to_ref_point_3D))
-    print("Max distance to reference point 2D/3D: {:.3f}m / {:.3f}m".format(uwb_max_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_3D))
-    print("Standard deviation of distances to reference point 2D/3D: {:.3f}m / {:.3f}m".format(uwb_std_2D_distances_to_ref_point, uwb_std_3D_distances_to_ref_point))
+
+    print("ACCURACY RESULTS")
+    print("Mean | RMS | Max | Std raw distances to reference point 2D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_to_ref_point_2D, uwb_rms_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_2D, uwb_std_2D_distances_to_ref_point))
+    print("Mean | RMS | Max | Std raw distances to reference point 3D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_to_ref_point_3D, uwb_rms_distance_to_ref_point_3D, uwb_max_distance_to_ref_point_3D, uwb_std_3D_distances_to_ref_point))
+    print("Mean | RMS | Max | Std filtered distances to reference point 2D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_to_ref_point_2D, filtered_rms_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_2D, filtered_std_2D_distances_to_ref_point))
+    print("Mean | RMS | Max | Std filtered distances to reference point 3D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_to_ref_point_3D, filtered_rms_distance_to_ref_point_3D, filtered_max_distance_to_ref_point_3D, filtered_std_3D_distances_to_ref_point))
     print("\n")
-    print("FILTERED ACCURACY RESULTS")
-    print("Average distance to reference point 2D/3D: {:.3f}m / {:.3f}m".format(filtered_mean_distance_to_ref_point_2D, filtered_mean_distance_to_ref_point_3D))
-    print("Min distance to reference point 2D/3D: {:.3f}m / {:.3f}m".format(filtered_min_distance_to_ref_point_2D, filtered_min_distance_to_ref_point_3D))
-    print("Max distance to reference point 2D/3D: {:.3f}m / {:.3f}m".format(filtered_max_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_3D))
-    print("Standard deviation of distances to reference point 2D/3D: {:.3f}m / {:.3f}m".format(filtered_std_2D_distances_to_ref_point, filtered_std_3D_distances_to_ref_point))
+
+    print("PRECISION RESULTS")
+    print("Mean | RMS | Max | Std raw distances to measurement centroid 2D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_to_samples_center_point_2D, uwb_rms_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_2D, uwb_std_2D_distances_to_samples_center_point))
+    print("Mean | RMS | Max | Std raw distances to measurement centroid 3D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_distance_to_samples_center_point_3D, uwb_rms_distance_to_samples_center_point_3D, uwb_max_distance_to_samples_center_point_3D, uwb_std_3D_distances_to_samples_center_point))
+    print("Mean | RMS | Max | Std filtered distances to measurement centroid 2D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_to_samples_center_point_2D, filtered_rms_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_2D, filtered_std_2D_distances_to_samples_center_point))
+    print("Mean | RMS | Max | Std filtered distances to measurement centroid 3D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_distance_to_samples_center_point_3D, filtered_rms_distance_to_samples_center_point_3D, filtered_max_distance_to_samples_center_point_3D, filtered_std_3D_distances_to_samples_center_point))
     print("\n")
-    print("UWB PRECISION RESULTS")
-    print("Average distance to samples center point 2D/3D: {:.3f}m / {:.3f}m".format(uwb_mean_distance_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_3D))
-    print("Min distance to samples center point 2D/3D: {:.3f}m / {:.3f}m".format(uwb_min_distance_to_samples_center_point_2D, uwb_min_distance_to_samples_center_point_3D))
-    print("Max distance to samples center point 2D/3D: {:.3f}m / {:.3f}m".format(uwb_max_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_3D))
-    print("Standard deviation of distances to samples center point 2D/3D: {:.3f}m / {:.3f}m".format(uwb_std_2D_distances_to_samples_center_point, uwb_std_3D_distances_to_samples_center_point))
+
+    print("JITTER RESULTS")
+    print("Mean | RMS | Max | Std raw delta distances 2D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_delta_distance_2D, uwb_rms_delta_distance_2D, uwb_max_delta_distance_2D, uwb_std_delta_distance_2D))
+    print("Mean | RMS | Max | Std raw delta distances 3D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(uwb_mean_delta_distance_3D, uwb_rms_delta_distance_3D, uwb_max_delta_distance_3D, uwb_std_delta_distance_3D))
+    print("Mean | RMS | Max | Std filtered delta distances 2D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_delta_distance_2D, filtered_rms_delta_distance_2D, filtered_max_delta_distance_2D, filtered_std_delta_distance_2D))
+    print("Mean | RMS | Max | Std filtered delta distances 3D: {:.3f} | {:.3f} | {:.3f} | {:.3f}m".format(filtered_mean_delta_distance_3D, filtered_rms_delta_distance_3D, filtered_max_delta_distance_3D, filtered_std_delta_distance_3D))
     print("\n")
-    print("FILTERED PRECISION RESULTS")
-    print("Average distance to samples center point 2D/3D: {:.3f}m / {:.3f}m".format(filtered_mean_distance_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_3D))
-    print("Min distance to samples center point 2D/3D: {:.3f}m / {:.3f}m".format(filtered_min_distance_to_samples_center_point_2D, filtered_min_distance_to_samples_center_point_3D))
-    print("Max distance to samples center point 2D/3D: {:.3f}m / {:.3f}m".format(filtered_max_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_3D))
-    print("Standard deviation of distances to samples center point 2D/3D: {:.3f}m / {:.3f}m".format(filtered_std_2D_distances_to_samples_center_point, filtered_std_3D_distances_to_samples_center_point))
-    print("\n")
-    print("UWB MOTION SICKNESS RESULTS")
-    print("Average delta distance 2D/3D: {:.3f}m / {:.3f}m".format(uwb_mean_delta_distance_2D, uwb_mean_delta_distance_3D))
-    print("Min delta distance 2D/3D: {:.3f}m / {:.3f}m".format(uwb_min_delta_distance_2D, uwb_min_delta_distance_3D))
-    print("Max delta distance 2D/3D: {:.3f}m / {:.3f}m".format(uwb_max_delta_distance_2D, uwb_max_delta_distance_3D))
-    print("\n")
-    print("FILTERED MOTION SICKNESS RESULTS")
-    print("Average delta distance 2D/3D: {:.3f}m / {:.3f}m".format(filtered_mean_delta_distance_2D, filtered_mean_delta_distance_3D))
-    print("Min delta distance 2D/3D: {:.3f}m / {:.3f}m".format(filtered_min_delta_distance_2D, filtered_min_delta_distance_3D))
-    print("Max delta distance 2D/3D: {:.3f}m / {:.3f}m".format(filtered_max_delta_distance_2D, filtered_max_delta_distance_3D))
-    print("\n")
+
+    print("All values in meter units")
 
     # Plot 2D coordinates in cartesian and polar coordinate system
     plot_coordinates(direction, uwb_points, filtered_points, uwb_mean_point, filtered_mean_point, reference_point)

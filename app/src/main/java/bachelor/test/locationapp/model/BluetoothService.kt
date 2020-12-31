@@ -7,7 +7,7 @@ import android.content.Context
 import java.util.*
 
 const val GET_LOCATION_CHARACTERISTIC = "003BBDF2-C634-4B3D-AB56-7EC889B89A37"
-private const val GET_PROXY_POSITIONS = "F4A67D7D-379D-4183-9C03-4B6EA5103291"
+private const val GET_PROXY_POSITIONS_CHARACTERISTIC = "F4A67D7D-379D-4183-9C03-4B6EA5103291"
 private const val SET_LOCATION_MODE_CHARACTERISTIC = "A02B947E-DF97-4516-996A-1882521E0EAD"
 private const val DESCRIPTOR = "00002902-0000-1000-8000-00805F9B34FB"
 private const val TAG_MAC = "F0:74:2F:98:DE:90"
@@ -38,7 +38,7 @@ class BluetoothService(private val model: ModelImpl) {
 
     fun terminate(): Boolean{
         if (tagIsConnected){
-            disableLocationDataNotifications(GET_PROXY_POSITIONS)
+            disableLocationDataNotifications(GET_PROXY_POSITIONS_CHARACTERISTIC)
             tagConnection?.disconnect()
             tagConnection?.close()
             tagConnection = null
@@ -50,21 +50,18 @@ class BluetoothService(private val model: ModelImpl) {
 
     private fun scanLeDevice() {
         val scanner = bluetoothAdapter?.bluetoothLeScanner
-
-        println("Scan started")
         scanner?.startScan(object: ScanCallback(){
+
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
                 super.onScanResult(callbackType, result)
                 val device = result?.device
                 if (device?.address == TAG_MAC){
-                    println("Found tag")
                     scanner.stopScan(this)
                     device.connectGatt(model.context, false, gattCallback)
                 }
             }
 
             override fun onScanFailed(errorCode: Int) {
-                println("Scan failed")
                 println(errorCode.toString())
             }
         })
@@ -75,7 +72,6 @@ class BluetoothService(private val model: ModelImpl) {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    println("Connected to tag")
                     tagConnection = gatt
                     tagIsConnected = true
                     tagConnection!!.discoverServices()
@@ -92,7 +88,6 @@ class BluetoothService(private val model: ModelImpl) {
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
-                    println("Services discovered")
                     // Set location mode to 0 (Position only mode)
                     val setLocationModeCharacteristic = gatt.services[2].getCharacteristic(UUID.fromString(SET_LOCATION_MODE_CHARACTERISTIC))
                     setLocationModeCharacteristic.value = POSITION_MODE
@@ -104,7 +99,6 @@ class BluetoothService(private val model: ModelImpl) {
                 else -> {
                     // Unsuccessful service discovery
                     model.onConnectionSuccess(false)
-                    println("No services discovered")
                 }
             }
         }
@@ -118,7 +112,7 @@ class BluetoothService(private val model: ModelImpl) {
                     // Subscribing to changes of PROXY_POSITIONS characteristic
                     // We're not interested in this characteristic but subscribing to it prevents us
                     // from automatically being disconnected from tag while inactive
-                    enableCharacteristicNotifications(GET_PROXY_POSITIONS)
+                    enableCharacteristicNotifications(GET_PROXY_POSITIONS_CHARACTERISTIC)
                     model.onConnectionSuccess(true)
                 } else {
                     model.onConnectionSuccess(false)
@@ -130,14 +124,14 @@ class BluetoothService(private val model: ModelImpl) {
 
         // Remote characteristic changes handling
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
-            // Only forward incoming characteristic notification data if it is GET_LOCATION_CHARACTERISTIC
+            // Only forward incoming characteristic notification data if it is position data
             if (characteristic!! == tagConnection!!.services[2].getCharacteristic(UUID.fromString(GET_LOCATION_CHARACTERISTIC))){
                 model.onCharacteristicChange(characteristic.value)
             }
         }
     }
 
-    fun enableCharacteristicNotifications(characteristicString: String){
+    fun enableCharacteristicNotifications(characteristicString: String) {
         if (tagIsConnected){
             val characteristic = tagConnection!!.services[2].getCharacteristic(UUID.fromString(characteristicString))
             tagConnection?.setCharacteristicNotification(characteristic, true)
