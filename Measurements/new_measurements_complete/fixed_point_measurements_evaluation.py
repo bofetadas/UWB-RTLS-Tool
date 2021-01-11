@@ -66,6 +66,12 @@ def evaluate_data(filename, reference_point):
     filtered_x_coords = []
     filtered_y_coords = []
     filtered_z_coords = []
+    raw_x_accs = []
+    raw_y_accs = []
+    raw_z_accs = []
+    filtered_x_accs = []
+    filtered_y_accs = []
+    filtered_z_accs = []
 
     # List holding all sample points
     uwb_points = []
@@ -90,7 +96,7 @@ def evaluate_data(filename, reference_point):
     uwb_distances_to_samples_center_point_3D = []
     filtered_distances_to_samples_center_point_2D = []
     filtered_distances_to_samples_center_point_3D = []
-    
+
     # Experimental
     # Lists holding all distance differences from positions to their next one
     uwb_delta_distances_2D = []
@@ -107,15 +113,26 @@ def evaluate_data(filename, reference_point):
         for line in file:
             uwb_position = line.split('|')[0]
             filtered_position = line.split('|')[1]
+            raw_acceleration = line.split('|')[2]
+            filtered_acceleration = line.split('|')[3]
 
             # Extract x, y and z coordinates out of each line
             uwb_x = float(uwb_position.split(',')[0])
             uwb_y = float(uwb_position.split(',')[1])
             uwb_z = float(uwb_position.split(',')[2])
+
             filtered_x = float(filtered_position.split(',')[0])
             filtered_y = float(filtered_position.split(',')[1])
             filtered_z = float(filtered_position.split(',')[2])
-            
+
+            raw_acceleration_x = float(raw_acceleration.split(',')[0])
+            raw_acceleration_y = float(raw_acceleration.split(',')[1])
+            raw_acceleration_z = float(raw_acceleration.split(',')[2])
+
+            filtered_acceleration_x = float(filtered_acceleration.split(',')[0])
+            filtered_acceleration_y = float(filtered_acceleration.split(',')[1])
+            filtered_acceleration_z = float(filtered_acceleration.split(',')[2])
+
             # Add individual coordinates to coord's means
             uwb_x_mean += uwb_x
             uwb_y_mean += uwb_y
@@ -124,13 +141,19 @@ def evaluate_data(filename, reference_point):
             filtered_y_mean += filtered_y
             filtered_z_mean += filtered_z
 
-            # Add individual coordinates to coord's lists
+            # Add individual coordinates and accelerations to lists
             uwb_x_coords.append(uwb_x)
             uwb_y_coords.append(uwb_y)
             uwb_z_coords.append(uwb_z)
             filtered_x_coords.append(filtered_x)
             filtered_y_coords.append(filtered_y)
             filtered_z_coords.append(filtered_z)
+            raw_x_accs.append(raw_acceleration_x)
+            raw_y_accs.append(raw_acceleration_y)
+            raw_z_accs.append(raw_acceleration_z)
+            filtered_x_accs.append(filtered_acceleration_x)
+            filtered_y_accs.append(filtered_acceleration_y)
+            filtered_z_accs.append(filtered_acceleration_z)
 
             # Calculate distances on each axis
             uwb_axis_distance_x = uwb_x - reference_point[0]
@@ -146,7 +169,7 @@ def evaluate_data(filename, reference_point):
             filtered_distances_y.append(filtered_axis_distance_y)
             filtered_distances_z.append(filtered_axis_distance_z)
 
-            # Make up coordinate and add to list
+            # Make up coordinates and accelerations and add to list
             uwb_sample_point = [uwb_x, uwb_y, uwb_z]
             uwb_points.append(uwb_sample_point)
             filtered_sample_point = [filtered_x, filtered_y, filtered_z]
@@ -183,7 +206,7 @@ def evaluate_data(filename, reference_point):
     filtered_rms_distance_to_ref_point_3D = root_mean_square(filtered_distances_to_ref_point_3D)
     filtered_max_distance_to_ref_point_3D = max(filtered_distances_to_ref_point_3D)
     filtered_std_3D_distances_to_ref_point = standard_deviation(filtered_distances_to_ref_point_3D)
-    
+
     '''#############################################################
     #################### PRECISION EVALUATION ###################
     #############################################################'''
@@ -208,7 +231,7 @@ def evaluate_data(filename, reference_point):
         filtered_distances_to_samples_center_point_2D.append(filtered_distance_to_sample_center_point_2D)
         filtered_distance_to_sample_center_point_3D = distance_between_two_points3D(filtered_sample_point, filtered_mean_point)
         filtered_distances_to_samples_center_point_3D.append(filtered_distance_to_sample_center_point_3D)
-    
+
     # Calculate mean, rms, max and std distance of samples to samples center point
     uwb_mean_distance_to_samples_center_point_2D = mean(uwb_distances_to_samples_center_point_2D)
     uwb_rms_distance_to_samples_center_point_2D = root_mean_square(uwb_distances_to_samples_center_point_2D)
@@ -250,18 +273,66 @@ def evaluate_data(filename, reference_point):
     filtered_rms_delta_distance_3D = root_mean_square(delta_distances(distance_between_two_points3D, filtered_points))
     filtered_max_delta_distance_3D = max(delta_distances(distance_between_two_points3D, filtered_points))
     filtered_std_delta_distance_3D = standard_deviation(delta_distances(distance_between_two_points3D, filtered_points))
-    
-    return sample_count, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, uwb_mean_distance_to_ref_point_2D, uwb_mean_distance_to_ref_point_3D, uwb_rms_distance_to_ref_point_2D, uwb_rms_distance_to_ref_point_3D, uwb_max_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_3D, filtered_mean_distance_to_ref_point_2D, filtered_mean_distance_to_ref_point_3D, filtered_rms_distance_to_ref_point_2D, filtered_rms_distance_to_ref_point_3D, filtered_max_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_3D, uwb_std_2D_distances_to_ref_point, uwb_std_3D_distances_to_ref_point, filtered_std_2D_distances_to_ref_point, filtered_std_3D_distances_to_ref_point, uwb_mean_distance_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_3D, uwb_rms_distance_to_samples_center_point_2D, uwb_rms_distance_to_samples_center_point_3D, uwb_max_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_3D, uwb_std_2D_distances_to_samples_center_point, uwb_std_3D_distances_to_samples_center_point, filtered_mean_distance_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_3D, filtered_rms_distance_to_samples_center_point_2D, filtered_rms_distance_to_samples_center_point_3D, filtered_max_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_3D, filtered_std_2D_distances_to_samples_center_point, filtered_std_3D_distances_to_samples_center_point, uwb_mean_delta_distance_2D, uwb_mean_delta_distance_3D, uwb_rms_delta_distance_2D, uwb_rms_delta_distance_3D, uwb_max_delta_distance_2D, uwb_max_delta_distance_3D, uwb_std_delta_distance_2D, uwb_std_delta_distance_3D, filtered_mean_delta_distance_2D, filtered_mean_delta_distance_3D, filtered_rms_delta_distance_2D, filtered_rms_delta_distance_3D, filtered_max_delta_distance_2D, filtered_max_delta_distance_3D, filtered_std_delta_distance_2D, filtered_std_delta_distance_3D, uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_points, filtered_points, uwb_x_mean, uwb_y_mean, uwb_z_mean, uwb_mean_point, filtered_x_mean, filtered_y_mean, filtered_z_mean, filtered_mean_point
+
+    return sample_count, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, uwb_mean_distance_to_ref_point_2D, uwb_mean_distance_to_ref_point_3D, uwb_rms_distance_to_ref_point_2D, uwb_rms_distance_to_ref_point_3D, uwb_max_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_3D, filtered_mean_distance_to_ref_point_2D, filtered_mean_distance_to_ref_point_3D, filtered_rms_distance_to_ref_point_2D, filtered_rms_distance_to_ref_point_3D, filtered_max_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_3D, uwb_std_2D_distances_to_ref_point, uwb_std_3D_distances_to_ref_point, filtered_std_2D_distances_to_ref_point, filtered_std_3D_distances_to_ref_point, uwb_mean_distance_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_3D, uwb_rms_distance_to_samples_center_point_2D, uwb_rms_distance_to_samples_center_point_3D, uwb_max_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_3D, uwb_std_2D_distances_to_samples_center_point, uwb_std_3D_distances_to_samples_center_point, filtered_mean_distance_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_3D, filtered_rms_distance_to_samples_center_point_2D, filtered_rms_distance_to_samples_center_point_3D, filtered_max_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_3D, filtered_std_2D_distances_to_samples_center_point, filtered_std_3D_distances_to_samples_center_point, uwb_mean_delta_distance_2D, uwb_mean_delta_distance_3D, uwb_rms_delta_distance_2D, uwb_rms_delta_distance_3D, uwb_max_delta_distance_2D, uwb_max_delta_distance_3D, uwb_std_delta_distance_2D, uwb_std_delta_distance_3D, filtered_mean_delta_distance_2D, filtered_mean_delta_distance_3D, filtered_rms_delta_distance_2D, filtered_rms_delta_distance_3D, filtered_max_delta_distance_2D, filtered_max_delta_distance_3D, filtered_std_delta_distance_2D, filtered_std_delta_distance_3D, uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_points, filtered_points, uwb_x_mean, uwb_y_mean, uwb_z_mean, uwb_mean_point, filtered_x_mean, filtered_y_mean, filtered_z_mean, filtered_mean_point, raw_x_accs, raw_y_accs, raw_z_accs, filtered_x_accs, filtered_y_accs, filtered_z_accs
+
+def get_values(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations):
+    uwb_x_coordinates = []
+    uwb_y_coordinates = []
+    uwb_z_coordinates = []
+    filtered_x_coordinates = []
+    filtered_y_coordinates = []
+    filtered_z_coordinates = []
+    raw_x_accelerations = []
+    raw_y_accelerations = []
+    raw_z_accelerations = []
+    filtered_x_accelerations = []
+    filtered_y_accelerations = []
+    filtered_z_accelerations = []
+
+    for p in uwb_positions:
+        uwb_x_coordinate = p[0]
+        uwb_x_coordinates.append(uwb_x_coordinate)
+        uwb_y_coordinate = p[1]
+        uwb_y_coordinates.append(uwb_y_coordinate)
+        uwb_z_coordinate = p[2]
+        uwb_z_coordinates.append(uwb_z_coordinate)
+
+    for p in filtered_positions:
+        filtered_x_coordinate = p[0]
+        filtered_x_coordinates.append(filtered_x_coordinate)
+        filtered_y_coordinate = p[1]
+        filtered_y_coordinates.append(filtered_y_coordinate)
+        filtered_z_coordinate = p[2]
+        filtered_z_coordinates.append(filtered_z_coordinate)
+
+    for a in raw_accelerations:
+        raw_x_acceleration = a[0]
+        raw_x_accelerations.append(raw_x_acceleration)
+        raw_y_acceleration = a[1]
+        raw_y_accelerations.append(raw_y_acceleration)
+        raw_z_acceleration = a[2]
+        raw_z_accelerations.append(raw_z_acceleration)
+
+    for a in filtered_accelerations:
+        filtered_x_acceleration = a[0]
+        filtered_x_accelerations.append(filtered_x_acceleration)
+        filtered_y_acceleration = a[1]
+        filtered_y_accelerations.append(filtered_y_acceleration)
+        filtered_z_acceleration = a[2]
+        filtered_z_accelerations.append(filtered_z_acceleration)
+
+    return uwb_x_coordinates, uwb_y_coordinates, uwb_z_coordinates, filtered_x_coordinates, filtered_y_coordinates, filtered_z_coordinates, raw_x_accelerations, raw_y_accelerations, raw_z_accelerations, filtered_x_accelerations, filtered_y_accelerations, filtered_z_accelerations
 
 # Values are plotted in a centered system
 # That is, the reference point is set to (0,0,0) and the samples are scattered around it accordingly
 def plot_coordinates(direction, uwb_points, filtered_points, uwb_mean_point, filtered_mean_point, reference_point):
     # Plot 2D
-    fig = plt.figure(figsize=(7, 13))
-    ax0 = plt.subplot(211)
-    ax1 = plt.subplot(212, projection='polar')
+    fig = plt.figure()
+    #ax0 = plt.subplot(211)
+    ax1 = plt.subplot(111, projection='polar')
     plt.title("2D measurements at {}, {} in {} direction".format(reference_point[0], reference_point[1], direction))
-    plot_2d_cartesian(uwb_points, filtered_points, uwb_mean_point, filtered_mean_point, reference_point, ax0)
+    #plot_2d_cartesian(uwb_points, filtered_points, uwb_mean_point, filtered_mean_point, reference_point, ax0)
     plot_2d_polar(uwb_points, filtered_points, uwb_mean_point, filtered_mean_point, reference_point, direction, ax1)
 
     plt.show()
@@ -300,6 +371,7 @@ def plot_2d_polar(uwb_points, filtered_points, uwb_mean_point, filtered_mean_poi
     r, theta = cart2pol(0, 0)
     axs.scatter(theta, r, label='Reference point', c='g', marker='o')
     axs.quiver(0, 0, d[0], d[1], color='orange', scale=10, width=0.01)
+    axs.set_rlabel_position(-125) # Change according to measurements placement in plot
     legend(axs)
 
 # Plot a legend and remove duplicate legend elements
@@ -312,17 +384,19 @@ def legend(axs):
     # by_label = OrderedDict(zip(labels, handles))
     axs.legend(by_label.values(), by_label.keys())
 
-def plot_line_charts(uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, reference_point, sample_count):
+def plot_line_charts(uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, raw_x_accs, raw_y_accs, raw_z_accs, filtered_x_accs, filtered_y_accs, filtered_z_accs, sample_count, reference_point):
     fig = plt.figure()
-    plt.title("Raw UWB and filtered positions")
     # Plot coordinates
     ax1 = plt.subplot(311)
-    ax1.plot(range(sample_count), uwb_x_coords, label='Raw X', c='b')
-    ax1.plot(range(sample_count), filtered_x_coords, label='Filtered X', c='r')
-    ax1.axhline(uwb_x_mean, 0, 1, label='Raw X Mean', c='b', linestyle='dashed')
-    ax1.axhline(filtered_x_mean, 0, 1, label='Filtered X Mean', c='r', linestyle='dashed')
-    ax1.axhline(reference_point[0], 0, 1, label='User X', c='g')
-    ax1.legend()
+    ax1.set_title("Raw and filtered positions")
+    ax1.plot(range(sample_count), uwb_x_coords, label='Raw', c='b')
+    ax1.plot(range(sample_count), filtered_x_coords, label='Filtered', c='r')
+    ax1.axhline(uwb_x_mean, 0, 1, label='Raw Mean', c='b', linestyle='dashed')
+    ax1.axhline(filtered_x_mean, 0, 1, label='Filtered Mean', c='r', linestyle='dashed')
+    ax1.axhline(reference_point[0], 0, 1, label='Reference', c='g')
+    #ax1.legend()
+    ax1.legend(bbox_to_anchor=(1, 1.5), loc='upper center', ncol=1)
+    ax1.set_ylabel('X')
 
     ax2 = plt.subplot(312)
     ax2.plot(range(sample_count), uwb_y_coords, label='Raw Y', c='b')
@@ -330,7 +404,8 @@ def plot_line_charts(uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords
     ax2.axhline(uwb_y_mean, 0, 1, label='Raw Y Mean', c='b', linestyle='dashed')
     ax2.axhline(filtered_y_mean, 0, 1, label='Filtered Y Mean', c='r', linestyle='dashed')
     ax2.axhline(reference_point[1], 0, 1, label='User Y', c='g')
-    ax2.legend()
+    #ax2.legend()
+    ax2.set_ylabel('Y')
 
     ax3 = plt.subplot(313)
     ax3.plot(range(sample_count), uwb_z_coords, label='Raw Z', c='b')
@@ -338,7 +413,9 @@ def plot_line_charts(uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords
     ax3.axhline(uwb_z_mean, 0, 1, label='Raw Z Mean', c='b', linestyle='dashed')
     ax3.axhline(filtered_z_mean, 0, 1, label='Filtered Z Mean', c='r', linestyle='dashed')
     ax3.axhline(reference_point[2], 0, 1, label='User Z', c='g')
-    ax3.legend()
+    #ax3.legend()
+    ax3.set_xlabel('Time')
+    ax3.set_ylabel('Z')
 
     # Make sure that the y-axis scales are equal so that the viewer gets a better image of the jitter
     x_axis_y_min, x_axis_y_max = ax1.get_ylim()
@@ -349,26 +426,53 @@ def plot_line_charts(uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords
     z_axis_y_range = z_axis_y_max - z_axis_y_min
 
     highest_range = max([x_axis_y_range, y_axis_y_range, z_axis_y_range])
-    ax1.set_ylim(x_axis_y_min, x_axis_y_min + highest_range)
-    ax2.set_ylim(y_axis_y_min, y_axis_y_min + highest_range)
-    ax3.set_ylim(z_axis_y_min, z_axis_y_min + highest_range)
+    ax1.set_ylim(x_axis_y_min - 0.1, x_axis_y_min + highest_range)
+    ax2.set_ylim(y_axis_y_min - 0.1, y_axis_y_min + highest_range)
+    ax3.set_ylim(z_axis_y_min - 0.1, z_axis_y_min + highest_range)
 
     plt.show()
-        
+
+    # Plot accelerations
+    fig = plt.figure()
+    ax1 = plt.subplot(311)
+    ax1.set_title("Raw and filtered accelerations")
+    ax1.plot(range(sample_count), raw_x_accs, label='Raw X', c='b')
+    ax1.plot(range(sample_count), filtered_x_accs, label='Filtered X', c='r')
+    #ax1.legend()
+    ax1.legend(bbox_to_anchor=(1, 1.5), loc='upper center', ncol=1)
+    ax1.set_ylabel('X')
+
+    ax2 = plt.subplot(312)
+    ax2.plot(range(sample_count), raw_y_accs, label='Raw Y', c='b')
+    ax2.plot(range(sample_count), filtered_y_accs, label='Filtered Y', c='r')
+    #ax2.legend()
+    ax2.set_ylabel('Y')
+
+    ax3 = plt.subplot(313)
+    ax3.plot(range(sample_count), raw_z_accs, label='Raw Z', c='b')
+    ax3.plot(range(sample_count), filtered_z_accs, label='Filtered Z', c='r')
+    ax3.axhline(2.0, 0, 1, label='Z Acc Threshold', c='g')
+    ax3.axhline(-2.0, 0, 1, c='g')
+    #ax3.legend()
+    ax3.set_xlabel('Time')
+    ax3.set_ylabel('Z')
+
+    plt.show()
+
 if __name__ == "__main__":
     try:
         filename = sys.argv[1]
     except IndexError:
         print_no_document_found_error()
         sys.exit(1)
-    
+
     direction = filename.split('(')[0]
     x_reference = float((filename.split('(')[1].split(')')[0].split('_')[0]).replace(',', '.'))
     y_reference = float((filename.split('(')[1].split(')')[0].split('_')[1]).replace(',', '.'))
     z_reference = float((filename.split('(')[1].split(')')[0].split('_')[2]).replace(',', '.'))
     reference_point = [x_reference, y_reference, z_reference]
-    
-    sample_count, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, uwb_mean_distance_to_ref_point_2D, uwb_mean_distance_to_ref_point_3D, uwb_rms_distance_to_ref_point_2D, uwb_rms_distance_to_ref_point_3D, uwb_max_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_3D, filtered_mean_distance_to_ref_point_2D, filtered_mean_distance_to_ref_point_3D, filtered_rms_distance_to_ref_point_2D, filtered_rms_distance_to_ref_point_3D, filtered_max_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_3D, uwb_std_2D_distances_to_ref_point, uwb_std_3D_distances_to_ref_point, filtered_std_2D_distances_to_ref_point, filtered_std_3D_distances_to_ref_point, uwb_mean_distance_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_3D, uwb_rms_distance_to_samples_center_point_2D, uwb_rms_distance_to_samples_center_point_3D, uwb_max_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_3D, uwb_std_2D_distances_to_samples_center_point, uwb_std_3D_distances_to_samples_center_point, filtered_mean_distance_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_3D, filtered_rms_distance_to_samples_center_point_2D, filtered_rms_distance_to_samples_center_point_3D, filtered_max_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_3D, filtered_std_2D_distances_to_samples_center_point, filtered_std_3D_distances_to_samples_center_point, uwb_mean_delta_distance_2D, uwb_mean_delta_distance_3D, uwb_rms_delta_distance_2D, uwb_rms_delta_distance_3D, uwb_max_delta_distance_2D, uwb_max_delta_distance_3D, uwb_std_delta_distance_2D, uwb_std_delta_distance_3D, filtered_mean_delta_distance_2D, filtered_mean_delta_distance_3D, filtered_rms_delta_distance_2D, filtered_rms_delta_distance_3D, filtered_max_delta_distance_2D, filtered_max_delta_distance_3D, filtered_std_delta_distance_2D, filtered_std_delta_distance_3D, uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_points, filtered_points, uwb_x_mean, uwb_y_mean, uwb_z_mean, uwb_mean_point, filtered_x_mean, filtered_y_mean, filtered_z_mean, filtered_mean_point = evaluate_data(filename, reference_point)
+
+    sample_count, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, uwb_mean_distance_to_ref_point_2D, uwb_mean_distance_to_ref_point_3D, uwb_rms_distance_to_ref_point_2D, uwb_rms_distance_to_ref_point_3D, uwb_max_distance_to_ref_point_2D, uwb_max_distance_to_ref_point_3D, filtered_mean_distance_to_ref_point_2D, filtered_mean_distance_to_ref_point_3D, filtered_rms_distance_to_ref_point_2D, filtered_rms_distance_to_ref_point_3D, filtered_max_distance_to_ref_point_2D, filtered_max_distance_to_ref_point_3D, uwb_std_2D_distances_to_ref_point, uwb_std_3D_distances_to_ref_point, filtered_std_2D_distances_to_ref_point, filtered_std_3D_distances_to_ref_point, uwb_mean_distance_to_samples_center_point_2D, uwb_mean_distance_to_samples_center_point_3D, uwb_rms_distance_to_samples_center_point_2D, uwb_rms_distance_to_samples_center_point_3D, uwb_max_distance_to_samples_center_point_2D, uwb_max_distance_to_samples_center_point_3D, uwb_std_2D_distances_to_samples_center_point, uwb_std_3D_distances_to_samples_center_point, filtered_mean_distance_to_samples_center_point_2D, filtered_mean_distance_to_samples_center_point_3D, filtered_rms_distance_to_samples_center_point_2D, filtered_rms_distance_to_samples_center_point_3D, filtered_max_distance_to_samples_center_point_2D, filtered_max_distance_to_samples_center_point_3D, filtered_std_2D_distances_to_samples_center_point, filtered_std_3D_distances_to_samples_center_point, uwb_mean_delta_distance_2D, uwb_mean_delta_distance_3D, uwb_rms_delta_distance_2D, uwb_rms_delta_distance_3D, uwb_max_delta_distance_2D, uwb_max_delta_distance_3D, uwb_std_delta_distance_2D, uwb_std_delta_distance_3D, filtered_mean_delta_distance_2D, filtered_mean_delta_distance_3D, filtered_rms_delta_distance_2D, filtered_rms_delta_distance_3D, filtered_max_delta_distance_2D, filtered_max_delta_distance_3D, filtered_std_delta_distance_2D, filtered_std_delta_distance_3D, uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_points, filtered_points, uwb_x_mean, uwb_y_mean, uwb_z_mean, uwb_mean_point, filtered_x_mean, filtered_y_mean, filtered_z_mean, filtered_mean_point, raw_x_accs, raw_y_accs, raw_z_accs, filtered_x_accs, filtered_y_accs, filtered_z_accs = evaluate_data(filename, reference_point)
     print("\n")
     print("GENERAL INFORMATION")
     print("Direction: {}, Samples collected: {}".format(direction, sample_count))
@@ -402,5 +506,6 @@ if __name__ == "__main__":
 
     # Plot 2D coordinates in cartesian and polar coordinate system
     plot_coordinates(direction, uwb_points, filtered_points, uwb_mean_point, filtered_mean_point, reference_point)
-    # Plot axis line charts
-    plot_line_charts(uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, reference_point, sample_count)
+
+    # Plot axis line charts regardless of fixed or movement measurement
+    plot_line_charts(uwb_x_coords, uwb_y_coords, uwb_z_coords, filtered_x_coords, filtered_y_coords, filtered_z_coords, uwb_x_mean, uwb_y_mean, uwb_z_mean, filtered_x_mean, filtered_y_mean, filtered_z_mean, raw_x_accs, raw_y_accs, raw_z_accs, filtered_x_accs, filtered_y_accs, filtered_z_accs, sample_count, reference_point)
