@@ -119,14 +119,7 @@ def plot_2D_cartesian(uwb_positions, filtered_positions, axs):
     # Plot 2D filtered positions
     for x, y, z in filtered_positions:
         axs.scatter(x, y, c='r', marker='x', label="Filtered Positions")
-    '''first_path_vertical = [y / 10 for y in range(0, 40, 1)]
-    second_path_horizontal = [x / 100 for x in range(100, 265, 10)]
-    third_path_vertical = [y / 10 for y in range(0, 20, 1)]
-    fourth_path_horizontal = [t / 100 for t in range(75, 265, 10)]
-    plt.plot([1] *  len(first_path_vertical), first_path_vertical, marker='v', linestyle='None', c='black')
-    plt.plot(second_path_horizontal, [0] *  len(second_path_horizontal), marker='>', linestyle='None', c='black')
-    plt.plot([2.65] *  len(third_path_vertical), third_path_vertical, marker='^', linestyle='None', c='black')
-    plt.plot(fourth_path_horizontal, [2] *  len(fourth_path_horizontal), marker='<', linestyle='None', c='black')'''
+
     plt.hlines(0, 1, 2.65, 'black', 'dashed', label="Ground Truth")
     plt.hlines(2, 0.75, 2.65, 'black', 'dashed')
     plt.vlines(1, 0, 3, 'black', 'dashed')
@@ -154,7 +147,7 @@ def plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filter
     uwb_x_coordinates, uwb_y_coordinates, uwb_z_coordinates, filtered_x_coordinates, filtered_y_coordinates, filtered_z_coordinates, raw_x_accelerations, raw_y_accelerations, raw_z_accelerations, filtered_x_accelerations, filtered_y_accelerations, filtered_z_accelerations = get_values(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations)
     plt.title("Raw and filtered Z-Coordinates")
     # Plot coordinates
-    '''ax1 = plt.subplot(311)
+    ax1 = plt.subplot(311)
     ax1.plot(range(sample_count), uwb_x_coordinates, label='Raw X', c='b')
     ax1.plot(range(sample_count), filtered_x_coordinates, label='Filtered X', c='r')
     ax1.legend()
@@ -162,9 +155,9 @@ def plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filter
     ax2 = plt.subplot(312)
     ax2.plot(range(sample_count), uwb_y_coordinates, label='Raw Y', c='b')
     ax2.plot(range(sample_count), filtered_y_coordinates, label='Filtered Y', c='r')
-    ax2.legend()'''
+    ax2.legend()
 
-    ax3 = plt.subplot(211)
+    ax3 = plt.subplot(313)
     ax3.plot(range(sample_count), uwb_z_coordinates, label='Raw Z', c='b')
     ax3.plot(range(sample_count), filtered_z_coordinates, label='Filtered Z', c='r')
     ax3.axhline(1.73, 0, 1, label='User Height', c='g')
@@ -172,12 +165,12 @@ def plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filter
     ax3.set_title("Coordinates on Z-Axis")
     ax3.legend()
 
-    #plt.show()
+    plt.show()
 
     # Plot accelerations
-    #fig = plt.figure()
-    #plt.title("Raw and filtered accelerations")
-    '''ax1 = plt.subplot(311)
+    fig = plt.figure()
+    plt.title("Raw and filtered accelerations")
+    ax1 = plt.subplot(311)
     ax1.plot(range(sample_count), raw_x_accelerations, label='Raw X', c='b')
     ax1.plot(range(sample_count), filtered_x_accelerations, label='Filtered X', c='r')
     ax1.legend()
@@ -185,17 +178,17 @@ def plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filter
     ax2 = plt.subplot(312)
     ax2.plot(range(sample_count), raw_y_accelerations, label='Raw Y', c='b')
     ax2.plot(range(sample_count), filtered_y_accelerations, label='Filtered Y', c='r')
-    ax2.legend()'''
+    ax2.legend()
 
-    ax4 = plt.subplot(212)
-    ax4.plot(range(sample_count), raw_z_accelerations, label='Raw Z', c='b')
-    ax4.plot(range(sample_count), filtered_z_accelerations, label='Filtered Z', c='r')
-    ax4.axhline(2.0, 0, 1, label='Z Acc Threshold', c='g')
-    ax4.axhline(-2.0, 0, 1, c='g')
-    ax4.set_xlabel('Time')
-    ax4.set_ylabel('Z')
-    ax4.set_title("Accelerations on Z-Axis")
-    ax4.legend()
+    ax3 = plt.subplot(313)
+    ax3.plot(range(sample_count), raw_z_accelerations, label='Raw Z', c='b')
+    ax3.plot(range(sample_count), filtered_z_accelerations, label='Filtered Z', c='r')
+    ax3.axhline(2.0, 0, 1, label='Z Acc Threshold', c='g')
+    ax3.axhline(-2.0, 0, 1, c='g')
+    ax3.set_xlabel('Time')
+    ax3.set_ylabel('Z')
+    ax3.set_title("Accelerations on Z-Axis")
+    ax3.legend()
 
     plt.show()
 
