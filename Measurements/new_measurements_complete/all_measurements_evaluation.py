@@ -406,15 +406,15 @@ def evaluate_and_plot_data(directory):
     uwb_mean_distance_to_measurement_centroid_2D = mean(uwb_mean_distances_to_measurement_centroid_2D)
     uwb_median_distance_to_measurement_centroid_2D = median(uwb_mean_distances_to_measurement_centroid_2D)
     uwb_mean_std_of_distances_to_measurement_centroid_2D = mean(uwb_mean_distances_to_measurement_centroid_stds_2D)
-    uwb_mean_distance_to_measurment_centroid_3D = mean(uwb_mean_distances_to_measurement_centroid_3D)
+    uwb_mean_distance_to_measurement_centroid_3D = mean(uwb_mean_distances_to_measurement_centroid_3D)
     uwb_median_distance_to_measurement_centroid_3D = median(uwb_mean_distances_to_measurement_centroid_3D)
     uwb_mean_std_of_distances_to_measurement_centroid_3D = mean(uwb_mean_distances_to_measurement_centroid_stds_3D)
     
     # Filtered
-    filtered_mean_distance_to_measurment_centroid_2D = mean(filtered_mean_distances_to_measurement_centroid_2D)
+    filtered_mean_distance_to_measurement_centroid_2D = mean(filtered_mean_distances_to_measurement_centroid_2D)
     filtered_median_distance_to_measurement_centroid_2D = median(filtered_mean_distances_to_measurement_centroid_2D)
     filtered_mean_std_of_distances_to_measurement_centroid_2D = mean(filtered_mean_distances_to_measurement_centroid_stds_2D)
-    filtered_mean_distance_to_measurment_centroid_3D = mean(filtered_mean_distances_to_measurement_centroid_3D)
+    filtered_mean_distance_to_measurement_centroid_3D = mean(filtered_mean_distances_to_measurement_centroid_3D)
     filtered_median_distance_to_measurement_centroid_3D = median(filtered_mean_distances_to_measurement_centroid_3D)
     filtered_mean_std_of_distances_to_measurement_centroid_3D = mean(filtered_mean_distances_to_measurement_centroid_stds_3D)
 
