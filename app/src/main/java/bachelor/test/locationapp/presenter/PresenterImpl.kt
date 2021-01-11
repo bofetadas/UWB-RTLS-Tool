@@ -7,11 +7,8 @@ import android.content.IntentFilter
 import bachelor.test.locationapp.model.Model
 import bachelor.test.locationapp.model.ModelImpl
 import bachelor.test.locationapp.model.Observable
-import bachelor.test.locationapp.presenter.positioning.*
-import bachelor.test.locationapp.presenter.recording.Directions
-import bachelor.test.locationapp.presenter.recording.InputData
-import bachelor.test.locationapp.presenter.recording.Recording
-import bachelor.test.locationapp.presenter.recording.RecordingImpl
+import bachelor.test.locationapp.presenter.positioning.Positioning
+import bachelor.test.locationapp.presenter.positioning.PositioningImpl
 import bachelor.test.locationapp.view.MainScreenContract
 
 class PresenterImpl(private val context: Context, private val view: MainScreenContract.View): MainScreenContract.Presenter, Observer {
@@ -19,8 +16,6 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     private var model: Model? = null
     private var broadcastReceiver: BroadcastReceiver = BluetoothBroadcastReceiver(this)
     private val positioningImpl: Positioning = PositioningImpl(context, this)
-    private val recordingImpl: Recording = RecordingImpl(context, this)
-    private var recording = false
 
     // Android Lifecycle event functions
     override fun start() {
@@ -49,74 +44,26 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
     }
 
     override fun onStartClicked() {
-        view.showRecordingOptionsDialog()
+        positioningImpl.startIMU()
+        model?.startDataTransfer()
+        view.swapStartButton(false)
+        view.changeBackground("static")
     }
 
     override fun onStopClicked() {
-        recording = false
         model?.stopDataTransfer()
         positioningImpl.stopIMU()
         positioningImpl.resetKalmanFilter()
         view.swapStartButton(true)
+        view.changeBackground("reset")
     }
 
-    override fun onRegularDataTransferStart() {
-        model?.startDataTransfer()
-        positioningImpl.startIMU()
-        view.swapStartButton(false)
-    }
-
-    override fun onRecordingDataTransferStart(inputData: InputData?) {
-        val success = if (inputData == null){
-            recordingImpl.createRecordingMovementFile()
-        } else {
-            recordingImpl.createRecordingFixedPositionFile(inputData.xInput, inputData.yInput, inputData.zInput, inputData.direction)
-        }
-        if (success) {
-            recording = true
-            model?.startDataTransfer()
-            recordingImpl.startTimer(inputData?.timePeriod)
-            recordingImpl.vibrateOnRecordStart()
-            positioningImpl.startIMU()
-            view.showMessage("Data recording successfully initialized")
-            view.showRecordStopScreen()
-        } else {
-            view.showMessage("File already exists. Please look into data directory to resolve the issue")
-        }
-    }
-
-    override fun onRecordStopClicked() {
-        recordingImpl.stopTimer()
-    }
-
-    override fun onTimerDone() {
-        view.dismissRecordStopScreen()
-        onStopClicked()
-    }
-
-    // Positioning callback functions
-    override fun onNewStateVectorEstimate(uwbLocationData: LocationData, filteredLocationData: LocationData, rawAccelerationData: AccelerationData, filteredAccelerationData: AccelerationData) {
-        view.showUWBPosition(uwbLocationData)
-        view.showFilteredPosition(filteredLocationData)
-        if (recording){
-            recordingImpl.writeToFile("$uwbLocationData | $filteredLocationData | $rawAccelerationData | $filteredAccelerationData")
-        }
-    }
-
-    override fun onAccelerometerUpdate(accelerationData: AccelerationData) {
-        view.showAcceleration(accelerationData)
-    }
-
-    override fun onOrientationUpdate(orientationData: OrientationData) {
-        view.showOrientation(orientationData)
-    }
-
-    override fun onCompassDirectionUpdate(direction: Directions?) {
-        if (direction == null){
-            view.showCompassDirection("")
+    override fun onMovementDetected(movement: Boolean) {
+        if (movement){
+            view.changeBackground("dynamic")
         }
         else {
-            view.showCompassDirection(direction.toString())
+            view.changeBackground("static")
         }
     }
 
@@ -144,16 +91,16 @@ class PresenterImpl(private val context: Context, private val view: MainScreenCo
 
     override fun onBluetoothDisconnectionSuccess(observable: Observable, success: Boolean) {
         view.enableConnectButton(true)
+        view.changeBackground("reset")
         view.showMessage("Tag disconnected")
         positioningImpl.stopIMU()
-        recording = false
     }
 
     override fun onBluetoothCharacteristicChange(observable: Observable, args: Any) {
-        try{
+        try {
             args as ByteArray
             positioningImpl.calculateLocation(args)
-        } catch(e: TypeCastException){
+        } catch (e: TypeCastException) {
             throw e
         }
     }

@@ -502,12 +502,12 @@ def evaluate_and_plot_data(directory):
     plot_heat_maps(uwb_positions_dictionary, filtered_positions_dictionary)
 
 def plot_coordinates(reference_positions, uwb_positions, filtered_positions):
-    fig = plt.figure("2D and 3D visualization", figsize=(23, 9))
-    ax0 = plt.subplot(121)
-    ax1 = plt.subplot(122, projection='3d')
+    fig = plt.figure("2D and 3D visualization")
+    ax0 = plt.subplot(111)
+    #ax1 = plt.subplot(122, projection='3d')
     plt.title("Positions accuracy visualization")
     plot_2d_cartesian(reference_positions, uwb_positions, filtered_positions, ax0)
-    plot_3d(reference_positions, uwb_positions, filtered_positions, ax1)
+    #plot_3d(reference_positions, uwb_positions, filtered_positions, ax1)
     plt.show()
 
 def plot_2d_cartesian(reference_positions, uwb_positions, filtered_positions, axs):
@@ -527,7 +527,7 @@ def plot_2d_cartesian(reference_positions, uwb_positions, filtered_positions, ax
     legend(axs)
 
 def plot_3d(reference_positions, uwb_positions, filtered_positions, axs):
-    axs.set_title("3D Plot of reference positions, uwb positions and filtered positions")
+    axs.set_title("3D Plot of reference positions, raw positions and filtered positions")
     axs.set_xlabel('X')
     axs.set_ylabel('Y')
     axs.set_zlabel('Z')
@@ -536,7 +536,7 @@ def plot_3d(reference_positions, uwb_positions, filtered_positions, axs):
         axs.scatter(x, y, z, label='Reference positions', c='g', marker='o')
     # Plot 3D raw uwb positions
     for x, y, z in uwb_positions:
-        axs.scatter(x, y, z, label="UWB positions", c='b', marker='^')
+        axs.scatter(x, y, z, label="Raw positions", c='b', marker='^')
     # Plot 3D filtered positions
     for x, y, z in filtered_positions:
         axs.scatter(x, y, z, label="Filtered positions", c='r', marker='x')
@@ -598,21 +598,21 @@ def plot_heat_maps(uwb_positions_dictionary, filtered_positions_dictionary):
     filtered_z_data = ndarray(buffer=filtered_z_values, shape=(4, 3))
 
     # Plot uwb and filtered z heat map
-    fig = plt.figure("Height Map", figsize=(23, 9))
-    ax0 = plt.subplot(121)
+    fig = plt.figure("Height Map")
+    ax0 = plt.subplot(111)
     ax0.set_title("Raw height map")
     ax0.set_xlabel('X')
     ax0.set_ylabel('Y')
-    ax1 = plt.subplot(122)
-    ax1.set_title("Filtered height map")
-    ax1.set_xlabel('X')
-    ax1.set_ylabel('Y')
+    #ax1 = plt.subplot(122)
+    #ax1.set_title("Filtered height map")
+    #ax1.set_xlabel('X')
+    #ax1.set_ylabel('Y')
     a0 = ax0.imshow(uwb_z_data, interpolation='None', origin='lower', cmap='jet', extent=(uwb_data.min(axis=0)[0]-.5 , uwb_data.max(axis=0)[0]+.5, uwb_data.min(axis=0)[1]-.5, uwb_data.max(axis=0)[1]+.5))
-    a1 = ax1.imshow(filtered_z_data, interpolation='None', origin='lower', cmap='jet', extent=(filtered_data.min(axis=0)[0]-.5 , filtered_data.max(axis=0)[0]+.5, filtered_data.min(axis=0)[1]-.5, filtered_data.max(axis=0)[1]+.5))
+    #a1 = ax1.imshow(filtered_z_data, interpolation='None', origin='lower', cmap='jet', extent=(filtered_data.min(axis=0)[0]-.5 , filtered_data.max(axis=0)[0]+.5, filtered_data.min(axis=0)[1]-.5, filtered_data.max(axis=0)[1]+.5))
     a0_colorbar = fig.colorbar(a0, ax=ax0)
     a0_colorbar.ax.set_title("Z", size=18)
-    a1_colorbar = fig.colorbar(a1, ax=ax1)
-    a1_colorbar.ax.set_title("Z", size=18)
+    #a1_colorbar = fig.colorbar(a1, ax=ax1)
+    #a1_colorbar.ax.set_title("Z", size=18)
     current_cmap = cm.get_cmap()
     current_cmap.set_bad(color='black')
     plt.show()

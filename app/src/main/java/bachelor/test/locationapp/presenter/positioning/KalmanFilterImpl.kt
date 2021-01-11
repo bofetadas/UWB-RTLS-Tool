@@ -84,8 +84,8 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
 
     // Filter strategies
     private val kalmanFilterStrategies = KalmanFilterStrategies()
-    private var predictStrategy: (locationData: LocationData?, accelerationData: AccelerationData?, orientationData: OrientationData?) -> Unit = kalmanFilterStrategies.notConfigured
-    private var updateStrategy: (locationData: LocationData, accData: AccelerationData, orientationData: OrientationData) -> Unit = kalmanFilterStrategies.notConfigured
+    private var predictStrategy: (locationData: LocationData?, accelerationData: AccelerationData?) -> Unit = kalmanFilterStrategies.notConfigured
+    private var updateStrategy: (locationData: LocationData, accData: AccelerationData) -> Unit = kalmanFilterStrategies.notConfigured
     private var dynamicZEstimationCoroutine: Job? = null
 
     override fun configure(initialLocationData: LocationData){
@@ -123,18 +123,18 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     }
 
     override fun predict(accelerationData: AccelerationData){
-        predictStrategy.invoke(null, accelerationData, null)
+        predictStrategy.invoke(null, accelerationData)
     }
 
-    override fun update(locationData: LocationData, accelerationData: AccelerationData, orientationData: OrientationData){
-        updateStrategy.invoke(locationData, accelerationData, orientationData)
+    override fun update(locationData: LocationData, accelerationData: AccelerationData){
+        updateStrategy.invoke(locationData, accelerationData)
     }
 
     private fun setStateVector(initialLocationData: LocationData) {
         // x
-        stateVector[0, 0] = initialLocationData.xPos
-        stateVector[1, 0] = initialLocationData.yPos
-        stateVector[2, 0] = initialLocationData.zPos
+        stateVector[0, 0] = 1.057
+        stateVector[1, 0] = 1.751
+        stateVector[2, 0] = 0.292
         stateVector[3, 0] = 0.0
         stateVector[4, 0] = 0.0
         stateVector[5, 0] = 0.0
@@ -230,7 +230,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
 
     private fun setStateCovarianceMatrix(){
         // P
-        stateNoiseCovarianceMatrix[0, 0] =  0.01
+        stateNoiseCovarianceMatrix[0, 0] =  0.001
         stateNoiseCovarianceMatrix[0, 1] =  0.0
         stateNoiseCovarianceMatrix[0, 2] =  0.0
         stateNoiseCovarianceMatrix[0, 3] =  0.0
@@ -240,7 +240,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         stateNoiseCovarianceMatrix[0, 7] =  0.0
         stateNoiseCovarianceMatrix[0, 8] =  0.0
         stateNoiseCovarianceMatrix[1, 0] =  0.0
-        stateNoiseCovarianceMatrix[1, 1] =  0.01
+        stateNoiseCovarianceMatrix[1, 1] =  0.001
         stateNoiseCovarianceMatrix[1, 2] =  0.0
         stateNoiseCovarianceMatrix[1, 3] =  0.0
         stateNoiseCovarianceMatrix[1, 4] =  0.0
@@ -250,7 +250,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
         stateNoiseCovarianceMatrix[1, 8] =  0.0
         stateNoiseCovarianceMatrix[2, 0] =  0.0
         stateNoiseCovarianceMatrix[2, 1] =  0.0
-        stateNoiseCovarianceMatrix[2, 2] =  0.001
+        stateNoiseCovarianceMatrix[2, 2] =  0.0001
         stateNoiseCovarianceMatrix[2, 3] =  0.0
         stateNoiseCovarianceMatrix[2, 4] =  0.0
         stateNoiseCovarianceMatrix[2, 5] =  0.0
@@ -497,7 +497,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
     }
 
     private inner class KalmanFilterStrategies {
-        val predict: (locationData: LocationData?, accelerationData: AccelerationData?, orientationData: OrientationData?) -> Unit  = { _, accelerationData, _ ->
+        val predict: (locationData: LocationData?, accelerationData: AccelerationData?) -> Unit  = { _, accelerationData ->
             // With each prediction, update the process noise covariance matrix with the current overall acceleration to make the filter more adaptive
             val currentProcessNoiseCovarianceMatrix = applyCurrentOverallAccelerationToProcessNoiseCovarianceMatrix(accelerationData!!)
 
@@ -511,14 +511,14 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             addEquals(stateNoiseCovarianceMatrix, currentProcessNoiseCovarianceMatrix)
         }
 
-        val update: (uwbLocationData: LocationData, rawAccelerationData: AccelerationData, orientationData: OrientationData) -> Unit = update@ { uwbLocationData, rawAccelerationData, orientationData ->
+        val update: (uwbLocationData: LocationData, rawAccelerationData: AccelerationData) -> Unit = update@ { uwbLocationData, rawAccelerationData ->
             // y = z - H * x
             measurementVector = DMatrixRMaj(doubleArrayOf(uwbLocationData.xPos, uwbLocationData.yPos, uwbLocationData.zPos, rawAccelerationData.xAcc, rawAccelerationData.yAcc, rawAccelerationData.zAcc))
             mult(measurementTransitionMatrix, stateVector, innovationVector)
             subtract(measurementVector, innovationVector, innovationVector)
 
             // S = H * P * H' + R
-            adjustNoise(rawAccelerationData, orientationData)
+            adjustNoise(rawAccelerationData)
             mult(measurementTransitionMatrix, stateNoiseCovarianceMatrix, c)
             multTransB(c, measurementTransitionMatrix, innovationCovarianceMatrix)
             addEquals(innovationCovarianceMatrix, measurementNoiseCovarianceMatrix)
@@ -546,7 +546,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             kalmanFilterOutputListener.onNewStateVectorEstimate(uwbLocationData, LocationData(stateVector[0, 0], stateVector[1, 0], stateVector[2, 0]), rawAccelerationData, AccelerationData(stateVector[6, 0], stateVector[7, 0], stateVector[8, 0]))
         }
 
-        val notConfigured: (p0: Any?, p1: Any?, p2: Any?) -> Unit = {_, _, _ -> throw IllegalAccessError("You need to call KalmanFilterImpl().configure() before making use of it.")}
+        val notConfigured: (p0: Any?, p1: Any?) -> Unit = {_, _ -> throw IllegalAccessError("You need to call KalmanFilterImpl().configure() before making use of it.")}
 
         private fun applyCurrentOverallAccelerationToProcessNoiseCovarianceMatrix(accelerationData: AccelerationData): DMatrixRMaj {
             val size = processNoiseCovarianceMatrix.numElements
@@ -564,7 +564,7 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             return sqrt(accelerationData.xAcc.pow(2) + accelerationData.yAcc.pow(2) + accelerationData.zAcc.pow(2))
         }
 
-        private fun adjustNoise(accelerationData: AccelerationData, orientationData: OrientationData) {
+        private fun adjustNoise(accelerationData: AccelerationData) {
             // Because the filter behaves very static in terms of Z position estimation, there is a
             // delay of several seconds when the user actually intentionally changed its height,
             // e.g. by sitting down.
@@ -575,23 +575,10 @@ class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutpu
             if (doesUserIntentionallyChangeHeight(accelerationData.zAcc)){
                 handleDynamicZCoordinateEstimation()
             }
-
-            // Because the accelerometer of this projects' phone is noisy when lying on its back,
-            // we have to tell the filter whether the z acceleration is reliable or not.
-            if (isZAccelerationReliable(orientationData.roll)) {
-                measurementNoiseCovarianceMatrix[5, 5] = MEASUREMENT_NOISE_Z_ACCELERATION_REGULAR
-            }
-            else {
-                measurementNoiseCovarianceMatrix[5, 5] = MEASUREMENT_NOISE_Z_ACCELERATION_STATIC
-            }
         }
 
         private fun doesUserIntentionallyChangeHeight(zAcceleration: Double): Boolean {
             return kotlin.math.abs(zAcceleration) >= ACCELERATION_HEIGHT_CHANGE_THRESHOLD
-        }
-
-        private fun isZAccelerationReliable(roll: Double): Boolean {
-            return kotlin.math.abs(roll) > ORIENTATION_ROLL_THRESHOLD
         }
 
         // Drop the Z position measurement noise to briefly make filter more dynamic on Z axis.

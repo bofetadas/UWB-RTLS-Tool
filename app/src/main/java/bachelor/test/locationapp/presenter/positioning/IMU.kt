@@ -46,11 +46,10 @@ class IMU(context: Context): IMUInputListener {
         magnetValuesLowPass = lowPass(values, magnetValuesLowPass)
     }
 
-    fun getIMUData(): IMUData {
+    fun getIMUAcceleration(): AccelerationData {
         // Calculate world acceleration and orientation
         val acceleration = calculateAcceleration()
-        val orientation = calculateOrientation()
-        return IMUData(acceleration, orientation)
+        return acceleration
     }
 
     // Transform device acceleration into world acceleration
@@ -58,23 +57,11 @@ class IMU(context: Context): IMUInputListener {
         // Calculate rotation matrix from gravity and magnetic sensor data
         val rotationMatrix = FloatArray(9)
         SensorManager.getRotationMatrix(rotationMatrix, null, gravityValues, magnetValues)
+        // Multiply measured acceleration with rotation matrix to get acceleration relative to NEU
         val xAcc = rotationMatrix[0] * accelerationValues[0] + rotationMatrix[1] * accelerationValues[1] + rotationMatrix[2] * accelerationValues[2]
         val yAcc = rotationMatrix[3] * accelerationValues[0] + rotationMatrix[4] * accelerationValues[1] + rotationMatrix[5] * accelerationValues[2]
         val zAcc = rotationMatrix[6] * accelerationValues[0] + rotationMatrix[7] * accelerationValues[1] + rotationMatrix[8] * accelerationValues[2]
         return AccelerationData(xAcc.toDouble(), yAcc.toDouble(), zAcc.toDouble() - GRAVITY)
-    }
-
-    // Transform device orientation into world orientation
-    private fun calculateOrientation(): OrientationData {
-        // Calculate rotation matrix from low-passed gravity and magnetic sensor data
-        val rotationMatrix = FloatArray(9)
-        val orientationVector = FloatArray(3)
-        SensorManager.getRotationMatrix(rotationMatrix, null, gravityValuesLowPass, magnetValuesLowPass)
-        SensorManager.getOrientation(rotationMatrix, orientationVector)
-        val yaw = Math.toDegrees(orientationVector[0].toDouble()) + DECLINATION
-        val pitch = Math.toDegrees(orientationVector[1].toDouble())
-        val roll = Math.toDegrees(orientationVector[2].toDouble())
-        return OrientationData(yaw, pitch, roll)
     }
 
     private fun lowPass(inputValues: FloatArray, outputValues: FloatArray): FloatArray {
