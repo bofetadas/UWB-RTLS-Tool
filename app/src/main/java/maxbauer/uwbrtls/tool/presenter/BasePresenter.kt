@@ -1,3 +1,3 @@
-package bachelor.test.uwbrtlstool.presenter
+package maxbauer.uwbrtls.tool.presenter
 
 interface BasePresenter

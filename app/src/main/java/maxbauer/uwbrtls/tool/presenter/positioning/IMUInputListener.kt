@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.presenter.positioning
+package maxbauer.uwbrtls.tool.presenter.positioning
 
 interface IMUInputListener {
     fun onAccelerometerUpdate(values: FloatArray)

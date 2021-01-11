@@ -1,6 +1,6 @@
-package bachelor.test.uwbrtlstool.presenter.positioning
+package maxbauer.uwbrtls.tool.presenter.positioning
 
-import bachelor.test.uwbrtlstool.utils.StringUtil
+import maxbauer.uwbrtls.tool.utils.StringUtil
 
 data class AccelerationData(val xAcc: Double, val yAcc: Double, val zAcc: Double) {
 

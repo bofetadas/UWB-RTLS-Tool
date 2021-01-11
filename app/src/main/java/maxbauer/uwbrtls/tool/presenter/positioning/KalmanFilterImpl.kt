@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.presenter.positioning
+package maxbauer.uwbrtls.tool.presenter.positioning
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
@@ -41,7 +41,8 @@ private const val MEASUREMENT_NOISE_Z_ACCELERATION_STATIC = 50000.0
 // Period of time in which the filter shall be highly dynamic in Z coordinate estimation
 private const val DYNAMIC_Z_FILTER_TIME_PERIOD = 2000L
 
-class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutputListener): KalmanFilter {
+class KalmanFilterImpl(private val kalmanFilterOutputListener: KalmanFilterOutputListener):
+    KalmanFilter {
 
     // State estimate matrices
     // x

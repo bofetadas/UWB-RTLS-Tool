@@ -1,6 +1,6 @@
-package bachelor.test.uwbrtlstool.model
+package maxbauer.uwbrtls.tool.model
 
-import bachelor.test.uwbrtlstool.presenter.Observer
+import maxbauer.uwbrtls.tool.presenter.Observer
 
 interface Observable {
     fun addObserver(observer: Observer)

@@ -1,13 +1,14 @@
-package bachelor.test.uwbrtlstool.presenter.positioning
+package maxbauer.uwbrtls.tool.presenter.positioning
 
 import android.content.Context
-import bachelor.test.uwbrtlstool.utils.CompassUtil
-import bachelor.test.uwbrtlstool.view.MainScreenContract
+import maxbauer.uwbrtls.tool.utils.CompassUtil
+import maxbauer.uwbrtls.tool.view.MainScreenContract
 
 private const val POSITION_BYTE_ARRAY_SIZE = 14
 
 // Entry class for handling positioning logic
-class PositioningImpl(context: Context, private val presenter: MainScreenContract.Presenter): Positioning, KalmanFilterOutputListener {
+class PositioningImpl(context: Context, private val presenter: MainScreenContract.Presenter): Positioning,
+    KalmanFilterOutputListener {
 
     private val converter = ByteArrayToLocationDataConverter()
     private val imu = IMU(context)

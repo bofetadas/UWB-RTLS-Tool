@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.view
+package maxbauer.uwbrtls.tool.view
 
 import android.app.AlertDialog
 import android.app.Dialog
@@ -9,8 +9,8 @@ import android.widget.EditText
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
-import bachelor.test.uwbrtlstool.R
-import bachelor.test.uwbrtlstool.presenter.recording.Directions
+import maxbauer.uwbrtls.tool.R
+import maxbauer.uwbrtls.tool.presenter.recording.Directions
 
 class RecordingFixedPositionDialog : DialogFragment(){
 

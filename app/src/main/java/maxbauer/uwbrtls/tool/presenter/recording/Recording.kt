@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.presenter.recording
+package maxbauer.uwbrtls.tool.presenter.recording
 
 interface Recording {
     fun createRecordingMovementFile(): Boolean

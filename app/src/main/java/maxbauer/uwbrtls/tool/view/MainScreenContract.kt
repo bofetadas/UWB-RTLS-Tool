@@ -1,11 +1,11 @@
-package bachelor.test.uwbrtlstool.view
+package maxbauer.uwbrtls.tool.view
 
-import bachelor.test.uwbrtlstool.presenter.BasePresenter
-import bachelor.test.uwbrtlstool.presenter.positioning.AccelerationData
-import bachelor.test.uwbrtlstool.presenter.positioning.LocationData
-import bachelor.test.uwbrtlstool.presenter.positioning.OrientationData
-import bachelor.test.uwbrtlstool.presenter.recording.Directions
-import bachelor.test.uwbrtlstool.presenter.recording.InputData
+import maxbauer.uwbrtls.tool.presenter.BasePresenter
+import maxbauer.uwbrtls.tool.presenter.positioning.AccelerationData
+import maxbauer.uwbrtls.tool.presenter.positioning.LocationData
+import maxbauer.uwbrtls.tool.presenter.positioning.OrientationData
+import maxbauer.uwbrtls.tool.presenter.recording.Directions
+import maxbauer.uwbrtls.tool.presenter.recording.InputData
 
 interface MainScreenContract {
     interface View : BaseView<Presenter> {
@@ -23,7 +23,7 @@ interface MainScreenContract {
         fun dismissRecordStopScreen()
     }
 
-    interface Presenter: BasePresenter{
+    interface Presenter: BasePresenter {
         fun start()
         fun stop()
         fun onConnectClicked()

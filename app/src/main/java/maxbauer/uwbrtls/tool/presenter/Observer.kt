@@ -1,6 +1,6 @@
-package bachelor.test.uwbrtlstool.presenter
+package maxbauer.uwbrtls.tool.presenter
 
-import bachelor.test.uwbrtlstool.model.Observable
+import maxbauer.uwbrtls.tool.model.Observable
 
 interface Observer {
     fun onBluetoothNotEnabled(observable: Observable)

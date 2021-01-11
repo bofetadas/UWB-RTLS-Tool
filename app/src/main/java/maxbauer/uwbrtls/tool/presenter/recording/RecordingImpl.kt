@@ -1,10 +1,11 @@
-package bachelor.test.uwbrtlstool.presenter.recording
+package maxbauer.uwbrtls.tool.presenter.recording
 
 import android.content.Context
-import bachelor.test.uwbrtlstool.view.MainScreenContract
+import maxbauer.uwbrtls.tool.view.MainScreenContract
 
 // Entry class for handling recording logic
-class RecordingImpl(context: Context, private val presenter: MainScreenContract.Presenter): Recording, TimerCallbacks {
+class RecordingImpl(context: Context, private val presenter: MainScreenContract.Presenter): Recording,
+    TimerCallbacks {
     private val fileController = FileController(context)
     private val vibratorFeedback = VibratorFeedback(context)
     private val timer = Timer(this)

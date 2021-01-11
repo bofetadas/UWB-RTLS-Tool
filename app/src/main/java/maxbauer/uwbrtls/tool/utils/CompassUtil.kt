@@ -1,6 +1,6 @@
-package bachelor.test.uwbrtlstool.utils
+package maxbauer.uwbrtls.tool.utils
 
-import bachelor.test.uwbrtlstool.presenter.recording.Directions
+import maxbauer.uwbrtls.tool.presenter.recording.Directions
 
 // Yaw values for the 4 compass directions (determined empirically)
 private const val COMPASS_DIRECTION_YAW_NORTH = 12

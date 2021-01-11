@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.view
+package maxbauer.uwbrtls.tool.view
 
 interface RecordingFixedPositionDialogListener {
 

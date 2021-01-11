@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.presenter
+package maxbauer.uwbrtls.tool.presenter
 
 import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver

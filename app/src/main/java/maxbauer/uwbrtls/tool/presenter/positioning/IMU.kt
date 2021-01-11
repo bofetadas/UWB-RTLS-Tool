@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.presenter.positioning
+package maxbauer.uwbrtls.tool.presenter.positioning
 
 import android.content.Context
 import android.hardware.SensorManager

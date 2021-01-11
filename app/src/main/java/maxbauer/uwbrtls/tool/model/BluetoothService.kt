@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.model
+package maxbauer.uwbrtls.tool.model
 
 import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
@@ -89,7 +89,9 @@ class BluetoothService(private val model: ModelImpl) {
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
                     // Set location mode to 0 (Position only mode)
-                    val setLocationModeCharacteristic = gatt.services[2].getCharacteristic(UUID.fromString(SET_LOCATION_MODE_CHARACTERISTIC))
+                    val setLocationModeCharacteristic = gatt.services[2].getCharacteristic(UUID.fromString(
+                        SET_LOCATION_MODE_CHARACTERISTIC
+                    ))
                     setLocationModeCharacteristic.value = POSITION_MODE
                     val success = gatt.writeCharacteristic(setLocationModeCharacteristic)
                     if (!success){
@@ -125,7 +127,9 @@ class BluetoothService(private val model: ModelImpl) {
         // Remote characteristic changes handling
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
             // Only forward incoming characteristic notification data if it is position data
-            if (characteristic!! == tagConnection!!.services[2].getCharacteristic(UUID.fromString(GET_LOCATION_CHARACTERISTIC))){
+            if (characteristic!! == tagConnection!!.services[2].getCharacteristic(UUID.fromString(
+                    GET_LOCATION_CHARACTERISTIC
+                ))){
                 model.onCharacteristicChange(characteristic.value)
             }
         }

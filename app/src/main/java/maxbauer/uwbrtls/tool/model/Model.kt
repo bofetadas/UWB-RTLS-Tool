@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.model
+package maxbauer.uwbrtls.tool.model
 
 interface Model: Observable, BluetoothCallbacks {
     fun initializeBluetoothConnection()

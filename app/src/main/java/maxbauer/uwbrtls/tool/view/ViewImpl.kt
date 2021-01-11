@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.view
+package maxbauer.uwbrtls.tool.view
 
 import android.Manifest
 import android.app.AlertDialog
@@ -8,17 +8,18 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import bachelor.test.uwbrtlstool.BuildConfig
-import bachelor.test.uwbrtlstool.R
-import bachelor.test.uwbrtlstool.presenter.PresenterImpl
-import bachelor.test.uwbrtlstool.presenter.positioning.AccelerationData
-import bachelor.test.uwbrtlstool.presenter.positioning.LocationData
-import bachelor.test.uwbrtlstool.presenter.positioning.OrientationData
-import bachelor.test.uwbrtlstool.presenter.recording.InputData
-import bachelor.test.uwbrtlstool.utils.StringUtil
 import kotlinx.android.synthetic.main.view.*
+import maxbauer.uwbrtls.tool.BuildConfig
+import maxbauer.uwbrtls.tool.R
+import maxbauer.uwbrtls.tool.presenter.PresenterImpl
+import maxbauer.uwbrtls.tool.presenter.positioning.AccelerationData
+import maxbauer.uwbrtls.tool.presenter.positioning.LocationData
+import maxbauer.uwbrtls.tool.presenter.positioning.OrientationData
+import maxbauer.uwbrtls.tool.presenter.recording.InputData
+import maxbauer.uwbrtls.tool.utils.StringUtil
 
-class ViewImpl : AppCompatActivity(), MainScreenContract.View, RecordingFixedPositionDialogListener {
+class ViewImpl : AppCompatActivity(), MainScreenContract.View,
+    RecordingFixedPositionDialogListener {
 
     private lateinit var presenter: MainScreenContract.Presenter
 

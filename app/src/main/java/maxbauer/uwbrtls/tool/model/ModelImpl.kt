@@ -1,7 +1,7 @@
-package bachelor.test.uwbrtlstool.model
+package maxbauer.uwbrtls.tool.model
 
 import android.content.Context
-import bachelor.test.uwbrtlstool.presenter.Observer
+import maxbauer.uwbrtls.tool.presenter.Observer
 import java.util.*
 
 class ModelImpl(val context: Context): Model {

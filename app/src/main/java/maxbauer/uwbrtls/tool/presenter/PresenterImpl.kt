@@ -1,20 +1,21 @@
-package bachelor.test.uwbrtlstool.presenter
+package maxbauer.uwbrtls.tool.presenter
 
 import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
-import bachelor.test.uwbrtlstool.model.Model
-import bachelor.test.uwbrtlstool.model.ModelImpl
-import bachelor.test.uwbrtlstool.model.Observable
-import bachelor.test.uwbrtlstool.presenter.positioning.*
-import bachelor.test.uwbrtlstool.presenter.recording.Directions
-import bachelor.test.uwbrtlstool.presenter.recording.InputData
-import bachelor.test.uwbrtlstool.presenter.recording.Recording
-import bachelor.test.uwbrtlstool.presenter.recording.RecordingImpl
-import bachelor.test.uwbrtlstool.view.MainScreenContract
+import maxbauer.uwbrtls.tool.model.Model
+import maxbauer.uwbrtls.tool.model.ModelImpl
+import maxbauer.uwbrtls.tool.model.Observable
+import maxbauer.uwbrtls.tool.presenter.positioning.*
+import maxbauer.uwbrtls.tool.presenter.recording.Directions
+import maxbauer.uwbrtls.tool.presenter.recording.InputData
+import maxbauer.uwbrtls.tool.presenter.recording.Recording
+import maxbauer.uwbrtls.tool.presenter.recording.RecordingImpl
+import maxbauer.uwbrtls.tool.view.MainScreenContract
 
-class PresenterImpl(private val context: Context, private val view: MainScreenContract.View): MainScreenContract.Presenter, Observer {
+class PresenterImpl(private val context: Context, private val view: MainScreenContract.View): MainScreenContract.Presenter,
+    Observer {
 
     private var model: Model? = null
     private var broadcastReceiver: BroadcastReceiver = BluetoothBroadcastReceiver(this)

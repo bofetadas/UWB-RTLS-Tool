@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.presenter.recording
+package maxbauer.uwbrtls.tool.presenter.recording
 
 import android.content.Context
 import android.os.VibrationEffect

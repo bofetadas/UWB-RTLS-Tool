@@ -1,4 +1,4 @@
-package bachelor.test.uwbrtlstool.utils
+package maxbauer.uwbrtls.tool.utils
 
 object StringUtil {
 
