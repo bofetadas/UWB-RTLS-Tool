@@ -101,9 +101,9 @@ def get_values(uwb_positions, filtered_positions, raw_accelerations, filtered_ac
     return uwb_x_coordinates, uwb_y_coordinates, uwb_z_coordinates, filtered_x_coordinates, filtered_y_coordinates, filtered_z_coordinates, raw_x_accelerations, raw_y_accelerations, raw_z_accelerations, filtered_x_accelerations, filtered_y_accelerations, filtered_z_accelerations
 
 def plot(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations, sample_count):
-    fig = plt.figure(figsize=(7, 13))
-    ax0 = plt.subplot(211)
-    ax1 = plt.subplot(212, projection='3d')
+    fig = plt.figure('''figsize=(7, 13)''')
+    ax0 = plt.subplot(111)
+    #ax1 = plt.subplot(212, projection='3d')
     plt.title("Raw UWB and filtered positions")
     plot_2D_cartesian(uwb_positions, filtered_positions, ax0)
     #plot_3D(uwb_positions, filtered_positions, ax1)
@@ -119,6 +119,17 @@ def plot_2D_cartesian(uwb_positions, filtered_positions, axs):
     # Plot 2D filtered positions
     for x, y, z in filtered_positions:
         axs.scatter(x, y, c='r', marker='x')
+    #plot_ground_truth()
+
+def plot_ground_truth():
+    plt.hlines(0, 1, 2.65, 'black', 'dashed', label="Ground Truth")
+    plt.hlines(2, 0.75, 2.65, 'black', 'dashed')
+    plt.vlines(1, 0, 3, 'black', 'dashed')
+    plt.vlines(2.65, 0, 2, 'black', 'dashed')
+    plt.plot(1, 3, marker='v', c='black', ms=8)
+    plt.plot(1, 0, marker='>', c='black', ms=8)
+    plt.plot(2.65, 0, marker='^', c='black', ms=8)
+    plt.plot(2.65, 2, marker='<', c='black', ms=8)
 
 def plot_3D(uwb_positions, filtered_positions, axs):
     axs.set_xlabel('X Axis')
@@ -137,17 +148,17 @@ def plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filter
     uwb_x_coordinates, uwb_y_coordinates, uwb_z_coordinates, filtered_x_coordinates, filtered_y_coordinates, filtered_z_coordinates, raw_x_accelerations, raw_y_accelerations, raw_z_accelerations, filtered_x_accelerations, filtered_y_accelerations, filtered_z_accelerations = get_values(uwb_positions, filtered_positions, raw_accelerations, filtered_accelerations)
     plt.title("Raw UWB and filtered positions")
     # Plot coordinates
-    ax1 = fig.add_subplot(311)
+    ax1 = plt.subplot(311)
     ax1.plot(range(sample_count), uwb_x_coordinates, label='UWB X', c='b')
     ax1.plot(range(sample_count), filtered_x_coordinates, label='Filtered X', c='r')
     ax1.legend()
 
-    ax2 = fig.add_subplot(312)
+    ax2 = plt.subplot(312)
     ax2.plot(range(sample_count), uwb_y_coordinates, label='UWB Y', c='b')
     ax2.plot(range(sample_count), filtered_y_coordinates, label='Filtered Y', c='r')
     ax2.legend()
 
-    ax3 = fig.add_subplot(313)
+    ax3 = plt.subplot(313)
     ax3.plot(range(sample_count), uwb_z_coordinates, label='UWB Z', c='b')
     ax3.plot(range(sample_count), filtered_z_coordinates, label='Filtered Z', c='r')
     ax3.axhline(1.67, 0, 1, label='User Height', c='g')
@@ -158,17 +169,17 @@ def plot_line_chart(uwb_positions, filtered_positions, raw_accelerations, filter
     # Plot accelerations
     fig = plt.figure()
     plt.title("Raw and filtered accelerations")
-    ax1 = fig.add_subplot(311)
+    ax1 = plt.subplot(311)
     ax1.plot(range(sample_count), raw_x_accelerations, label='Raw X', c='b')
     ax1.plot(range(sample_count), filtered_x_accelerations, label='Filtered X', c='r')
     ax1.legend()
 
-    ax2 = fig.add_subplot(312)
+    ax2 = plt.subplot(312)
     ax2.plot(range(sample_count), raw_y_accelerations, label='Raw Y', c='b')
     ax2.plot(range(sample_count), filtered_y_accelerations, label='Filtered Y', c='r')
     ax2.legend()
 
-    ax3 = fig.add_subplot(313)
+    ax3 = plt.subplot(313)
     ax3.plot(range(sample_count), raw_z_accelerations, label='Raw Z', c='b')
     ax3.plot(range(sample_count), filtered_z_accelerations, label='Filtered Z', c='r')
     ax3.axhline(2.0, 0, 1, label='Z Acc Threshold', c='g')
