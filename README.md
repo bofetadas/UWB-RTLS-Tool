@@ -1,4 +1,4 @@
-# LocationApp
+# UWB-RTLS-Tool
 Simple Android app that displays the position of a tag inside a Ultra Wideband Real Time Localization System based on decawave's DWM1001-Devkits.
 
 This app was tested with a Samsung Galaxy S8 running Android 9. 
